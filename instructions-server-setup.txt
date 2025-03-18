@@ -1,0 +1,69 @@
+trinity@raspberrypi:~ $ sudo certbot --nginx -d mma-ai.duckdns.org
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for mma-ai.duckdns.org
+
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/mma-ai.duckdns.org/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/mma-ai.duckdns.org/privkey.pem
+This certificate expires on 2025-06-12.
+These files will be updated when the certificate renews.
+Certbot has set up a scheduled task to automatically renew this certificate in the background.
+
+Deploying certificate
+Successfully deployed certificate for mma-ai.duckdns.org to /etc/nginx/sites-enabled/flask_app
+Congratulations! You have successfully enabled HTTPS on https://mma-ai.duckdns.org
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+If you like Certbot, please consider supporting our work by:
+ * Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+ * Donating to EFF:                    https://eff.org/donate-le
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+trinity@raspberrypi:~ $
+
+
+
+
+#### OUTPUT 
+
+
+
+trinity@raspberrypi:~/ai-local-builds/responses-api $ sudo systemctl status nginx.service
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/lib/systemd/system/nginx.service; disabled; preset: enabl>
+     Active: active (running) since Fri 2025-03-14 12:29:05 EDT; 3s ago
+       Docs: man:nginx(8)
+    Process: 25735 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_proc>
+    Process: 25736 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (>
+   Main PID: 25737 (nginx)
+      Tasks: 5 (limit: 9554)
+        CPU: 31ms
+     CGroup: /system.slice/nginx.service
+             ├─25737 "nginx: master process /usr/sbin/nginx -g daemon on; maste>
+             ├─25738 "nginx: worker process"
+             ├─25739 "nginx: worker process"
+             ├─25740 "nginx: worker process"
+             └─25741 "nginx: worker process"
+
+Mar 14 12:29:05 raspberrypi systemd[1]: Starting nginx.service - A high perform>
+Mar 14 12:29:05 raspberrypi systemd[1]: Started nginx.service - A high performa>
+trinity@raspberrypi:~/ai-local-builds/responses-api $ sudo systemctl status flaskapp.service
+● flaskapp.service - Gunicorn instance to serve Flask (mma-ai.duckdns.org)
+     Loaded: loaded (/etc/systemd/system/flaskapp.service; disabled; preset: en>
+     Active: active (running) since Fri 2025-03-14 12:28:58 EDT; 17s ago
+   Main PID: 25257 (gunicorn)
+      Tasks: 2 (limit: 9554)
+        CPU: 1.225s
+     CGroup: /system.slice/flaskapp.service
+             ├─25257 /home/trinity/.pyenv/versions/3.12.0/bin/python3.12 /home/>
+             └─25373 /home/trinity/.pyenv/versions/3.12.0/bin/python3.12 /home/>
+
+Mar 14 12:28:58 raspberrypi systemd[1]: Started flaskapp.service - Gunicorn ins>
+Mar 14 12:28:58 raspberrypi gunicorn[25257]: [2025-03-14 12:28:58 -0400] [25257>
+Mar 14 12:28:58 raspberrypi gunicorn[25257]: [2025-03-14 12:28:58 -0400] [25257>
+Mar 14 12:28:58 raspberrypi gunicorn[25257]: [2025-03-14 12:28:58 -0400] [25257>
+Mar 14 12:28:58 raspberrypi gunicorn[25373]: [2025-03-14 12:28:58 -0400] [25373>
+Mar 14 12:28:59 raspberrypi gunicorn[25373]: INFO:app:API key loaded (starts wi>
+Mar 14 12:28:59 raspberrypi gunicorn[25373]: DEBUG:httpx:load_ssl_context verif>
+Mar 14 12:28:59 raspberrypi gunicorn[25373]: DEBUG:httpx:load_verify_locations >
+trinity@raspberrypi:~/ai-local-builds/responses-api $
+
