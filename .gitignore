@@ -68,3 +68,4 @@ Carthage/Build/
 # Logs
 logs
 *.log 
+mma-ai-swift/mma-ai-swift.xcodeproj/xcshareddata/
