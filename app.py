@@ -7,6 +7,7 @@ import uuid
 from dotenv import load_dotenv
 import logging
 import time
+import base64
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -90,24 +91,49 @@ def chat():
         messages = client.beta.threads.messages.list(thread_id=thread_id)
         
         # Get the most recent assistant message
-        content = ""
+        response_data = []
         for msg in messages.data:
             if msg.role == "assistant":
                 for content_item in msg.content:
                     if content_item.type == "text":
-                        content = content_item.text.value
-                        break
-                if content:  # If we found content, break out of the loop
+                        # Capture text annotations
+                        text_content = content_item.text.value
+                        annotations = [
+                            {
+                                "type": "file",
+                                "text": annotation.text,
+                                "file_id": annotation.file_path.file_id
+                            } for annotation in content_item.text.annotations
+                        ]
+                        response_data.append({
+                            "type": "text",
+                            "content": text_content,
+                            "annotations": annotations
+                        })
+                    elif content_item.type == "image_file":
+                        # Retrieve and encode image
+                        image_file = content_item.image_file.file_id
+                        image_data = client.files.content(image_file)
+                        encoded_image = base64.b64encode(image_data.content).decode('utf-8')
+                        response_data.append({
+                            "type": "image",
+                            "format": "png",
+                            "content": f"data:image/png;base64,{encoded_image}"
+                        })
+                if response_data:
                     break
         
-        if not content:
-            content = "Sorry, I couldn't retrieve the information you requested."
+        if not response_data:
+            response_data = [{
+                "type": "error",
+                "content": "Sorry, I couldn't retrieve the information you requested."
+            }]
         
-        logger.info(f"Received response from Assistant: '{content[:50]}...'")
+        logger.info(f"Received response from Assistant: '{response_data[:50]}...'")
         
         # Return response with conversation ID
         return jsonify({
-            "response": content,
+            "response": response_data,
             "conversation_id": conversation_id
         })
         
@@ -119,7 +145,8 @@ def chat():
 def get_examples():
     examples = [
         "Tell me about Max Holloway's most recent 5 fights and details of the outcomes",
-        "Analyze and research Paddy Pimblett and Michael Chandler, then predict who would win in a fight and why.",
+        "Generate me a visualization of Max Holloway’s method of victories",
+        "Analyze and research Paddy Pimblett and Michael Chandler in depth, then predict who would win in a fight and why.",
         "List me all the columns in your datasets",
         "Tell me the most recent 3 events and the main event outcome of each one",
         "Where is the upcoming UFC card/event this weekend and what are all of the fights on it with a short overview of each fight?",
@@ -127,7 +154,7 @@ def get_examples():
     ]
     return jsonify({"examples": examples})
 
-#if __name__ == '__main__':
-#    app.run(debug=True, host='0.0.0.0', port=5001)
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5001)
+if __name__ == '__main__':
+   app.run(debug=True, host='0.0.0.0', port=5001)
+# if __name__ == "__main__":
+#     app.run(host="127.0.0.1", port=5001)
