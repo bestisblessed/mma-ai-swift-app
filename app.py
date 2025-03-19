@@ -144,13 +144,12 @@ def chat():
 @app.route('/api/examples', methods=['GET'])
 def get_examples():
     examples = [
-        "Tell me about Max Holloway's most recent 5 fights and details of the outcomes",
-        "Generate me a visualization of Max Holloway’s method of victories",
-        "Analyze and research Paddy Pimblett and Michael Chandler in depth, then predict who would win in a fight and why.",
-        "List me all the columns in your datasets",
-        "Tell me the most recent 3 events and the main event outcome of each one",
-        "Where is the upcoming UFC card/event this weekend and what are all of the fights on it with a short overview of each fight?",
-        "What is the current weather forecast for Miami, Florida?"
+        "Tell me about Jon Jones most recent 5 fights in detail",
+        "Make me a pie chartvisualization of Max Holloway’s method of victories",
+        "Analyze and research Paddy Pimblett and Michael Chandler in depth, then predict who would win in a potential fight and why.",
+        "List me all the columns and summarize the data in all of your datasets",
+        # "Tell me the most recent 3 events and the main event outcome of each one",
+        # "Where is the upcoming UFC card/event this weekend and what are all of the fights on it with a short overview of each fight?",
     ]
     return jsonify({"examples": examples})
 
