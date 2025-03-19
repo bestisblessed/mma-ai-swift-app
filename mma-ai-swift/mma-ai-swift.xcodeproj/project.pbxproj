@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731D8CC52D8AC1B4004F58E6 /* Message.swift */; };
 		7345C3072D82DB4F00839854 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7345C3062D82DB4F00839854 /* Theme.swift */; };
 		736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736B5A772D82E22A008D7A55 /* DashboardView.swift */; };
 		738B03112D82DD5B0065813D /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B030F2D82DD5B0065813D /* LaunchScreen.swift */; };
@@ -23,6 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		731D8CC52D8AC1B4004F58E6 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		7345C3062D82DB4F00839854 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		736B5A772D82E22A008D7A55 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		738B030F2D82DD5B0065813D /* LaunchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreen.swift; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 		8A1234561234567800000010 /* mma-ai-swift */ = {
 			isa = PBXGroup;
 			children = (
+				731D8CC52D8AC1B4004F58E6 /* Message.swift */,
 				736B5A772D82E22A008D7A55 /* DashboardView.swift */,
 				73A9603F2D82E0ED009B6A7E /* AppTheme.swift */,
 				73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */,
@@ -182,6 +185,7 @@
 				73A960432D82E0ED009B6A7E /* SettingsView.swift in Sources */,
 				73A960442D82E0ED009B6A7E /* ConversationHistoryView.swift in Sources */,
 				738B03122D82DD5B0065813D /* LoadingView.swift in Sources */,
+				731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */,
 				8A1234561234567800000001 /* MMAApp.swift in Sources */,
 				736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */,
 				8A1234561234567800000005 /* ChatViewModel.swift in Sources */,

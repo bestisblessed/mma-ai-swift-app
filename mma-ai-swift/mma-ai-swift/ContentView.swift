@@ -170,8 +170,27 @@ struct ChatView: View {
                 ScrollViewReader { proxy in
                     LazyVStack(spacing: 8) {
                         ForEach(chatViewModel.messages) { message in
-                            MessageBubble(message: message)
-                                .id(message.id)
+                            VStack(alignment: .leading) {
+                                if message.imageData != nil {
+                                    Image(uiImage: UIImage(data: message.imageData!) ?? UIImage())
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(maxWidth: 300)
+                                        .cornerRadius(10)
+                                } else {
+                                    Text(message.content)
+                                        .padding(10)
+                                        .background(message.isUser ? AppTheme.accent : AppTheme.cardBackground)
+                                        .foregroundColor(message.isUser ? .white : AppTheme.textPrimary)
+                                        .cornerRadius(15)
+                                }
+                                Text(message.formattedTime)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
+                            .padding(.horizontal)
+                            .padding(.vertical, 4)
                         }
                     }
                     .padding(.horizontal)
@@ -296,4 +315,6 @@ struct MessageBubble: View {
             }
         }
     }
-} 
+}
+
+/* Removed duplicate Message struct declaration */ 

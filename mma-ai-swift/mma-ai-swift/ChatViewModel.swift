@@ -15,19 +15,6 @@ class SSLCertificateHandler: NSObject, URLSessionDelegate {
     }
 }
 
-struct Message: Identifiable {
-    let id = UUID()
-    let content: String
-    let isUser: Bool
-    let timestamp: Date
-    
-    var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: timestamp)
-    }
-}
-
 class ChatViewModel: ObservableObject {
     @Published var messages: [Message] = []
     @Published var isLoading = false
@@ -236,29 +223,23 @@ class ChatViewModel: ObservableObject {
                             return
                         }
                         
-                        let responseContent = decodedResponse.response ?? ""
-                        print("Response content: '\(responseContent)'")
-                        
-                        if responseContent.isEmpty {
-                            print("Empty response received from server")
-                            let errorMessage = Message(
-                                content: "The server returned an empty response. This might be due to an issue with the OpenAI API key or rate limiting.",
+                        let responseItems = decodedResponse.response
+                        for item in responseItems {
+                            var messageContent = item.content
+                            if let annotations = item.annotations {
+                                messageContent += "\n\nReferences:\n" + annotations.map { $0.text }.joined(separator: "\n")
+                            }
+                            
+                            let newMessage = Message(
+                                content: messageContent,
                                 isUser: false,
-                                timestamp: Date()
+                                timestamp: Date(),
+                                imageData: item.type == "image" ? self?.extractImageData(from: item.content) : nil
                             )
-                            self?.messages.append(errorMessage)
-                        } else {
-                            let assistantMessage = Message(
-                                content: responseContent,
-                                isUser: false,
-                                timestamp: Date()
-                            )
-                            self?.messages.append(assistantMessage)
+                            self?.messages.append(newMessage)
                         }
                         
-                        if let newConversationId = decodedResponse.conversation_id {
-                            self?.conversationId = newConversationId
-                        }
+                        self?.conversationId = decodedResponse.conversation_id
                     } catch {
                         print("Decoding error: \(error.localizedDescription)")
                         let errorMessage = Message(
@@ -288,12 +269,37 @@ class ChatViewModel: ObservableObject {
             }
         }
     }
+    
+    private func extractImageData(from dataUrl: String) -> Data? {
+        // Check if it's a data URL format
+        guard dataUrl.hasPrefix("data:image/") else {
+            print("Not a valid data URL: \(dataUrl.prefix(30))...")
+            return nil
+        }
+        
+        // Extract the base64 part after the comma
+        guard let commaIndex = dataUrl.firstIndex(of: ",") else {
+            print("No comma found in data URL")
+            return nil
+        }
+        
+        let base64String = String(dataUrl[dataUrl.index(after: commaIndex)...])
+        print("Extracted base64 string of length: \(base64String.count)")
+        return Data(base64Encoded: base64String)
+    }
 }
 
-struct ChatResponse: Codable {
-    let response: String?
-    let conversation_id: String?
+struct ChatResponse: Decodable {
+    let response: [ResponseItem]
+    let conversation_id: String
     let error: String?
+}
+
+struct ResponseItem: Decodable {
+    let type: String
+    let content: String
+    let format: String?  // For images
+    let annotations: [Annotation]?
 }
 
 struct ExamplesResponse: Codable {
@@ -309,4 +315,10 @@ struct ConversationMessage: Codable {
     let role: String
     let content: String
     let timestamp: String
+}
+
+struct Annotation: Decodable {
+    let type: String
+    let text: String
+    let file_id: String
 } 
