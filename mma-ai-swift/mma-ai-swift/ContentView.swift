@@ -6,7 +6,7 @@ struct ContentView: View {
     @StateObject private var historyManager = ConversationHistoryManager()
     @State private var showSettings = false
     @State private var showHistory = false
-    @State private var selectedTab = 0
+    @State private var selectedTab = 1
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -26,7 +26,7 @@ struct ContentView: View {
             }
             .tag(0)
             
-            // Chat Tab (now in the middle)
+            // Chat Tab (in the middle)
             NavigationView {
                 VStack {
                     if chatViewModel.isFirstLaunch {
@@ -43,12 +43,27 @@ struct ContentView: View {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 20))
                     },
-                    trailing: Button(action: {
-                        showSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 20))
-                    }
+                    trailing: 
+                        // Show different buttons based on whether we're in chat or welcome screen
+                        Group {
+                            if chatViewModel.isFirstLaunch {
+                                // Settings button when on welcome screen
+                                Button(action: {
+                                    showSettings = true
+                                }) {
+                                    Image(systemName: "gear")
+                                        .font(.system(size: 20))
+                                }
+                            } else {
+                                // Only home button when in chat mode, no settings
+                                Button(action: {
+                                    chatViewModel.goToWelcomeScreen()
+                                }) {
+                                    Image(systemName: "house.fill")
+                                        .font(.system(size: 20))
+                                }
+                            }
+                        }
                 )
                 .sheet(isPresented: $showSettings) {
                     SettingsView(settingsManager: settingsManager)
@@ -77,14 +92,18 @@ struct ContentView: View {
                 }
             }
             .tabItem {
-                Label("Chat", systemImage: "bubble.left.and.bubble.right")
+                if chatViewModel.isFirstLaunch {
+                    Label("Chat", systemImage: "bubble.left.and.bubble.right")
+                } else {
+                    Label("Home", systemImage: "house.fill")
+                }
             }
             .tag(1)
             
             // Fighters Tab (remains third)
             NavigationView {
                 FighterDashboardView()
-                    .navigationTitle("Fighters")
+                    .navigationTitle("Database")
                     .navigationBarItems(trailing: Button(action: {
                         showSettings = true
                     }) {
@@ -93,7 +112,7 @@ struct ContentView: View {
                     })
             }
             .tabItem {
-                Label("Fighters", systemImage: "figure.boxing")
+                Label("Database", systemImage: "figure.boxing")
             }
             .tag(2)
         }
@@ -133,7 +152,14 @@ struct WelcomeView: View {
                 // Generate buttons for example questions
                 ForEach(0..<chatViewModel.exampleQuestions.count, id: \.self) { index in
                     Button(action: {
-                        chatViewModel.sendMessage(chatViewModel.exampleQuestions[index])
+                        // Check if there's a saved conversation
+                        if chatViewModel.restoreConversation() {
+                            // If there's a saved conversation, just send the message
+                            chatViewModel.sendMessage(chatViewModel.exampleQuestions[index])
+                        } else {
+                            // Otherwise create a new conversation with this question
+                            chatViewModel.sendMessage(chatViewModel.exampleQuestions[index])
+                        }
                         chatViewModel.isFirstLaunch = false
                     }) {
                         Text(chatViewModel.exampleQuestions[index])
@@ -150,6 +176,8 @@ struct WelcomeView: View {
                 }
                 
                 Button("Start Chatting") {
+                    // Check if there's a saved conversation to restore
+                    chatViewModel.restoreConversation()
                     chatViewModel.isFirstLaunch = false
                 }
                 .padding()
@@ -383,4 +411,3 @@ struct MessageBubble: View {
     }
 }
 
-/* Removed duplicate Message struct declaration */ 

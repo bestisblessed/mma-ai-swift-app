@@ -22,6 +22,10 @@ class ChatViewModel: ObservableObject {
     @Published var exampleQuestions: [String] = []
     @Published var conversationId: String?
     
+    // Store saved conversation when going to welcome screen
+    private var savedMessages: [Message] = []
+    private var savedConversationId: String?
+    
     private var apiUrl = "https://mma-ai.duckdns.org/api"
     
     init() {
@@ -40,6 +44,19 @@ class ChatViewModel: ObservableObject {
     }
     
     func loadConversation(id: String) {
+        // Try to convert the string ID to a UUID
+        guard UUID(uuidString: id) != nil else {
+            print("Failed to convert string ID to UUID: \(id)")
+            return
+        }
+        
+        // Check if we're already in this conversation
+        if conversationId == id {
+            // If we're already viewing this conversation, go to welcome screen instead
+            goToWelcomeScreen()
+            return
+        }
+        
         isLoading = true
         conversationId = id
         
@@ -272,7 +289,41 @@ class ChatViewModel: ObservableObject {
         self.messages = []
         self.conversationId = nil
         self.isFirstLaunch = false
+        
+        // Clear saved conversation
+        self.savedMessages = []
+        self.savedConversationId = nil
+        
         print("Started new chat")
+    }
+    
+    func goToWelcomeScreen() {
+        // Save the current conversation
+        if !messages.isEmpty {
+            self.savedMessages = self.messages
+            self.savedConversationId = self.conversationId
+        }
+        
+        // Clear the current view but don't delete the conversation
+        self.messages = []
+        self.conversationId = nil
+        self.isFirstLaunch = true
+        
+        print("Returned to welcome screen (conversation saved)")
+        loadExampleQuestions() // Refresh example questions
+    }
+    
+    // New function to restore conversation when coming back from welcome screen
+    func restoreConversation() -> Bool {
+        if !savedMessages.isEmpty {
+            self.messages = self.savedMessages
+            self.conversationId = self.savedConversationId
+            print("Restored conversation with \(savedMessages.count) messages")
+            return true
+        } else {
+            print("No saved conversation to restore")
+            return false
+        }
     }
     
     func exportConversation() -> (text: String, images: [Data]) {
