@@ -10,7 +10,23 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Chat Tab
+            // Dashboard Tab (now first)
+            NavigationView {
+                DashboardView()
+                    .navigationTitle("Dashboard")
+                    .navigationBarItems(trailing: Button(action: {
+                        showSettings = true
+                    }) {
+                        Image(systemName: "gear")
+                            .font(.system(size: 20))
+                    })
+            }
+            .tabItem {
+                Label("Dashboard", systemImage: "chart.bar")
+            }
+            .tag(0)
+            
+            // Chat Tab (now in the middle)
             NavigationView {
                 VStack {
                     if chatViewModel.isFirstLaunch {
@@ -63,25 +79,9 @@ struct ContentView: View {
             .tabItem {
                 Label("Chat", systemImage: "bubble.left.and.bubble.right")
             }
-            .tag(0)
-            
-            // Dashboard Tab
-            NavigationView {
-                DashboardView()
-                    .navigationTitle("Dashboard")
-                    .navigationBarItems(trailing: Button(action: {
-                        showSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 20))
-                    })
-            }
-            .tabItem {
-                Label("Dashboard", systemImage: "chart.bar")
-            }
             .tag(1)
             
-            // Fighters Tab
+            // Fighters Tab (remains third)
             NavigationView {
                 FighterDashboardView()
                     .navigationTitle("Fighters")
@@ -209,6 +209,43 @@ struct ChatView: View {
                 }
             }
             
+            // Action buttons row (NEW)
+            HStack(spacing: 16) {
+                Spacer()
+                
+                Button(action: {
+                    showingAlert = true
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle")
+                        Text("New Chat")
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(AppTheme.cardBackground)
+                    .foregroundColor(AppTheme.accent)
+                    .cornerRadius(18)
+                }
+                
+                Button(action: {
+                    showingExportSheet = true
+                }) {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("Share")
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(AppTheme.cardBackground)
+                    .foregroundColor(AppTheme.accent)
+                    .cornerRadius(18)
+                }
+                
+                Spacer()
+            }
+            .padding(.vertical, 8)
+            .background(AppTheme.cardBackground)
+            
             // Input area
             VStack(spacing: 0) {
                 Divider()
@@ -247,24 +284,9 @@ struct ChatView: View {
             )
         }
         .navigationTitle("MMA AI Chatbot")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    showingAlert = true
-                }) {
-                    Image(systemName: "plus.circle")
-                        .foregroundColor(AppTheme.accent)
-                }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showingExportSheet = true
-                }) {
-                    Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(AppTheme.accent)
-                }
-            }
+        .sheet(isPresented: $showingExportSheet) {
+            let export = chatViewModel.exportConversation()
+            ExportView(text: export.text, images: export.images)
         }
         .alert(isPresented: $showingAlert) {
             Alert(
@@ -275,10 +297,6 @@ struct ChatView: View {
                 },
                 secondaryButton: .cancel()
             )
-        }
-        .sheet(isPresented: $showingExportSheet) {
-            let export = chatViewModel.exportConversation()
-            ExportView(text: export.text, images: export.images)
         }
     }
 }
