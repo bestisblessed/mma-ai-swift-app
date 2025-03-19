@@ -80,6 +80,22 @@ struct ContentView: View {
                 Label("Dashboard", systemImage: "chart.bar")
             }
             .tag(1)
+            
+            // Fighters Tab
+            NavigationView {
+                FighterDashboardView()
+                    .navigationTitle("Fighters")
+                    .navigationBarItems(trailing: Button(action: {
+                        showSettings = true
+                    }) {
+                        Image(systemName: "gear")
+                            .font(.system(size: 20))
+                    })
+            }
+            .tabItem {
+                Label("Fighters", systemImage: "figure.boxing")
+            }
+            .tag(2)
         }
         .accentColor(AppTheme.accent)
     }

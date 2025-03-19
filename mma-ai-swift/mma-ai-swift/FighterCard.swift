@@ -1,6 +1,7 @@
 import SwiftUI
 
-struct FighterStats {
+struct FighterStats: Identifiable {
+    var id: String { name }
     let name: String
     let nickname: String?
     let record: String // e.g., "21-6-0"

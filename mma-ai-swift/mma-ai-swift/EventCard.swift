@@ -114,8 +114,8 @@ class FighterDataManager {
                     let name = columns[0]
                     let nickname = columns[1].isEmpty || columns[1] == "-" ? nil : columns[1]
                     let birthDate = columns[2]
-                    let nationality = columns[3]
-                    let hometown = columns[4]
+                    let _ = columns[3]  // nationality
+                    let _ = columns[4]  // hometown
                     let team = columns[5]
                     let weightClass = columns[6]
                     let height = columns[7]
@@ -214,7 +214,7 @@ class FighterDataManager {
                     let eventDate = formatDate(columns[2])
                     let fighter1 = columns[3]
                     let fighter2 = columns[4]
-                    let weightClass = columns[7]
+                    let _ = columns[7]  // weightClass
                     let winner = columns[8]
                     let method = columns[9]
                     
@@ -429,6 +429,23 @@ class FighterDataManager {
     func getFightHistory(_ name: String) -> [FightResult]? {
         return fightHistory[name]
     }
+    
+    // Preload fighter and history data, returning the fighter if loaded successfully
+    func preloadFighterData(for name: String) -> FighterStats? {
+        print("🔄 Pre-loading data for fighter: \(name)")
+        
+        // First check if fighter exists
+        guard let fighter = getFighter(name) else {
+            print("❌ Fighter not found: \(name)")
+            return nil
+        }
+        
+        // Ensure history is loaded too
+        _ = getFightHistory(name)
+        
+        // Return the fighter data
+        return fighter
+    }
 }
 
 struct EventCard: View {
@@ -437,9 +454,6 @@ struct EventCard: View {
     @State private var showMainCard = true
     @State private var showPrelims = false
     @State private var selectedFighter: FighterStats? = nil
-    @State private var showFighterProfile = false
-    @State private var selectedFighterHistory: [FightResult] = []
-    @State private var isLoadingFighterData = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -562,83 +576,27 @@ struct EventCard: View {
         }
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
-        .sheet(isPresented: $showFighterProfile) {
-            if let fighter = selectedFighter {
-                NavigationView {
-                    ZStack {
-                        VStack {
-                            if isLoadingFighterData {
-                                ProgressView("Loading fighter data...")
-                                    .progressViewStyle(CircularProgressViewStyle())
-                            } else {
-                                FighterCard(fighter: fighter)
-                                
-                                // Recent Fights Section
-                                if !selectedFighterHistory.isEmpty {
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        Text("Recent Fights")
-                                            .font(.headline)
-                                            .padding(.horizontal)
-                                        
-                                        ForEach(selectedFighterHistory, id: \.opponent) { fight in
-                                            HStack {
-                                                VStack(alignment: .leading) {
-                                                    Text(fight.opponent)
-                                                        .fontWeight(.semibold)
-                                                    Text(fight.event)
-                                                        .font(.caption)
-                                                        .foregroundColor(.secondary)
-                                                }
-                                                
-                                                Spacer()
-                                                
-                                                VStack(alignment: .trailing) {
-                                                    Text(fight.outcome)
-                                                        .fontWeight(.bold)
-                                                        .foregroundColor(fight.outcome == "Win" ? .green : .red)
-                                                    Text(fight.method)
-                                                        .font(.caption)
-                                                    Text(fight.date)
-                                                        .font(.caption)
-                                                        .foregroundColor(.secondary)
-                                                }
-                                            }
-                                            .padding(.horizontal)
-                                            .padding(.vertical, 8)
-                                            .background(Color(UIColor.secondarySystemBackground))
-                                            .cornerRadius(8)
-                                            .padding(.horizontal)
-                                        }
-                                    }
-                                    .padding(.vertical)
-                                }
-                                
-                                Spacer()
-                            }
-                        }
-                        .navigationTitle(fighter.name)
-                        .navigationBarItems(trailing: Button("Close") {
-                            showFighterProfile = false
-                        })
-                    }
+        .fullScreenCover(item: $selectedFighter) { fighter in
+            FighterProfileView(
+                fighter: fighter,
+                onDismiss: {
+                    debugPrint("🔵 Fighter profile dismissed for: \(fighter.name)")
+                    selectedFighter = nil
                 }
-            }
+            )
         }
     }
     
-    private func loadFighterData(name: String) async {
-        isLoadingFighterData = true
+    private func loadFighterData(name: String) {
+        debugPrint("🔵 Selected fighter from event card: \(name)")
         
-        // Simulate a small delay to ensure loading state is visible
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-        
+        // Pre-load data and show profile
         if let fighter = FighterDataManager.shared.getFighter(name) {
+            debugPrint("✅ Successfully loaded data for: \(name)")
             selectedFighter = fighter
-            selectedFighterHistory = FighterDataManager.shared.getFightHistory(name) ?? []
-            showFighterProfile = true
+        } else {
+            debugPrint("⚠️ Could not load fighter data for: \(name)")
         }
-        
-        isLoadingFighterData = false
     }
     
     private func fightRow(fight: Fight) -> some View {
@@ -675,9 +633,7 @@ struct EventCard: View {
             // Fighter names
             HStack {
                 Button(action: {
-                    Task {
-                        await loadFighterData(name: fight.redCorner)
-                    }
+                    loadFighterData(name: fight.redCorner)
                 }) {
                     Text(fight.redCorner)
                         .font(.subheadline)
@@ -692,9 +648,7 @@ struct EventCard: View {
                     .padding(.horizontal, 4)
                 
                 Button(action: {
-                    Task {
-                        await loadFighterData(name: fight.blueCorner)
-                    }
+                    loadFighterData(name: fight.blueCorner)
                 }) {
                     Text(fight.blueCorner)
                         .font(.subheadline)

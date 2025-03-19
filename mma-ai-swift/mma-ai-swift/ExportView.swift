@@ -221,7 +221,7 @@ struct ExportView: View {
 }
 
 // Changed from struct to class since UIActivityItemProvider is a class
-class TextActivityItem: UIActivityItemProvider {
+class TextActivityItem: UIActivityItemProvider, @unchecked Sendable {
     var text: String
     
     init(_ text: String) {

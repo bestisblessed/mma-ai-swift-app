@@ -9,8 +9,10 @@
 /* Begin PBXBuildFile section */
 		73130C482D8AC8B6004A6AD5 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73130C472D8AC8B6004A6AD5 /* ExportView.swift */; };
 		731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731D8CC52D8AC1B4004F58E6 /* Message.swift */; };
+		733DFFE72D8AECA1004EC7B8 /* FighterProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */; };
 		7345C3072D82DB4F00839854 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7345C3062D82DB4F00839854 /* Theme.swift */; };
 		736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736B5A772D82E22A008D7A55 /* DashboardView.swift */; };
+		7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7378521A2D8AFB6400023875 /* FighterDashboardView.swift */; };
 		738B03112D82DD5B0065813D /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B030F2D82DD5B0065813D /* LaunchScreen.swift */; };
 		738B03122D82DD5B0065813D /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B03102D82DD5B0065813D /* LoadingView.swift */; };
 		738B03162D82DE4B0065813D /* EventCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B03132D82DE4B0065813D /* EventCard.swift */; };
@@ -27,8 +29,10 @@
 /* Begin PBXFileReference section */
 		73130C472D8AC8B6004A6AD5 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		731D8CC52D8AC1B4004F58E6 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterProfileView.swift; sourceTree = "<group>"; };
 		7345C3062D82DB4F00839854 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		736B5A772D82E22A008D7A55 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		7378521A2D8AFB6400023875 /* FighterDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterDashboardView.swift; sourceTree = "<group>"; };
 		738B030F2D82DD5B0065813D /* LaunchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreen.swift; sourceTree = "<group>"; };
 		738B03102D82DD5B0065813D /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		738B03132D82DE4B0065813D /* EventCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventCard.swift; sourceTree = "<group>"; };
@@ -88,6 +92,8 @@
 				73130C472D8AC8B6004A6AD5 /* ExportView.swift */,
 				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
 				738B03132D82DE4B0065813D /* EventCard.swift */,
+				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
+				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
 				738B03142D82DE4B0065813D /* FighterCard.swift */,
 				738B030F2D82DD5B0065813D /* LaunchScreen.swift */,
 				738B03102D82DD5B0065813D /* LoadingView.swift */,
@@ -180,6 +186,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A1234561234567800000003 /* ContentView.swift in Sources */,
+				7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */,
 				738B03162D82DE4B0065813D /* EventCard.swift in Sources */,
 				738B03172D82DE4B0065813D /* FighterCard.swift in Sources */,
 				7345C3072D82DB4F00839854 /* Theme.swift in Sources */,
@@ -190,6 +197,7 @@
 				73A960442D82E0ED009B6A7E /* ConversationHistoryView.swift in Sources */,
 				738B03122D82DD5B0065813D /* LoadingView.swift in Sources */,
 				731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */,
+				733DFFE72D8AECA1004EC7B8 /* FighterProfileView.swift in Sources */,
 				8A1234561234567800000001 /* MMAApp.swift in Sources */,
 				736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */,
 				8A1234561234567800000005 /* ChatViewModel.swift in Sources */,
