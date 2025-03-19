@@ -251,15 +251,15 @@ class FighterDataManager {
                 }
             }
             
-            // Sort fights by date (newest first) and limit to 3 most recent
+            // Sort fights by date (newest first) and limit to 5 most recent
             for (fighter, fights) in tempFightHistory {
                 // Sort by date (newest first)
                 let sortedFights = fights.sorted { fight1, fight2 in
                     return compareDates(fight1.date, fight2.date)
                 }
                 
-                // Keep only the 3 most recent fights
-                fightHistory[fighter] = Array(sortedFights.prefix(3))
+                // Keep only the 5 most recent fights
+                fightHistory[fighter] = Array(sortedFights.prefix(5))
             }
             
             print("Successfully loaded fight history for \(fightHistory.count) fighters from CSV")

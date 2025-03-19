@@ -109,6 +109,12 @@ struct UpcomingEventsView: View {
 struct RankingsView: View {
     var body: some View {
         VStack(spacing: 16) {
+            Text("BETA")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+                .padding(.top, 20)
+            
             Text("UFC Rankings")
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,6 +187,12 @@ struct RankingRow: View {
 struct NewsView: View {
     var body: some View {
         VStack(spacing: 16) {
+            Text("BETA")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+                .padding(.top, 20)
+            
             Text("Latest MMA News")
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .leading)
