@@ -188,27 +188,7 @@ struct ChatView: View {
                 ScrollViewReader { proxy in
                     LazyVStack(spacing: 8) {
                         ForEach(chatViewModel.messages) { message in
-                            VStack(alignment: .leading) {
-                                if message.imageData != nil {
-                                    Image(uiImage: UIImage(data: message.imageData!) ?? UIImage())
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(maxWidth: 300)
-                                        .cornerRadius(10)
-                                } else {
-                                    Text(message.content)
-                                        .padding(10)
-                                        .background(message.isUser ? AppTheme.accent : AppTheme.cardBackground)
-                                        .foregroundColor(message.isUser ? .white : AppTheme.textPrimary)
-                                        .cornerRadius(15)
-                                }
-                                Text(message.formattedTime)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
-                            .padding(.horizontal)
-                            .padding(.vertical, 4)
+                            MessageBubble(message: message)
                         }
                     }
                     .padding(.horizontal)
@@ -246,7 +226,6 @@ struct ChatView: View {
                             let messageToSend = newMessage
                             newMessage = ""
                             
-                            // Use slight delay to ensure text field is cleared before sending
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 chatViewModel.sendMessage(messageToSend)
                             }
@@ -267,7 +246,7 @@ struct ChatView: View {
                 alignment: .top
             )
         }
-        .navigationTitle("MMA AI")
+        .navigationTitle("MMA AI Chatbot")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
@@ -325,7 +304,24 @@ struct MessageBubble: View {
             }
             
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
-                if message.content == "Thinking..." && !message.isUser {
+                if message.isLoading {
+                    // Display a loading spinner in a bubble
+                    HStack {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .scaleEffect(0.8)
+                        
+                        Text("Thinking...")
+                            .font(.system(size: 16))
+                            .foregroundColor(AppTheme.botBubbleText)
+                            .padding(.leading, 8)
+                    }
+                    .padding(16)
+                    .background(AppTheme.botBubble)
+                    .cornerRadius(18)
+                    .offset(x: isAnimated ? 0 : -50)
+                    .opacity(isAnimated ? 1.0 : 0.0)
+                } else if message.content == "Thinking..." && !message.isUser {
                     ThinkingView()
                         .opacity(isAnimated ? 1.0 : 0.0)
                 } else {

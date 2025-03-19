@@ -85,23 +85,23 @@
 		8A1234561234567800000010 /* mma-ai-swift */ = {
 			isa = PBXGroup;
 			children = (
-				731D8CC52D8AC1B4004F58E6 /* Message.swift */,
-				736B5A772D82E22A008D7A55 /* DashboardView.swift */,
+				8A1234561234567800000022 /* Info.plist */,
 				73A9603F2D82E0ED009B6A7E /* AppTheme.swift */,
+				8A1234561234567800000006 /* ChatViewModel.swift */,
+				8A1234561234567800000004 /* ContentView.swift */,
 				73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */,
-				73130C472D8AC8B6004A6AD5 /* ExportView.swift */,
-				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
+				736B5A772D82E22A008D7A55 /* DashboardView.swift */,
 				738B03132D82DE4B0065813D /* EventCard.swift */,
-				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
-				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
+				73130C472D8AC8B6004A6AD5 /* ExportView.swift */,
 				738B03142D82DE4B0065813D /* FighterCard.swift */,
+				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
+				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
 				738B030F2D82DD5B0065813D /* LaunchScreen.swift */,
 				738B03102D82DD5B0065813D /* LoadingView.swift */,
-				7345C3062D82DB4F00839854 /* Theme.swift */,
+				731D8CC52D8AC1B4004F58E6 /* Message.swift */,
 				8A1234561234567800000002 /* MMAApp.swift */,
-				8A1234561234567800000004 /* ContentView.swift */,
-				8A1234561234567800000006 /* ChatViewModel.swift */,
-				8A1234561234567800000022 /* Info.plist */,
+				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
+				7345C3062D82DB4F00839854 /* Theme.swift */,
 				8A1234561234567800000023 /* Assets.xcassets */,
 			);
 			path = "mma-ai-swift";

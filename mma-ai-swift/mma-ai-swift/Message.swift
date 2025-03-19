@@ -12,7 +12,16 @@ struct Message: Identifiable {
     let content: String
     let isUser: Bool
     let timestamp: Date
-    var imageData: Data?
+    let imageData: Data?
+    let isLoading: Bool
+    
+    init(content: String, isUser: Bool, timestamp: Date, imageData: Data? = nil, isLoading: Bool = false) {
+        self.content = content
+        self.isUser = isUser
+        self.timestamp = timestamp
+        self.imageData = imageData
+        self.isLoading = isLoading
+    }
     
     var formattedTime: String {
         let formatter = DateFormatter()

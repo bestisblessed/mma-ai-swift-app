@@ -139,8 +139,8 @@ class ChatViewModel: ObservableObject {
         
         isLoading = true
         
-        // Create a placeholder for the assistant's response
-        let loadingMessage = Message(content: "Working...", isUser: false, timestamp: Date())
+        // Create a placeholder for the assistant's response that shows it's loading
+        let loadingMessage = Message(content: "", isUser: false, timestamp: Date(), isLoading: true)
         messages.append(loadingMessage)
         let loadingIndex = messages.count - 1
         
