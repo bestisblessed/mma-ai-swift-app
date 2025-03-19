@@ -241,7 +241,7 @@ class ChatViewModel: ObservableObject {
                         let responseItems = decodedResponse.response
                         for item in responseItems {
                             var messageContent = item.content
-                            if let annotations = item.annotations {
+                            if let annotations = item.annotations, !annotations.isEmpty {
                                 messageContent += "\n\nReferences:\n" + annotations.map { $0.text }.joined(separator: "\n")
                             }
                             

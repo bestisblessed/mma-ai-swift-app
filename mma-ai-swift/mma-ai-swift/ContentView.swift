@@ -13,13 +13,22 @@ struct ContentView: View {
             // Dashboard Tab (now first)
             NavigationView {
                 DashboardView()
-                    .navigationTitle("Dashboard")
-                    .navigationBarItems(trailing: Button(action: {
-                        showSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 20))
-                    })
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            Text("Dashboard")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(AppTheme.textPrimary)
+                        }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: {
+                                showSettings = true
+                            }) {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 17))
+                            }
+                        }
+                    }
             }
             .tabItem {
                 Label("Dashboard", systemImage: "chart.bar")
@@ -35,15 +44,22 @@ struct ContentView: View {
                         ChatView(chatViewModel: chatViewModel, settingsManager: settingsManager)
                     }
                 }
-                .navigationTitle(chatViewModel.isFirstLaunch ? "" : "MMA AI")
-                .navigationBarItems(
-                    leading: Button(action: {
-                        showHistory = true
-                    }) {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 20))
-                    },
-                    trailing: 
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text(chatViewModel.isFirstLaunch ? "" : "MMA AI")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(AppTheme.textPrimary)
+                    }
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button(action: {
+                            showHistory = true
+                        }) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 17))
+                        }
+                    }
+                    ToolbarItem(placement: .navigationBarTrailing) {
                         // Show different buttons based on whether we're in chat or welcome screen
                         Group {
                             if chatViewModel.isFirstLaunch {
@@ -52,7 +68,7 @@ struct ContentView: View {
                                     showSettings = true
                                 }) {
                                     Image(systemName: "gear")
-                                        .font(.system(size: 20))
+                                        .font(.system(size: 17))
                                 }
                             } else {
                                 // Only home button when in chat mode, no settings
@@ -60,11 +76,12 @@ struct ContentView: View {
                                     chatViewModel.goToWelcomeScreen()
                                 }) {
                                     Image(systemName: "house.fill")
-                                        .font(.system(size: 20))
+                                        .font(.system(size: 17))
                                 }
                             }
                         }
-                )
+                    }
+                }
                 .sheet(isPresented: $showSettings) {
                     SettingsView(settingsManager: settingsManager)
                 }
@@ -103,13 +120,22 @@ struct ContentView: View {
             // Fighters Tab (remains third)
             NavigationView {
                 FighterDashboardView()
-                    .navigationTitle("Database")
-                    .navigationBarItems(trailing: Button(action: {
-                        showSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 20))
-                    })
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            Text("Database")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(AppTheme.textPrimary)
+                        }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: {
+                                showSettings = true
+                            }) {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 17))
+                            }
+                        }
+                    }
             }
             .tabItem {
                 Label("Database", systemImage: "figure.boxing")
@@ -117,6 +143,7 @@ struct ContentView: View {
             .tag(2)
         }
         .accentColor(AppTheme.accent)
+        .font(.system(size: 14, weight: .medium))
     }
 }
 
@@ -137,7 +164,7 @@ struct WelcomeView: View {
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
                 
-                Text("Ask questions about fighters, events, and statistics")
+                Text("Ask a question about fights, fighters, predictions, trends, or anything..")
                     .font(.subheadline)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
