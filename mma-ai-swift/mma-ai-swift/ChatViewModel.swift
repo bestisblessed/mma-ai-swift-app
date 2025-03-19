@@ -44,11 +44,7 @@ class ChatViewModel: ObservableObject {
     }
     
     func loadConversation(id: String) {
-        // Try to convert the string ID to a UUID
-        guard UUID(uuidString: id) != nil else {
-            print("Failed to convert string ID to UUID: \(id)")
-            return
-        }
+        print("Loading conversation with ID: \(id)")
         
         // Check if we're already in this conversation
         if conversationId == id {
@@ -395,4 +391,4 @@ struct Annotation: Decodable {
     let type: String
     let text: String
     let file_id: String
-} 
+}

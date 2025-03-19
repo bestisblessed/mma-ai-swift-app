@@ -145,8 +145,8 @@ def chat():
 def get_examples():
     examples = [
         "Tell me about Jon Jones most recent 5 fights in detail",
-        "Make me a pie chartvisualization of Max Holloway’s method of victories",
-        "Analyze and research Paddy Pimblett and Michael Chandler in depth, then predict who would win in a potential fight and why.",
+        "Make me a pie chart visualization of Max Holloway’s method of victories",
+        "Analyze and research Paddy Pimblett and Michael Chandler in depth, then predict who would win in a potential fight. Include the method and time of victory.",
         "List me all the columns and summarize the data in all of your datasets",
         # "Tell me the most recent 3 events and the main event outcome of each one",
         # "Where is the upcoming UFC card/event this weekend and what are all of the fights on it with a short overview of each fight?",

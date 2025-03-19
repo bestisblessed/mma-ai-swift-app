@@ -1,14 +1,15 @@
 import SwiftUI
 
-struct ConversationSummary: Identifiable, Codable {
-    let id: String
-    let title: String
-    let date: Date
-    let previewText: String
+struct Conversation: Identifiable, Codable {
+    var id: String
+    var title: String
+    var previewText: String
+    var timestamp: Date
+    var messages: [Message]?
 }
 
 class ConversationHistoryManager: ObservableObject {
-    @Published var conversations: [ConversationSummary] = []
+    @Published var conversations: [Conversation] = []
     private let storageKey = "savedConversations"
     
     init() {
@@ -17,7 +18,7 @@ class ConversationHistoryManager: ObservableObject {
     
     private func loadConversations() {
         if let data = UserDefaults.standard.data(forKey: storageKey),
-           let decodedConversations = try? JSONDecoder().decode([ConversationSummary].self, from: data) {
+           let decodedConversations = try? JSONDecoder().decode([Conversation].self, from: data) {
             conversations = decodedConversations
         }
     }
@@ -28,14 +29,30 @@ class ConversationHistoryManager: ObservableObject {
         }
     }
     
-    func addConversation(title: String, previewText: String, id: String) {
-        let newConversation = ConversationSummary(
-            id: id,
-            title: title,
-            date: Date(),
-            previewText: previewText
-        )
-        conversations.insert(newConversation, at: 0)
+    func addConversation(title: String, previewText: String, id: String, messages: [Message]? = nil) {
+        // Check if conversation with this ID already exists
+        if let index = conversations.firstIndex(where: { $0.id == id }) {
+            // Update existing conversation
+            conversations[index].title = title
+            conversations[index].previewText = previewText
+            conversations[index].timestamp = Date()
+            conversations[index].messages = messages
+        } else {
+            // Add new conversation
+            let newConversation = Conversation(
+                id: id,
+                title: title,
+                previewText: previewText,
+                timestamp: Date(),
+                messages: messages
+            )
+            conversations.insert(newConversation, at: 0)
+        }
+
+        // Sort by most recent
+        conversations.sort { $0.timestamp > $1.timestamp }
+        
+        // Save to storage
         saveConversations()
     }
     
@@ -61,6 +78,7 @@ struct ConversationHistoryView: View {
                     ForEach(historyManager.conversations) { conversation in
                         Button(action: {
                             chatViewModel.loadConversation(id: conversation.id)
+                            chatViewModel.isFirstLaunch = false
                             presentationMode.wrappedValue.dismiss()
                         }) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -73,7 +91,7 @@ struct ConversationHistoryView: View {
                                     .foregroundColor(AppTheme.textSecondary)
                                     .lineLimit(1)
                                 
-                                Text(formatDate(conversation.date))
+                                Text(formatDate(conversation.timestamp))
                                     .font(.caption)
                                     .foregroundColor(AppTheme.textMuted)
                             }
@@ -99,9 +117,62 @@ struct ConversationHistoryView: View {
     }
 }
 
+struct SaveConversationView: View {
+    @ObservedObject var chatViewModel: ChatViewModel
+    @ObservedObject var historyManager: ConversationHistoryManager
+    @Environment(\.presentationMode) var presentationMode
+    @State private var title = ""
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Save Conversation")
+                    .font(.headline)
+                
+                TextField("Conversation Title", text: $title)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+                
+                Button("Save") {
+                    // Get first user message for the preview if available
+                    let previewText = chatViewModel.messages.first(where: { $0.isUser })?.content ?? "Conversation"
+                    
+                    // Generate a unique ID if none exists
+                    let id = chatViewModel.conversationId ?? UUID().uuidString
+                    
+                    // Save to history
+                    historyManager.addConversation(
+                        title: title.isEmpty ? String(previewText.prefix(30)) : title,
+                        previewText: previewText,
+                        id: id,
+                        messages: chatViewModel.messages
+                    )
+                    
+                    // Update the current conversation ID
+                    chatViewModel.conversationId = id
+                    
+                    presentationMode.wrappedValue.dismiss()
+                }
+                .padding()
+                .frame(width: 200)
+                .background(AppTheme.accent)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .disabled(chatViewModel.messages.isEmpty)
+                
+                Spacer()
+            }
+            .padding()
+            .navigationBarItems(trailing: Button("Cancel") {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+}
+
 #Preview {
     ConversationHistoryView(
         historyManager: ConversationHistoryManager(),
         chatViewModel: ChatViewModel()
     )
-} 
+}

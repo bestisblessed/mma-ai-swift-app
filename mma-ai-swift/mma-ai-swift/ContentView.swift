@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var historyManager = ConversationHistoryManager()
     @State private var showSettings = false
     @State private var showHistory = false
+    @State private var showSaveDialog = false
     @State private var selectedTab = 1
     
     var body: some View {
@@ -41,7 +42,12 @@ struct ContentView: View {
                     if chatViewModel.isFirstLaunch {
                         WelcomeView(chatViewModel: chatViewModel)
                     } else {
-                        ChatView(chatViewModel: chatViewModel, settingsManager: settingsManager)
+                        ChatView(
+                            chatViewModel: chatViewModel, 
+                            settingsManager: settingsManager,
+                            historyManager: historyManager,
+                            showSaveDialog: $showSaveDialog
+                        )
                     }
                 }
                 .navigationBarTitleDisplayMode(.inline)
@@ -71,9 +77,10 @@ struct ContentView: View {
                                         .font(.system(size: 17))
                                 }
                             } else {
-                                // Only home button when in chat mode, no settings
+                                // Home button when in chat mode
                                 Button(action: {
-                                    chatViewModel.goToWelcomeScreen()
+                                    // Navigate back to the welcome screen
+                                    chatViewModel.goToWelcomeScreen() // Call the method to go to the welcome screen
                                 }) {
                                     Image(systemName: "house.fill")
                                         .font(.system(size: 17))
@@ -91,6 +98,12 @@ struct ContentView: View {
                         chatViewModel: chatViewModel
                     )
                 }
+                .sheet(isPresented: $showSaveDialog) {
+                    SaveConversationView(
+                        chatViewModel: chatViewModel,
+                        historyManager: historyManager
+                    )
+                }
                 .onAppear {
                     // Update ChatViewModel with settings
                     chatViewModel.updateApiEndpoint(settingsManager.apiEndpoint)
@@ -98,24 +111,17 @@ struct ContentView: View {
                 .onChange(of: settingsManager.apiEndpoint) { _, newValue in
                     chatViewModel.updateApiEndpoint(newValue)
                 }
-                .onChange(of: chatViewModel.conversationId) { _, newId in
-                    if let id = newId, let firstMessage = chatViewModel.messages.first(where: { $0.isUser }) {
-                        historyManager.addConversation(
-                            title: firstMessage.content.prefix(30).appending(firstMessage.content.count > 30 ? "..." : "").description,
-                            previewText: firstMessage.content,
-                            id: id
-                        )
-                    }
-                }
             }
             .tabItem {
-                if chatViewModel.isFirstLaunch {
-                    Label("Chat", systemImage: "bubble.left.and.bubble.right")
-                } else {
-                    Label("Home", systemImage: "house.fill")
-                }
+                Label("Chat", systemImage: "bubble.left.and.bubble.right")
             }
             .tag(1)
+            .onChange(of: selectedTab) { oldValue, newValue in
+                if newValue == 1 && !chatViewModel.isFirstLaunch {
+                    // If the user selects the Chat tab and there's an ongoing conversation, show the chat
+                    chatViewModel.isFirstLaunch = false
+                }
+            }
             
             // Fighters Tab (remains third)
             NavigationView {
@@ -155,42 +161,44 @@ struct WelcomeView: View {
             VStack(spacing: 16) {
                 // Logo/Header
                 Image(systemName: "figure.boxing")
-                    .font(.system(size: 50))
+                    .font(.system(size: 60))
                     .foregroundColor(AppTheme.accent)
-                    .padding(.top, 10)
+//                    .padding(.top, 10)
+                    .padding(.top, 4)
                 
                 Text("Welcome to\nMMA AI")
                     .font(.title)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
                 
-                Text("Ask a question about fights, fighters, predictions, trends, or anything..")
-                    .font(.subheadline)
+                Text("Ask questions about historical fights & fighters, to generate predictions, create visualizations, find trends, or anything...")
+                    // .font(.footnote)
+                    .font(.system(size: 14))
+                    .fontWeight(.semibold)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                    .padding(.bottom, 5)
+                    .padding(.bottom, 2)
                 
                 Text("Example Questions:")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .padding(.top, 10)
+//                    .font(.headline)
+                    .font(.footnote)
+                    // .fontWeight(.semibold)
+//                    .padding(.top, 10)
+                    .padding(.top, 5)
                     .padding(.bottom, 5)
                 
                 // Generate buttons for example questions
                 ForEach(0..<chatViewModel.exampleQuestions.count, id: \.self) { index in
                     Button(action: {
-                        // Check if there's a saved conversation
                         if chatViewModel.restoreConversation() {
-                            // If there's a saved conversation, just send the message
                             chatViewModel.sendMessage(chatViewModel.exampleQuestions[index])
                         } else {
-                            // Otherwise create a new conversation with this question
                             chatViewModel.sendMessage(chatViewModel.exampleQuestions[index])
                         }
                         chatViewModel.isFirstLaunch = false
                     }) {
                         Text(chatViewModel.exampleQuestions[index])
-                            .font(.callout)
+                            .font(.footnote)
                             .multilineTextAlignment(.center)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 10)
@@ -203,7 +211,6 @@ struct WelcomeView: View {
                 }
                 
                 Button("Start Chatting") {
-                    // Check if there's a saved conversation to restore
                     chatViewModel.restoreConversation()
                     chatViewModel.isFirstLaunch = false
                 }
@@ -231,6 +238,8 @@ struct WelcomeView: View {
 struct ChatView: View {
     @ObservedObject var chatViewModel: ChatViewModel
     @ObservedObject var settingsManager: SettingsManager
+    @ObservedObject var historyManager: ConversationHistoryManager
+    @Binding var showSaveDialog: Bool
     @State private var newMessage = ""
     @State private var scrollViewProxy: ScrollViewProxy? = nil
     @State private var showingAlert = false
@@ -264,7 +273,7 @@ struct ChatView: View {
                 }
             }
             
-            // Action buttons row (NEW)
+            // Action buttons row (MODIFIED)
             HStack(spacing: 16) {
                 Spacer()
                 
@@ -281,6 +290,22 @@ struct ChatView: View {
                     .foregroundColor(AppTheme.accent)
                     .cornerRadius(18)
                 }
+                
+                // Added Save button
+                Button(action: {
+                    showSaveDialog = true
+                }) {
+                    HStack {
+                        Image(systemName: "square.and.arrow.down")
+                        Text("Save")
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(AppTheme.cardBackground)
+                    .foregroundColor(AppTheme.accent)
+                    .cornerRadius(18)
+                }
+                .disabled(chatViewModel.messages.isEmpty)
                 
                 Button(action: {
                     showingExportSheet = true
@@ -463,3 +488,8 @@ struct MessageBubble: View {
 }
 
 
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView(settingsManager: SettingsManager()) // Pass necessary dependencies
+    }
+}
