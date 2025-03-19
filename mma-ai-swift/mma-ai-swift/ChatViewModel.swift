@@ -27,10 +27,8 @@ class ChatViewModel: ObservableObject {
     init() {
         // Initialize with default example questions
         exampleQuestions = [
-            "Where is the upcoming UFC card/event this weekend and what are all of the fights on it with a short overview of each fight?",
             "Tell me about Max Holloway's most recent 5 fights chronologically",
-            "Compare Paddy Pimblett and Michael Chandler's fighting styles and predict who would win in a fight.",
-            "What is the current weather forecast for Miami, Florida?"
+            "Generate me a visualization of Max Holloway's method of victories"
         ]
         // Load from API if available
         loadExampleQuestions()
@@ -268,6 +266,31 @@ class ChatViewModel: ObservableObject {
                 self.messages.append(errorMessage)
             }
         }
+    }
+    
+    func startNewChat() {
+        self.messages = []
+        self.conversationId = nil
+        self.isFirstLaunch = false
+        print("Started new chat")
+    }
+    
+    func exportConversation() -> (text: String, images: [Data]) {
+        var exportText = "MMA AI Conversation Export\n"
+        exportText += "Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .medium))\n\n"
+        
+        var images: [Data] = []
+        
+        for message in messages {
+            let sender = message.isUser ? "You" : "MMA AI"
+            exportText += "[\(sender)]: \(message.content)\n\n"
+            
+            if let imageData = message.imageData {
+                images.append(imageData)
+            }
+        }
+        
+        return (text: exportText, images: images)
     }
     
     private func extractImageData(from dataUrl: String) -> Data? {

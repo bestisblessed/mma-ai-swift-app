@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ConversationSummary: Identifiable {
+struct ConversationSummary: Identifiable, Codable {
     let id: String
     let title: String
     let date: Date
@@ -9,33 +9,23 @@ struct ConversationSummary: Identifiable {
 
 class ConversationHistoryManager: ObservableObject {
     @Published var conversations: [ConversationSummary] = []
+    private let storageKey = "savedConversations"
     
     init() {
-        loadSampleData()
+        loadConversations()
     }
     
-    private func loadSampleData() {
-        // In a real app, this would load from UserDefaults or a database
-        conversations = [
-            ConversationSummary(
-                id: "1",
-                title: "UFC 300 Discussion",
-                date: Date().addingTimeInterval(-86400), // Yesterday
-                previewText: "Tell me about UFC 300"
-            ),
-            ConversationSummary(
-                id: "2",
-                title: "Max Holloway Stats",
-                date: Date().addingTimeInterval(-172800), // 2 days ago
-                previewText: "What are Max Holloway's recent stats?"
-            ),
-            ConversationSummary(
-                id: "3",
-                title: "Upcoming Events",
-                date: Date().addingTimeInterval(-259200), // 3 days ago
-                previewText: "What UFC events are coming up?"
-            )
-        ]
+    private func loadConversations() {
+        if let data = UserDefaults.standard.data(forKey: storageKey),
+           let decodedConversations = try? JSONDecoder().decode([ConversationSummary].self, from: data) {
+            conversations = decodedConversations
+        }
+    }
+    
+    private func saveConversations() {
+        if let encoded = try? JSONEncoder().encode(conversations) {
+            UserDefaults.standard.set(encoded, forKey: storageKey)
+        }
     }
     
     func addConversation(title: String, previewText: String, id: String) {
@@ -46,10 +36,12 @@ class ConversationHistoryManager: ObservableObject {
             previewText: previewText
         )
         conversations.insert(newConversation, at: 0)
+        saveConversations()
     }
     
     func deleteConversation(at indexSet: IndexSet) {
         conversations.remove(atOffsets: indexSet)
+        saveConversations()
     }
 }
 

@@ -439,6 +439,7 @@ struct EventCard: View {
     @State private var selectedFighter: FighterStats? = nil
     @State private var showFighterProfile = false
     @State private var selectedFighterHistory: [FightResult] = []
+    @State private var isLoadingFighterData = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -564,58 +565,80 @@ struct EventCard: View {
         .sheet(isPresented: $showFighterProfile) {
             if let fighter = selectedFighter {
                 NavigationView {
-                    VStack {
-                        FighterCard(fighter: fighter)
-                        
-                        // Recent Fights Section
-                        if !selectedFighterHistory.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Recent Fights")
-                                    .font(.headline)
-                                    .padding(.horizontal)
+                    ZStack {
+                        VStack {
+                            if isLoadingFighterData {
+                                ProgressView("Loading fighter data...")
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            } else {
+                                FighterCard(fighter: fighter)
                                 
-                                ForEach(selectedFighterHistory, id: \.opponent) { fight in
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text(fight.opponent)
-                                                .fontWeight(.semibold)
-                                            Text(fight.event)
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
+                                // Recent Fights Section
+                                if !selectedFighterHistory.isEmpty {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("Recent Fights")
+                                            .font(.headline)
+                                            .padding(.horizontal)
                                         
-                                        Spacer()
-                                        
-                                        VStack(alignment: .trailing) {
-                                            Text(fight.outcome)
-                                                .fontWeight(.bold)
-                                                .foregroundColor(fight.outcome == "Win" ? .green : .red)
-                                            Text(fight.method)
-                                                .font(.caption)
-                                            Text(fight.date)
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
+                                        ForEach(selectedFighterHistory, id: \.opponent) { fight in
+                                            HStack {
+                                                VStack(alignment: .leading) {
+                                                    Text(fight.opponent)
+                                                        .fontWeight(.semibold)
+                                                    Text(fight.event)
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                }
+                                                
+                                                Spacer()
+                                                
+                                                VStack(alignment: .trailing) {
+                                                    Text(fight.outcome)
+                                                        .fontWeight(.bold)
+                                                        .foregroundColor(fight.outcome == "Win" ? .green : .red)
+                                                    Text(fight.method)
+                                                        .font(.caption)
+                                                    Text(fight.date)
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                }
+                                            }
+                                            .padding(.horizontal)
+                                            .padding(.vertical, 8)
+                                            .background(Color(UIColor.secondarySystemBackground))
+                                            .cornerRadius(8)
+                                            .padding(.horizontal)
                                         }
                                     }
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 8)
-                                    .background(Color(UIColor.secondarySystemBackground))
-                                    .cornerRadius(8)
-                                    .padding(.horizontal)
+                                    .padding(.vertical)
                                 }
+                                
+                                Spacer()
                             }
-                            .padding(.vertical)
                         }
-                        
-                        Spacer()
+                        .navigationTitle(fighter.name)
+                        .navigationBarItems(trailing: Button("Close") {
+                            showFighterProfile = false
+                        })
                     }
-                    .navigationTitle(fighter.name)
-                    .navigationBarItems(trailing: Button("Close") {
-                        showFighterProfile = false
-                    })
                 }
             }
         }
+    }
+    
+    private func loadFighterData(name: String) async {
+        isLoadingFighterData = true
+        
+        // Simulate a small delay to ensure loading state is visible
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        if let fighter = FighterDataManager.shared.getFighter(name) {
+            selectedFighter = fighter
+            selectedFighterHistory = FighterDataManager.shared.getFightHistory(name) ?? []
+            showFighterProfile = true
+        }
+        
+        isLoadingFighterData = false
     }
     
     private func fightRow(fight: Fight) -> some View {
@@ -652,10 +675,8 @@ struct EventCard: View {
             // Fighter names
             HStack {
                 Button(action: {
-                    if let fighter = FighterDataManager.shared.getFighter(fight.redCorner) {
-                        selectedFighter = fighter
-                        selectedFighterHistory = FighterDataManager.shared.getFightHistory(fight.redCorner) ?? []
-                        showFighterProfile = true
+                    Task {
+                        await loadFighterData(name: fight.redCorner)
                     }
                 }) {
                     Text(fight.redCorner)
@@ -671,10 +692,8 @@ struct EventCard: View {
                     .padding(.horizontal, 4)
                 
                 Button(action: {
-                    if let fighter = FighterDataManager.shared.getFighter(fight.blueCorner) {
-                        selectedFighter = fighter
-                        selectedFighterHistory = FighterDataManager.shared.getFightHistory(fight.blueCorner) ?? []
-                        showFighterProfile = true
+                    Task {
+                        await loadFighterData(name: fight.blueCorner)
                     }
                 }) {
                     Text(fight.blueCorner)

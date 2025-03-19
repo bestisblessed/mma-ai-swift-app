@@ -162,6 +162,8 @@ struct ChatView: View {
     @ObservedObject var settingsManager: SettingsManager
     @State private var newMessage = ""
     @State private var scrollViewProxy: ScrollViewProxy? = nil
+    @State private var showingAlert = false
+    @State private var showingExportSheet = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -248,6 +250,40 @@ struct ChatView: View {
                 Divider().background(AppTheme.accent.opacity(0.3)),
                 alignment: .top
             )
+        }
+        .navigationTitle("MMA AI")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    showingAlert = true
+                }) {
+                    Image(systemName: "plus.circle")
+                        .foregroundColor(AppTheme.accent)
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingExportSheet = true
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .foregroundColor(AppTheme.accent)
+                }
+            }
+        }
+        .alert(isPresented: $showingAlert) {
+            Alert(
+                title: Text("Start New Chat"),
+                message: Text("Are you sure you want to start a new conversation? This will clear the current chat."),
+                primaryButton: .default(Text("Yes")) {
+                    chatViewModel.startNewChat()
+                },
+                secondaryButton: .cancel()
+            )
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            let export = chatViewModel.exportConversation()
+            ExportView(text: export.text, images: export.images)
         }
     }
 }
