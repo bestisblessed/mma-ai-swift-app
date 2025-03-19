@@ -6,7 +6,7 @@ struct FighterDashboardView: View {
     @State private var selectedFighter: FighterStats? = nil
     @StateObject private var viewModel = FighterDashboardViewModel()
     
-    private let divisions = ["All", "Heavyweight", "Light Heavyweight", "Middleweight", "Welterweight", "Lightweight", "Featherweight", "Bantamweight", "Flyweight", "Women's"]
+    private let divisions = ["All", "Heavyweight", "Light Heavyweight", "Middleweight", "Welterweight", "Lightweight", "Featherweight", "Bantamweight", "Flyweight"]
     
     var body: some View {
         VStack {

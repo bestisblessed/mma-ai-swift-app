@@ -207,7 +207,7 @@ struct WelcomeView: View {
                             .foregroundColor(AppTheme.textPrimary)
                             .cornerRadius(10)
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 4)
                 }
                 
                 Button("Start Chatting") {
@@ -284,11 +284,11 @@ struct ChatView: View {
                         Image(systemName: "plus.circle")
                         Text("New Chat")
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
                     .background(AppTheme.cardBackground)
                     .foregroundColor(AppTheme.accent)
-                    .cornerRadius(18)
+                    .cornerRadius(12)
                 }
                 
                 // Added Save button
@@ -299,11 +299,11 @@ struct ChatView: View {
                         Image(systemName: "square.and.arrow.down")
                         Text("Save")
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
                     .background(AppTheme.cardBackground)
                     .foregroundColor(AppTheme.accent)
-                    .cornerRadius(18)
+                    .cornerRadius(12)
                 }
                 .disabled(chatViewModel.messages.isEmpty)
                 
@@ -314,16 +314,16 @@ struct ChatView: View {
                         Image(systemName: "square.and.arrow.up")
                         Text("Share")
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
                     .background(AppTheme.cardBackground)
                     .foregroundColor(AppTheme.accent)
-                    .cornerRadius(18)
+                    .cornerRadius(12)
                 }
                 
                 Spacer()
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
             .background(AppTheme.cardBackground)
             
             // Input area

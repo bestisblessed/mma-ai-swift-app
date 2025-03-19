@@ -132,8 +132,8 @@ class FighterDataManager {
                         weightClass: weightClass,
                         age: calculateAge(from: birthDate),
                         height: height,
-                        reach: "N/A", // Not in our CSV data
-                        stance: "N/A", // Not in our CSV data
+//                        reach: "N/A", // Not in our CSV data
+//                        stance: "N/A", // Not in our CSV data
                         teamAffiliation: team
                     )
                 }
@@ -322,8 +322,8 @@ class FighterDataManager {
             weightClass: "Welterweight",
             age: 33,
             height: "6'0\"",
-            reach: "N/A",
-            stance: "N/A",
+//            reach: "N/A",
+//            stance: "N/A",
             teamAffiliation: "Team Renegade"
         )
         
@@ -334,8 +334,8 @@ class FighterDataManager {
             weightClass: "Welterweight",
             age: 31,
             height: "5'10\"",
-            reach: "N/A",
-            stance: "N/A",
+//            reach: "N/A",
+//            stance: "N/A",
             teamAffiliation: "Renzo Gracie Philly"
         )
         
@@ -347,8 +347,8 @@ class FighterDataManager {
             weightClass: "Welterweight",
             age: 32,
             height: "6'3\"",
-            reach: "N/A",
-            stance: "N/A",
+//            reach: "N/A",
+//            stance: "N/A",
             teamAffiliation: "Phalanx MMA Academy"
         )
         
@@ -359,8 +359,8 @@ class FighterDataManager {
             weightClass: "Welterweight",
             age: 36,
             height: "5'11\"",
-            reach: "N/A",
-            stance: "N/A",
+//            reach: "N/A",
+//            stance: "N/A",
             teamAffiliation: "Mjölnir MMA"
         )
         

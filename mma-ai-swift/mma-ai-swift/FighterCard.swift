@@ -8,8 +8,8 @@ struct FighterStats: Identifiable {
     let weightClass: String
     let age: Int
     let height: String
-    let reach: String
-    let stance: String
+    // let reach: String
+    // let stance: String
     let teamAffiliation: String
 }
 
@@ -46,8 +46,8 @@ struct FighterCard: View {
                 statRow(label: "Weight Class", value: fighter.weightClass)
                 statRow(label: "Age", value: "\(fighter.age)")
                 statRow(label: "Height", value: fighter.height)
-                statRow(label: "Reach", value: fighter.reach)
-                statRow(label: "Stance", value: fighter.stance)
+                // statRow(label: "Reach", value: fighter.reach)
+                // statRow(label: "Stance", value: fighter.stance)
                 statRow(label: "Team", value: fighter.teamAffiliation)
             }
             .padding()
@@ -83,8 +83,8 @@ struct FighterCard: View {
             weightClass: "Featherweight",
             age: 32,
             height: "5'11\"",
-            reach: "69\"",
-            stance: "Orthodox",
+            // reach: "69\"",
+            // stance: "Orthodox",
             teamAffiliation: "Hawaii Elite MMA"
         ))
         .padding()
