@@ -207,7 +207,7 @@ struct WelcomeView: View {
                             .foregroundColor(AppTheme.textPrimary)
                             .cornerRadius(10)
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 2)
                 }
                 
                 Button("Start Chatting") {
