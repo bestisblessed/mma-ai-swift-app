@@ -7,6 +7,8 @@ struct Fight {
     let weightClass: String
     let isMainEvent: Bool
     let isTitleFight: Bool
+    let round: String
+    let time: String
 }
 
 struct EventInfo {
@@ -31,6 +33,7 @@ class FighterDataManager {
     
     var fighters: [String: FighterStats] = [:]
     var fightHistory: [String: [FightResult]] = [:]
+    var eventDetails: [String: EventInfo] = [:]
     
     init() {
         verifyDataFiles()
@@ -202,6 +205,7 @@ class FighterDataManager {
             
             // Temporary dictionary to organize fights by fighter
             var tempFightHistory: [String: [FightResult]] = [:]
+            var tempEventDetails: [String: EventInfo] = [:]
             
             // Skip header row
             for i in 1..<rows.count {
@@ -211,12 +215,15 @@ class FighterDataManager {
                 let columns = parseCSVRow(row)
                 if columns.count >= 14 { // Ensure we have enough columns
                     let eventName = columns[0]
+                    let location = columns[1]
                     let eventDate = formatDate(columns[2])
                     let fighter1 = columns[3]
                     let fighter2 = columns[4]
-                    let _ = columns[7]  // weightClass
+                    let weightClass = columns[7]
                     let winner = columns[8]
                     let method = columns[9]
+                    let round = columns.count > 10 ? columns[10] : "N/A"
+                    let time = columns.count > 11 ? columns[11] : "N/A"
                     
                     // Create fight results for fighter 1
                     let outcome1 = fighter1 == winner ? "Win" : "Loss"
@@ -248,6 +255,41 @@ class FighterDataManager {
                         tempFightHistory[fighter2] = []
                     }
                     tempFightHistory[fighter2]?.append(result2)
+                    
+                    // Create or update event info
+                    if tempEventDetails[eventName] == nil {
+                        tempEventDetails[eventName] = EventInfo(
+                            name: eventName,
+                            date: eventDate,
+                            location: location,
+                            venue: "N/A", // Not available in our CSV
+                            fights: []
+                        )
+                    }
+                    
+                    // Add the fight to the event
+                    let fight = Fight(
+                        redCorner: fighter1,
+                        blueCorner: fighter2,
+                        weightClass: weightClass,
+                        isMainEvent: false, // Could be determined by event order or specific tags
+                        isTitleFight: method.lowercased().contains("title"),
+                        round: round,
+                        time: time
+                    )
+                    
+                    // Add additional fight details
+                    var fights = tempEventDetails[eventName]!.fights
+                    fights.append(fight)
+                    
+                    // Update the event with this fight
+                    tempEventDetails[eventName] = EventInfo(
+                        name: eventName,
+                        date: eventDate,
+                        location: location,
+                        venue: tempEventDetails[eventName]!.venue,
+                        fights: fights
+                    )
                 }
             }
             
@@ -262,7 +304,11 @@ class FighterDataManager {
                 fightHistory[fighter] = Array(sortedFights.prefix(5))
             }
             
+            // Store the event details
+            eventDetails = tempEventDetails
+            
             print("Successfully loaded fight history for \(fightHistory.count) fighters from CSV")
+            print("Successfully loaded \(eventDetails.count) events from CSV")
         } catch {
             print("Error loading event_data_sherdog.csv: \(error)")
             loadSampleFightHistory() // Fallback to sample data if file can't be read
@@ -675,12 +721,12 @@ struct EventCard: View {
             location: "London, UK",
             venue: "O2 Arena",
             fights: [
-                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false),
-                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false),
-                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false),
-                Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false),
-                Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false),
-                Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false)
+                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
             ]
         ))
         .padding()

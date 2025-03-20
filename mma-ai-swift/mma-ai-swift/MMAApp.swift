@@ -58,7 +58,21 @@ struct MMAApp: App {
         // Wait for all fighter data to be loaded
         dispatchGroup.notify(queue: .main) {
             debugPrint("All fighter data preloading complete")
+            // Also load fight data into memory
+            preloadFightData()
         }
+    }
+    
+    private func preloadFightData() {
+        debugPrint("Preloading fight data...")
+        
+        // Count the total number of fight records
+        var totalFights = 0
+        for (_, fights) in FighterDataManager.shared.fightHistory {
+            totalFights += fights.count
+        }
+        
+        debugPrint("✅ Found \(totalFights) total fight records across \(FighterDataManager.shared.fightHistory.count) fighters")
     }
     
     private func ensureFighterIsLoaded(_ name: String) {

@@ -84,22 +84,21 @@ struct UpcomingEventsView: View {
                 venue: "O2 Arena",
                 fights: [
                     // Main Card
-                    Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false),
-                    // Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Jan Blachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false),
+                    Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Jan Blachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
                     
                     // Preliminary Card
-                    Fight(redCorner: "Jai Herbert", blueCorner: "Chris Padilla", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Lone'er Kavanagh", blueCorner: "Felipe dos Santos", weightClass: "Flyweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Marcin Tybura", blueCorner: "Mick Parkin", weightClass: "Heavyweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Christian Leroy Duncan", blueCorner: "Andrey Pulyaev", weightClass: "Middleweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Shauna Bannon", blueCorner: "Puja Tomar", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Nathan Fletcher", blueCorner: "Caolan Loughran", weightClass: "Bantamweight", isMainEvent: false, isTitleFight: false),
-                    Fight(redCorner: "Guram Kutateladze", blueCorner: "Kaue Fernandes", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false)
+                    Fight(redCorner: "Jai Herbert", blueCorner: "Chris Padilla", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Lone'er Kavanagh", blueCorner: "Felipe dos Santos", weightClass: "Flyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Marcin Tybura", blueCorner: "Mick Parkin", weightClass: "Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Christian Leroy Duncan", blueCorner: "Andrey Pulyaev", weightClass: "Middleweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Shauna Bannon", blueCorner: "Puja Tomar", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Nathan Fletcher", blueCorner: "Caolan Loughran", weightClass: "Bantamweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Guram Kutateladze", blueCorner: "Kaue Fernandes", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
                 ]
             ))
         }
