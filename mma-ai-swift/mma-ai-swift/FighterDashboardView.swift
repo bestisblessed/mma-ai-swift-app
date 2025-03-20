@@ -74,7 +74,15 @@ struct FighterDashboardView: View {
                 } else {
                     // Fighter grid
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        // LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        //     ForEach(filteredFighters, id: \.name) { fighter in
+                        //         FighterTileView(fighter: fighter) {
+                        //             debugPrint("🔵 Selected fighter: \(fighter.name)")
+                        //             selectedFighter = fighter
+                        //         }
+                        //     }
+                        // }
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120))], spacing: 10) { // Adjust grid size
                             ForEach(filteredFighters, id: \.name) { fighter in
                                 FighterTileView(fighter: fighter) {
                                     debugPrint("🔵 Selected fighter: \(fighter.name)")
@@ -445,31 +453,31 @@ struct FighterTileView: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 4) { // Reduce spacing
+            VStack(alignment: .leading, spacing: 3) {
                 Text(fighter.name)
-                    .font(.subheadline) // Smaller font
+                    .font(.subheadline)
                     .foregroundColor(AppTheme.textPrimary)
                     .lineLimit(1)
                 
                 if let nickname = fighter.nickname {
                     Text("'\(nickname)'")
-                        .font(.caption2) // Smaller font
+                        .font(.caption2)
                         .foregroundColor(AppTheme.accent)
                         .lineLimit(1)
                 }
                 
                 Text(fighter.record)
-                    .font(.caption2) // Smaller font
+                    .font(.caption2)
                     .foregroundColor(.secondary)
-
+                
                 Text(fighter.weightClass)
-                    .font(.caption2) // Smaller font
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8) // Decrease padding
+            .padding(8)
             .background(AppTheme.cardBackground)
-            .cornerRadius(8) // Smaller corners
+            .cornerRadius(8)
         }
     }
 }
@@ -753,4 +761,23 @@ struct FightProfileView: View {
 #Preview {
     FighterDashboardView()
         .preferredColorScheme(.dark)
+} 
+
+struct FighterStats: Identifiable {
+    var id: String { name }
+    let name: String
+    let nickname: String?
+    let record: String // e.g., "21-6-0"
+    let weightClass: String
+    let age: Int
+    let height: String
+    // let reach: String?
+    // let stance: String?
+    let teamAffiliation: String
+    let nationality: String?
+    let hometown: String?
+    let birthDate: String
+    let winsByKO: Int?
+    let winsBySubmission: Int?
+    let winsByDecision: Int?
 } 

@@ -117,16 +117,27 @@ class FighterDataManager {
                     let name = columns[0]
                     let nickname = columns[1].isEmpty || columns[1] == "-" ? nil : columns[1]
                     let birthDate = columns[2]
-                    let _ = columns[3]  // nationality
-                    let _ = columns[4]  // hometown
+                    let nationality = columns[3].isEmpty ? "N/A" : columns[3]
+                    let hometown = columns[4].isEmpty ? "N/A" : columns[4]
                     let team = columns[5]
                     let weightClass = columns[6]
                     let height = columns[7]
                     
-                    // Parse record from wins and losses
                     let wins = Int(columns[8]) ?? 0
                     let losses = Int(columns[9]) ?? 0
-                    let record = "\(wins)-\(losses)-0" // Simplifying for now, not including draws
+                    let record = "\(wins)-\(losses)-0"
+                    
+                    // Parse win method statistics based on actual CSV column order:
+                    // Win_Decision (10), Win_KO (11), Win_Sub (12)
+                    let winsByDec = Int(columns[10]) ?? 0    // Win_Decision column
+                    let winsByKO = Int(columns[11]) ?? 0     // Win_KO column
+                    let winsBySub = Int(columns[12]) ?? 0    // Win_Sub column
+                    
+                    // Verify the totals match for debugging
+                    let totalWinMethods = winsByKO + winsBySub + winsByDec
+                    if totalWinMethods != wins {
+                        print("Win method total (\(totalWinMethods)) doesn't match win total (\(wins)) for \(name)")
+                    }
                     
                     fighters[name] = FighterStats(
                         name: name,
@@ -135,9 +146,13 @@ class FighterDataManager {
                         weightClass: weightClass,
                         age: calculateAge(from: birthDate),
                         height: height,
-//                        reach: "N/A", // Not in our CSV data
-//                        stance: "N/A", // Not in our CSV data
-                        teamAffiliation: team
+                        teamAffiliation: team,
+                        nationality: nationality,
+                        hometown: hometown,
+                        birthDate: birthDate,
+                        winsByKO: winsByKO,
+                        winsBySubmission: winsBySub,
+                        winsByDecision: winsByDec
                     )
                 }
             }
@@ -293,15 +308,15 @@ class FighterDataManager {
                 }
             }
             
-            // Sort fights by date (newest first) and limit to 5 most recent
+            // Sort fights by date (newest first) and include all fights
             for (fighter, fights) in tempFightHistory {
                 // Sort by date (newest first)
                 let sortedFights = fights.sorted { fight1, fight2 in
                     return compareDates(fight1.date, fight2.date)
                 }
                 
-                // Keep only the 5 most recent fights
-                fightHistory[fighter] = Array(sortedFights.prefix(5))
+                // Include all fights
+                fightHistory[fighter] = sortedFights
             }
             
             // Store the event details
@@ -368,47 +383,52 @@ class FighterDataManager {
             weightClass: "Welterweight",
             age: 33,
             height: "6'0\"",
-//            reach: "N/A",
-//            stance: "N/A",
-            teamAffiliation: "Team Renegade"
+            teamAffiliation: "N/A",
+            nationality: nil,
+            hometown: nil,
+            birthDate: "",
+            winsByKO: nil,
+            winsBySubmission: nil,
+            winsByDecision: nil
         )
         
-        fighters["Sean Brady"] = FighterStats(
-            name: "Sean Brady",
-            nickname: nil,
-            record: "17-1-0",
-            weightClass: "Welterweight",
-            age: 31,
-            height: "5'10\"",
-//            reach: "N/A",
-//            stance: "N/A",
-            teamAffiliation: "Renzo Gracie Philly"
-        )
         
-        // Add a few more important fighters from our event
-        fighters["Kevin Holland"] = FighterStats(
-            name: "Kevin Holland",
-            nickname: "Trailblazer",
-            record: "26-13-0, 1NC",
-            weightClass: "Welterweight",
-            age: 32,
-            height: "6'3\"",
-//            reach: "N/A",
-//            stance: "N/A",
-            teamAffiliation: "Phalanx MMA Academy"
-        )
-        
-        fighters["Gunnar Nelson"] = FighterStats(
-            name: "Gunnar Nelson",
-            nickname: "Gunni",
-            record: "19-5-1",
-            weightClass: "Welterweight",
-            age: 36,
-            height: "5'11\"",
-//            reach: "N/A",
-//            stance: "N/A",
-            teamAffiliation: "Mjölnir MMA"
-        )
+//        fighters["Sean Brady"] = FighterStats(
+//            name: "Sean Brady",
+//            nickname: nil,
+//            record: "17-1-0",
+//            weightClass: "Welterweight",
+//            age: 31,
+//            height: "5'10\"",
+////            reach: "N/A",
+////            stance: "N/A",
+//            teamAffiliation: "Renzo Gracie Philly"
+//        )
+//        
+//        // Add a few more important fighters from our event
+//        fighters["Kevin Holland"] = FighterStats(
+//            name: "Kevin Holland",
+//            nickname: "Trailblazer",
+//            record: "26-13-0, 1NC",
+//            weightClass: "Welterweight",
+//            age: 32,
+//            height: "6'3\"",
+////            reach: "N/A",
+////            stance: "N/A",
+//            teamAffiliation: "Phalanx MMA Academy"
+//        )
+//        
+//        fighters["Gunnar Nelson"] = FighterStats(
+//            name: "Gunnar Nelson",
+//            nickname: "Gunni",
+//            record: "19-5-1",
+//            weightClass: "Welterweight",
+//            age: 36,
+//            height: "5'11\"",
+////            reach: "N/A",
+////            stance: "N/A",
+//            teamAffiliation: "Mjölnir MMA"
+//        )
         
         print("Loaded \(fighters.count) sample fighters")
     }
