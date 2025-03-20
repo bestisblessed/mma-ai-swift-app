@@ -73,7 +73,7 @@ def chat():
 
         # Wait for completion
         while run.status not in ["completed", "failed", "cancelled", "expired"]:
-            time.sleep(10)  # Poll every second
+            time.sleep(5)  # Poll every second
             run = client.beta.threads.runs.retrieve(
                 thread_id=thread_id, 
                 run_id=run.id
