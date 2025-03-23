@@ -165,19 +165,29 @@ def get_chat_history():
         # Fetch messages from the thread
         messages = client.beta.threads.messages.list(thread_id=thread_id)
         
-        # Format messages for response
+        # Group and format messages for response
+        user_messages = []
+        assistant_messages = []
         formatted_messages = []
+        
+        # First, separate user and assistant messages
         for msg in messages.data:
-            response_data = []
-            # Handle both user and assistant messages
             if msg.role == "user":
+                response_data = []
                 for content_item in msg.content:
                     if content_item.type == "text":
                         response_data.append({
                             "type": "text",
                             "content": content_item.text.value
                         })
+                if response_data:
+                    user_messages.append({
+                        "role": "user",
+                        "content": response_data,
+                        "created_at": msg.created_at  # We'll use this to match with assistant responses
+                    })
             elif msg.role == "assistant":
+                response_data = []
                 for content_item in msg.content:
                     if content_item.type == "text":
                         response_data.append({
@@ -192,16 +202,40 @@ def get_chat_history():
                             "type": "image",
                             "content": f"data:image/png;base64,{encoded_image}"
                         })
-            
-            # Only add messages with content
-            if response_data:
-                formatted_messages.append({
-                    "role": msg.role,
-                    "content": response_data
-                })
+                if response_data:
+                    assistant_messages.append({
+                        "role": "assistant",
+                        "content": response_data,
+                        "created_at": msg.created_at
+                    })
         
-        # Reverse to get chronological order (oldest first)
-        formatted_messages.reverse()
+        # Sort messages by creation time (oldest first)
+        user_messages.sort(key=lambda x: x["created_at"])
+        assistant_messages.sort(key=lambda x: x["created_at"])
+        
+        # For each user message, find the most recent assistant message that follows it
+        for i, user_msg in enumerate(user_messages):
+            # Add user message
+            formatted_messages.append({
+                "role": user_msg["role"],
+                "content": user_msg["content"]
+            })
+            
+            # Find the most recent assistant message created after this user message
+            next_user_time = user_messages[i+1]["created_at"] if i+1 < len(user_messages) else float('inf')
+            relevant_assistant_msgs = [
+                a for a in assistant_messages 
+                if a["created_at"] > user_msg["created_at"] and a["created_at"] < next_user_time
+            ]
+            
+            # If there are assistant messages, add only the most recent one
+            if relevant_assistant_msgs:
+                # Sort by creation time (newest first) and take the first one
+                relevant_assistant_msgs.sort(key=lambda x: x["created_at"], reverse=True)
+                formatted_messages.append({
+                    "role": "assistant",
+                    "content": relevant_assistant_msgs[0]["content"]
+                })
             
         return jsonify({
             "messages": formatted_messages,
