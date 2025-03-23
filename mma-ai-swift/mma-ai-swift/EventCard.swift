@@ -35,6 +35,7 @@ class FighterDataManager: ObservableObject {
     @Published private(set) var fightHistory: [String: [FightResult]] = [:]
     @Published private(set) var eventDetails: [String: EventInfo] = [:]
     @Published private(set) var upcomingEvents: [EventInfo] = []
+    @Published private(set) var pastEvents: [EventInfo] = []
     @Published private(set) var loadingState: LoadingState = .idle
     
     private let networkManager = NetworkManager.shared
@@ -85,6 +86,10 @@ class FighterDataManager: ObservableObject {
         return upcomingEvents
     }
     
+    func getPastEvents() -> [EventInfo] {
+        return pastEvents
+    }
+    
     // MARK: - Private Methods
     
     private func loadInitialData() async {
@@ -113,50 +118,49 @@ class FighterDataManager: ObservableObject {
         }
         
         do {
-            // Check if update is needed
-            var needsUpdate = force
+            // Skip network requests if not forced and within update time window
             if !force {
-                needsUpdate = try await networkManager.checkForUpdates()
+                if let needsUpdate = try? await networkManager.checkForUpdates(), !needsUpdate {
+                    print("No update needed, data is current")
+                    
+                    DispatchQueue.main.async {
+                        self.loadingState = .success
+                    }
+                    return
+                }
             }
             
-            if needsUpdate {
-                print("Fetching new data from server...")
-                // Fetch new data
-                let apiFighters = try await networkManager.fetchFighters()
-                let apiEvents = try await networkManager.fetchEvents()
-                
-                // Also fetch upcoming events
-                let upcomingApiEvents = try await networkManager.fetchUpcomingEvents()
-                
-                // Process and store the new data
-                processNewData(fighters: apiFighters, events: apiEvents)
-                
-                // Process upcoming events
-                processUpcomingEvents(events: upcomingApiEvents)
-                
-                // Save to cache
-                saveToCache()
-                
-                DispatchQueue.main.async {
-                    self.loadingState = .success
-                }
-            } else {
-                print("Data is up to date")
-                DispatchQueue.main.async {
-                    self.loadingState = .success
-                }
+            print("Fetching latest data from server...")
+            
+            // Fetch updated fighter and event data
+            async let fightersTask = networkManager.fetchFighters()
+            async let eventsTask = networkManager.fetchEvents()
+            async let upcomingEventsTask = networkManager.fetchUpcomingEvents()
+            
+            let (apiFighters, apiEvents, upcomingApiEvents) = try await (fightersTask, eventsTask, upcomingEventsTask)
+            
+            print("✅ Successfully fetched data - \(apiFighters.count) fighters, \(apiEvents.count) events, and upcoming events")
+            
+            // Process data
+            processNewData(fighters: apiFighters, events: apiEvents)
+            
+            // Process upcoming events
+            processUpcomingEvents(events: upcomingApiEvents)
+            
+            // Process past events
+            processPastEvents(events: apiEvents)
+            
+            // Save to cache
+            saveToCache()
+            
+            DispatchQueue.main.async {
+                self.loadingState = .success
             }
         } catch {
-            print("Error loading data: \(error)")
+            print("Failed to fetch data: \(error.localizedDescription)")
+            
             DispatchQueue.main.async {
                 self.loadingState = .error(error.localizedDescription)
-            }
-            
-            // If we have no data, load sample data as fallback
-            if fighters.isEmpty {
-                loadSampleFighterData()
-                loadSampleFightHistory()
-                loadSampleUpcomingEvents()
             }
         }
     }
@@ -341,6 +345,76 @@ class FighterDataManager: ObservableObject {
         print("✅ Finished processing \(newUpcomingEvents.count) upcoming events")
     }
     
+    // Process past events data
+    private func processPastEvents(events apiEvents: [APIEvent]) {
+        print("🔄 Processing past events...")
+        
+        // Group events by event name
+        let eventsByName = Dictionary(grouping: apiEvents) { $0.eventName }
+        var newPastEvents: [EventInfo] = []
+        
+        // Process each event
+        for (eventName, eventFights) in eventsByName {
+            // Skip if there are no fights with winners (incomplete data)
+            if eventFights.allSatisfy({ $0.winner == nil || $0.winner == "TBD" }) {
+                continue
+            }
+            
+            // Get the first event to extract common data
+            if let firstEvent = eventFights.first {
+                // Convert fights to our app's format
+                var fights: [Fight] = []
+                
+                for apiEvent in eventFights {
+                    let isMainEvent = apiEvent.fightType?.lowercased().contains("main event") ?? false
+                    let isTitleFight = apiEvent.method?.lowercased().contains("title") ?? false
+                    
+                    let fight = Fight(
+                        redCorner: apiEvent.fighter1,
+                        blueCorner: apiEvent.fighter2,
+                        weightClass: apiEvent.weightClass ?? "Unknown",
+                        isMainEvent: isMainEvent,
+                        isTitleFight: isTitleFight,
+                        round: apiEvent.round != nil ? String(apiEvent.round!) : "N/A",
+                        time: apiEvent.time ?? "N/A"
+                    )
+                    
+                    fights.append(fight)
+                }
+                
+                // Create the event info
+                let eventInfo = EventInfo(
+                    name: eventName,
+                    date: formatDate(firstEvent.date ?? "Unknown"),
+                    location: firstEvent.location ?? "Unknown",
+                    venue: "N/A", // Venue not available in CSV
+                    fights: fights
+                )
+                
+                newPastEvents.append(eventInfo)
+                print("✅ Processed past event: \(eventName) with \(fights.count) fights")
+            }
+        }
+        
+        // Sort events by date (most recent first)
+        newPastEvents.sort { event1, event2 in
+            // Later date should come first in the list
+            compareDates(event1.date, event2.date)
+        }
+        
+        // Keep only the most recent event
+        if !newPastEvents.isEmpty {
+            newPastEvents = [newPastEvents[0]]
+        }
+        
+        // Update on main thread
+        DispatchQueue.main.async {
+            self.pastEvents = newPastEvents
+        }
+        
+        print("✅ Finished processing \(newPastEvents.count) past events")
+    }
+    
     // MARK: - Cache Management
     
     private func saveToCache() {
@@ -350,11 +424,13 @@ class FighterDataManager: ObservableObject {
             let fightHistoryData = try JSONEncoder().encode(fightHistory)
             let eventDetailsData = try JSONEncoder().encode(eventDetails)
             let upcomingEventsData = try JSONEncoder().encode(upcomingEvents)
+            let pastEventsData = try JSONEncoder().encode(pastEvents)
             
             cache.set(fightersData, forKey: "cachedFighters")
             cache.set(fightHistoryData, forKey: "cachedFightHistory")
             cache.set(eventDetailsData, forKey: "cachedEventDetails")
             cache.set(upcomingEventsData, forKey: "cachedUpcomingEvents")
+            cache.set(pastEventsData, forKey: "cachedPastEvents")
             cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
             
             print("Data saved to cache")
@@ -364,37 +440,31 @@ class FighterDataManager: ObservableObject {
     }
     
     private func loadFromCache() -> Bool {
-        guard let fightersData = cache.data(forKey: "cachedFighters"),
-              let fightHistoryData = cache.data(forKey: "cachedFightHistory"),
-              let eventDetailsData = cache.data(forKey: "cachedEventDetails") else {
-            return false
+        // Try to load data from UserDefaults
+        if let fightersData = cache.data(forKey: "cachedFighters"),
+           let fightHistoryData = cache.data(forKey: "cachedFightHistory"),
+           let eventDetailsData = cache.data(forKey: "cachedEventDetails"),
+           let upcomingEventsData = cache.data(forKey: "cachedUpcomingEvents") {
+            
+            do {
+                fighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
+                fightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
+                eventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
+                upcomingEvents = try JSONDecoder().decode([EventInfo].self, from: upcomingEventsData)
+                
+                // Load past events if available, otherwise use empty array
+                if let pastEventsData = cache.data(forKey: "cachedPastEvents") {
+                    pastEvents = try JSONDecoder().decode([EventInfo].self, from: pastEventsData)
+                }
+                
+                return true
+            } catch {
+                print("Failed to decode cached data: \(error)")
+                return false
+            }
         }
         
-        do {
-            let cachedFighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
-            let cachedFightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
-            let cachedEventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
-            
-            // Try to load cached upcoming events
-            if let upcomingEventsData = cache.data(forKey: "cachedUpcomingEvents"),
-               let cachedUpcomingEvents = try? JSONDecoder().decode([EventInfo].self, from: upcomingEventsData) {
-                DispatchQueue.main.async {
-                    self.upcomingEvents = cachedUpcomingEvents
-                }
-            }
-            
-            DispatchQueue.main.async {
-                self.fighters = cachedFighters
-                self.fightHistory = cachedFightHistory
-                self.eventDetails = cachedEventDetails
-                self.loadingState = .success
-            }
-            
-            return true
-        } catch {
-            print("Failed to load data from cache: \(error)")
-            return false
-        }
+        return false
     }
     
     // MARK: - Helper Methods

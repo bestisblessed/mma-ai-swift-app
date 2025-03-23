@@ -11,12 +11,16 @@ struct DashboardView: View {
                     selectedTab = 0
                 }
                 
-                TabButton(title: "Rankings", isSelected: selectedTab == 1) {
+                TabButton(title: "Past", isSelected: selectedTab == 1) {
                     selectedTab = 1
                 }
                 
-                TabButton(title: "News", isSelected: selectedTab == 2) {
+                TabButton(title: "Rankings", isSelected: selectedTab == 2) {
                     selectedTab = 2
+                }
+                
+                TabButton(title: "News", isSelected: selectedTab == 3) {
+                    selectedTab = 3
                 }
             }
             .background(AppTheme.cardBackground)
@@ -28,8 +32,10 @@ struct DashboardView: View {
                     case 0:
                         UpcomingEventsView()
                     case 1:
-                        RankingsView()
+                        PastEventsView()
                     case 2:
+                        RankingsView()
+                    case 3:
                         NewsView()
                     default:
                         EmptyView()
@@ -163,6 +169,134 @@ struct UpcomingEventsView: View {
                 }
                 
                 Text("Data source: upcoming_event_data_sherdog.csv")
+                    .font(.caption)
+                    .foregroundColor(AppTheme.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 8)
+            }
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                refreshData()
+            }
+        }
+        // .onAppear {
+        //     refreshData()
+        // }
+    }
+    
+    private func refreshData() {
+        isRefreshing = true
+        
+        Task {
+            do {
+                try await dataManager.refreshData()
+            } catch {
+                print("Error refreshing data: \(error)")
+            }
+            
+            DispatchQueue.main.async {
+                isRefreshing = false
+            }
+        }
+    }
+}
+
+struct PastEventsView: View {
+    @ObservedObject private var dataManager = FighterDataManager.shared
+    @State private var isRefreshing = false
+    @Environment(\.scenePhase) private var scenePhase
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Past Events")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Button(action: {
+                    refreshData()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.headline)
+                        .foregroundColor(.yellow)
+                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                        .animation(isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isRefreshing)
+                }
+                .disabled(isRefreshing)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if dataManager.loadingState == .loading {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
+                        .scaleEffect(1.5)
+                    
+                    Text("Loading past events...")
+                        .foregroundColor(AppTheme.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(12)
+            } else if case let .error(errorMessage) = dataManager.loadingState {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.yellow)
+                    
+                    Text("Failed to load events")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.textPrimary)
+                    
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundColor(AppTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Try Again") {
+                        refreshData()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.yellow)
+                    .foregroundColor(.black)
+                    .cornerRadius(8)
+                    .padding(.top, 8)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(12)
+            } else if dataManager.getPastEvents().isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.largeTitle)
+                        .foregroundColor(.yellow)
+                    
+                    Text("No past events found")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.textPrimary)
+                    
+                    Text("Check back later for past UFC events")
+                        .font(.subheadline)
+                        .foregroundColor(AppTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(12)
+            } else {
+                ForEach(dataManager.getPastEvents(), id: \.name) { event in
+                    EventCard(event: event)
+                }
+                
+                Text("Data source: event_data_sherdog.csv")
                     .font(.caption)
                     .foregroundColor(AppTheme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
