@@ -71,6 +71,7 @@ struct TabButton: View {
 struct UpcomingEventsView: View {
     @ObservedObject private var dataManager = FighterDataManager.shared
     @State private var isRefreshing = false
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
         VStack(spacing: 16) {
@@ -168,6 +169,14 @@ struct UpcomingEventsView: View {
                     .padding(.top, 8)
             }
         }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                refreshData()
+            }
+        }
+        // .onAppear {
+        //     refreshData()
+        // }
     }
     
     private func refreshData() {
