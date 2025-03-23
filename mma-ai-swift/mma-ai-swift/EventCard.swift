@@ -165,13 +165,13 @@ class FighterDataManager: ObservableObject {
                 name: apiFighter.name,
                 nickname: apiFighter.nickname,
                 record: record,
-                weightClass: apiFighter.weightClass ?? <#default value#>,
+                weightClass: apiFighter.weightClass ?? "Unknown",
                 age: calculateAge(from: apiFighter.birthDate!),
-                height: apiFighter.height ?? <#default value#>,
+                height: apiFighter.height ?? "N/A",
                 teamAffiliation: apiFighter.team!,
                 nationality: apiFighter.nationality,
                 hometown: apiFighter.hometown,
-                birthDate: apiFighter.birthDate ?? <#default value#>,
+                birthDate: apiFighter.birthDate ?? "Unknown",
                 winsByKO: apiFighter.win_KO,
                 winsBySubmission: apiFighter.win_Sub,
                 winsByDecision: apiFighter.win_Decision
@@ -184,14 +184,14 @@ class FighterDataManager: ObservableObject {
         var tempEventMap: [String: [Fight]] = [:]
         
         for apiEvent in apiEvents {
-            let formattedDate = formatDate(apiEvent.date ?? <#default value#>)
+            let formattedDate = formatDate(apiEvent.date ?? "Unknown")
             
             // Create fight results for fighter 1
             let outcome1 = apiEvent.fighter1 == apiEvent.winner ? "Win" : "Loss"
             let result1 = FightResult(
                 opponent: apiEvent.fighter2,
                 outcome: outcome1,
-                method: apiEvent.method ?? <#default value#>,
+                method: apiEvent.method ?? "Unknown",
                 date: formattedDate,
                 event: apiEvent.eventName
             )
@@ -201,7 +201,7 @@ class FighterDataManager: ObservableObject {
             let result2 = FightResult(
                 opponent: apiEvent.fighter1,
                 outcome: outcome2,
-                method: apiEvent.method ?? <#default value#>,
+                method: apiEvent.method ?? "Unknown",
                 date: formattedDate,
                 event: apiEvent.eventName
             )
@@ -226,10 +226,10 @@ class FighterDataManager: ObservableObject {
             let fight = Fight(
                 redCorner: apiEvent.fighter1,
                 blueCorner: apiEvent.fighter2,
-                weightClass: apiEvent.weightClass ?? <#default value#>,
+                weightClass: apiEvent.weightClass ?? "Unknown",
                 isMainEvent: false, // Could be determined by event order
-                isTitleFight: apiEvent.method?.lowercased().contains("title") ?? <#default value#>,
-                round: apiEvent.round ?? "N/A",
+                isTitleFight: apiEvent.method?.lowercased().contains("title") ?? false,
+                round: apiEvent.round != nil ? String(apiEvent.round!) : "N/A",
                 time: apiEvent.time ?? "N/A"
             )
             
@@ -242,8 +242,8 @@ class FighterDataManager: ObservableObject {
             if let sampleEvent = apiEvents.first(where: { $0.eventName == eventName }) {
                 newEventDetails[eventName] = EventInfo(
                     name: eventName,
-                    date: formatDate(sampleEvent.date ?? <#default value#>),
-                    location: sampleEvent.location ?? <#default value#>,
+                    date: formatDate(sampleEvent.date ?? "Unknown"),
+                    location: sampleEvent.location ?? "Unknown",
                     venue: "N/A", // Not available in our CSV
                     fights: fights
                 )
@@ -776,4 +776,4 @@ struct EventCard: View {
             }
         }
     }
-} 
+}
