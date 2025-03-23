@@ -20,6 +20,7 @@
 		73A960422D82E0ED009B6A7E /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9603F2D82E0ED009B6A7E /* AppTheme.swift */; };
 		73A960432D82E0ED009B6A7E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A960412D82E0ED009B6A7E /* SettingsView.swift */; };
 		73A960442D82E0ED009B6A7E /* ConversationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */; };
+		73C1B5422D8FE78700E9D50D /* FullScreenImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C1B5412D8FE78700E9D50D /* FullScreenImageView.swift */; };
 		8A1234561234567800000001 /* MMAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000002 /* MMAApp.swift */; };
 		8A1234561234567800000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000004 /* ContentView.swift */; };
 		8A1234561234567800000005 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000006 /* ChatViewModel.swift */; };
@@ -40,6 +41,7 @@
 		73A9603F2D82E0ED009B6A7E /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationHistoryView.swift; sourceTree = "<group>"; };
 		73A960412D82E0ED009B6A7E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		73C1B5412D8FE78700E9D50D /* FullScreenImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageView.swift; sourceTree = "<group>"; };
 		8A1234561234567800000002 /* MMAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMAApp.swift; sourceTree = "<group>"; };
 		8A1234561234567800000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8A1234561234567800000006 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
 				7345C3062D82DB4F00839854 /* Theme.swift */,
 				8A1234561234567800000023 /* Assets.xcassets */,
+				73C1B5412D8FE78700E9D50D /* FullScreenImageView.swift */,
 			);
 			path = "mma-ai-swift";
 			sourceTree = "<group>";
@@ -188,6 +191,7 @@
 				8A1234561234567800000003 /* ContentView.swift in Sources */,
 				7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */,
 				738B03162D82DE4B0065813D /* EventCard.swift in Sources */,
+				73C1B5422D8FE78700E9D50D /* FullScreenImageView.swift in Sources */,
 				738B03172D82DE4B0065813D /* FighterCard.swift in Sources */,
 				7345C3072D82DB4F00839854 /* Theme.swift in Sources */,
 				738B03112D82DD5B0065813D /* LaunchScreen.swift in Sources */,

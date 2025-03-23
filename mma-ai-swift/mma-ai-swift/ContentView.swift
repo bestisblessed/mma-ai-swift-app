@@ -425,16 +425,18 @@ struct MessageBubble: View {
                 } else if let imageData = message.imageData, !message.isUser {
                     // Display image if we have image data
                     if let uiImage = UIImage(data: imageData) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: 280, maxHeight: 280)
-                            .cornerRadius(16)
-                            .padding(8)
-                            .background(AppTheme.botBubble)
-                            .cornerRadius(18)
-                            .offset(x: isAnimated ? 0 : -50)
-                            .opacity(isAnimated ? 1.0 : 0.0)
+                        NavigationLink(destination: FullScreenImageView(image: uiImage)) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: 280, maxHeight: 280)
+                                .cornerRadius(16)
+                                .padding(8)
+                                .background(AppTheme.botBubble)
+                                .cornerRadius(18)
+                                .offset(x: isAnimated ? 0 : -50)
+                                .opacity(isAnimated ? 1.0 : 0.0)
+                        }
                     } else {
                         // Fallback if image data is invalid
                         Text("Unable to display image")
