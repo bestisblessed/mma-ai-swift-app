@@ -82,7 +82,10 @@ class ChatViewModel: ObservableObject {
                 
                 do {
                     let response = try JSONDecoder().decode(ChatHistoryResponse.self, from: data)
-                    self?.messages = response.messages.map { msg in
+                    var loadedMessages: [Message] = []
+                    
+                    // Convert all messages in the conversation
+                    for msg in response.messages {
                         var content = ""
                         var imageData: Data? = nil
                         
@@ -101,13 +104,25 @@ class ChatViewModel: ObservableObject {
                             }
                         }
                         
-                        return Message(
+                        // Skip empty messages
+                        if content.isEmpty && imageData == nil {
+                            continue
+                        }
+                        
+                        // Create message object
+                        let message = Message(
                             content: content,
                             isUser: msg.role == "user",
                             timestamp: Date(),
                             imageData: imageData
                         )
+                        
+                        // Add to our collection
+                        loadedMessages.append(message)
                     }
+                    
+                    // Update the messages array - the backend already returns in chronological order now
+                    self?.messages = loadedMessages
                     self?.isFirstLaunch = false
                 } catch {
                     print("Error decoding conversation: \(error.localizedDescription)")

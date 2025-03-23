@@ -169,7 +169,15 @@ def get_chat_history():
         formatted_messages = []
         for msg in messages.data:
             response_data = []
-            if msg.role == "assistant":
+            # Handle both user and assistant messages
+            if msg.role == "user":
+                for content_item in msg.content:
+                    if content_item.type == "text":
+                        response_data.append({
+                            "type": "text",
+                            "content": content_item.text.value
+                        })
+            elif msg.role == "assistant":
                 for content_item in msg.content:
                     if content_item.type == "text":
                         response_data.append({
@@ -184,10 +192,16 @@ def get_chat_history():
                             "type": "image",
                             "content": f"data:image/png;base64,{encoded_image}"
                         })
-            formatted_messages.append({
-                "role": msg.role,
-                "content": response_data
-            })
+            
+            # Only add messages with content
+            if response_data:
+                formatted_messages.append({
+                    "role": msg.role,
+                    "content": response_data
+                })
+        
+        # Reverse to get chronological order (oldest first)
+        formatted_messages.reverse()
             
         return jsonify({
             "messages": formatted_messages,
@@ -195,6 +209,7 @@ def get_chat_history():
         })
         
     except Exception as e:
+        logger.error(f"Chat history error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
