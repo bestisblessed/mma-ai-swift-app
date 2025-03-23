@@ -17,6 +17,15 @@ struct EventInfo {
     let location: String
     let venue: String
     let fights: [Fight]
+    
+    // Add a computed property for displaying location
+    var displayLocation: String {
+        if venue.isEmpty || venue == "N/A" {
+            return location
+        } else {
+            return "\(venue) • \(location)"
+        }
+    }
 }
 
 struct FightResult {
@@ -402,9 +411,9 @@ class FighterDataManager: ObservableObject {
             compareDates(event1.date, event2.date)
         }
         
-        // Keep only the most recent event
-        if !newPastEvents.isEmpty {
-            newPastEvents = [newPastEvents[0]]
+        // Keep only the most recent 3 events
+        if newPastEvents.count > 3 {
+            newPastEvents = Array(newPastEvents.prefix(3))
         }
         
         // Update on main thread
@@ -717,7 +726,7 @@ struct EventCard: View {
                     .font(.headline)
                     .foregroundColor(Color.yellow)
                 
-                Text("\(event.venue) • \(event.location)")
+                Text(event.displayLocation)
                     .font(.subheadline)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
