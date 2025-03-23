@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -51,21 +51,6 @@
 		8A1234561234567800000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8A1234561234567800000023 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		73F694B02D88EA1B003F0278 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				event_data_sherdog.csv,
-				fighter_info.csv,
-			);
-			target = 8A1234561234567800000012 /* mma-ai-swift */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		73F694AB2D88E9FF003F0278 /* data */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (73F694B02D88EA1B003F0278 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = data; sourceTree = "<group>"; };
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		8A1234561234567800000008 /* Frameworks */ = {
@@ -116,7 +101,6 @@
 		8A1234561234567800000011 = {
 			isa = PBXGroup;
 			children = (
-				73F694AB2D88E9FF003F0278 /* data */,
 				8A1234561234567800000010 /* mma-ai-swift */,
 				8A1234561234567800000009 /* Products */,
 			);

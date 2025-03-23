@@ -34,6 +34,7 @@ class FighterDataManager: ObservableObject {
     @Published private(set) var fighters: [String: FighterStats] = [:]
     @Published private(set) var fightHistory: [String: [FightResult]] = [:]
     @Published private(set) var eventDetails: [String: EventInfo] = [:]
+    @Published private(set) var upcomingEvents: [EventInfo] = []
     @Published private(set) var loadingState: LoadingState = .idle
     
     private let networkManager = NetworkManager.shared
@@ -80,6 +81,10 @@ class FighterDataManager: ObservableObject {
         fightHistory[name]
     }
     
+    func getUpcomingEvents() -> [EventInfo] {
+        return upcomingEvents
+    }
+    
     // MARK: - Private Methods
     
     private func loadInitialData() async {
@@ -120,8 +125,14 @@ class FighterDataManager: ObservableObject {
                 let apiFighters = try await networkManager.fetchFighters()
                 let apiEvents = try await networkManager.fetchEvents()
                 
+                // Also fetch upcoming events
+                let upcomingApiEvents = try await networkManager.fetchUpcomingEvents()
+                
                 // Process and store the new data
                 processNewData(fighters: apiFighters, events: apiEvents)
+                
+                // Process upcoming events
+                processUpcomingEvents(events: upcomingApiEvents)
                 
                 // Save to cache
                 saveToCache()
@@ -145,6 +156,7 @@ class FighterDataManager: ObservableObject {
             if fighters.isEmpty {
                 loadSampleFighterData()
                 loadSampleFightHistory()
+                loadSampleUpcomingEvents()
             }
         }
     }
@@ -265,6 +277,70 @@ class FighterDataManager: ObservableObject {
         }
     }
     
+    // Process upcoming events data
+    private func processUpcomingEvents(events apiEvents: [APIEvent]) {
+        print("🔄 Processing \(apiEvents.count) upcoming events...")
+        
+        // Group events by event name to organize fights under each event
+        let eventsByName = Dictionary(grouping: apiEvents) { $0.eventName }
+        var newUpcomingEvents: [EventInfo] = []
+        
+        // Process each event
+        for (eventName, eventFights) in eventsByName {
+            // Get the first event to extract common data
+            if let firstEvent = eventFights.first {
+                // Convert fights to our app's format
+                var fights: [Fight] = []
+                
+                for apiEvent in eventFights {
+                    // Determine if this is a main event or title fight
+                    let isMainEvent = apiEvent.fightType?.lowercased().contains("main event") ?? false
+                    let isTitleFight = apiEvent.fightType?.lowercased().contains("title") ?? false
+                    
+                    let fight = Fight(
+                        redCorner: apiEvent.fighter1,
+                        blueCorner: apiEvent.fighter2,
+                        weightClass: apiEvent.weightClass ?? "Unknown",
+                        isMainEvent: isMainEvent,
+                        isTitleFight: isTitleFight,
+                        round: "N/A", // Upcoming fights don't have results
+                        time: "N/A"   // Upcoming fights don't have times
+                    )
+                    
+                    fights.append(fight)
+                }
+                
+                // Create the event info
+                let eventInfo = EventInfo(
+                    name: eventName,
+                    date: formatDate(firstEvent.date ?? "Unknown"),
+                    location: firstEvent.location ?? "Unknown",
+                    venue: "N/A", // Venue not available in CSV
+                    fights: fights
+                )
+                
+                newUpcomingEvents.append(eventInfo)
+                print("✅ Processed upcoming event: \(eventName) with \(fights.count) fights")
+            }
+        }
+        
+        // Sort events by date (soonest first)
+        newUpcomingEvents.sort { event1, event2 in
+            // Later date should come first in the list
+            let result = compareDates(event1.date, event2.date)
+            // If compareDates returns true, event1 is more recent than event2,
+            // but for upcoming events, we want earlier dates first
+            return !result
+        }
+        
+        // Update on main thread
+        DispatchQueue.main.async {
+            self.upcomingEvents = newUpcomingEvents
+        }
+        
+        print("✅ Finished processing \(newUpcomingEvents.count) upcoming events")
+    }
+    
     // MARK: - Cache Management
     
     private func saveToCache() {
@@ -273,10 +349,12 @@ class FighterDataManager: ObservableObject {
             let fightersData = try JSONEncoder().encode(fighters)
             let fightHistoryData = try JSONEncoder().encode(fightHistory)
             let eventDetailsData = try JSONEncoder().encode(eventDetails)
+            let upcomingEventsData = try JSONEncoder().encode(upcomingEvents)
             
             cache.set(fightersData, forKey: "cachedFighters")
             cache.set(fightHistoryData, forKey: "cachedFightHistory")
             cache.set(eventDetailsData, forKey: "cachedEventDetails")
+            cache.set(upcomingEventsData, forKey: "cachedUpcomingEvents")
             cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
             
             print("Data saved to cache")
@@ -296,6 +374,14 @@ class FighterDataManager: ObservableObject {
             let cachedFighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
             let cachedFightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
             let cachedEventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
+            
+            // Try to load cached upcoming events
+            if let upcomingEventsData = cache.data(forKey: "cachedUpcomingEvents"),
+               let cachedUpcomingEvents = try? JSONDecoder().decode([EventInfo].self, from: upcomingEventsData) {
+                DispatchQueue.main.async {
+                    self.upcomingEvents = cachedUpcomingEvents
+                }
+            }
             
             DispatchQueue.main.async {
                 self.fighters = cachedFighters
@@ -441,6 +527,28 @@ class FighterDataManager: ObservableObject {
         ]
         
         print("Loaded sample fight history for \(fightHistory.count) fighters")
+    }
+    
+    private func loadSampleUpcomingEvents() {
+        print("Loading sample upcoming events as fallback...")
+        
+        let sampleEvent = EventInfo(
+            name: "UFC Fight Night 254 London",
+            date: "March 22, 2025",
+            location: "London, UK",
+            venue: "O2 Arena",
+            fights: [
+                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
+            ]
+        )
+        
+        DispatchQueue.main.async {
+            self.upcomingEvents = [sampleEvent]
+        }
+        
+        print("Loaded 1 sample upcoming event")
     }
     
     private func formatDate(_ isoDateString: String) -> String {
@@ -739,37 +847,52 @@ struct EventCard: View {
 
 #Preview {
     VStack {
-        EventCard(event: EventInfo(
-            name: "UFC Fight Night 254 London",
-            date: "March 22, 2025",
-            location: "London, UK",
-            venue: "O2 Arena",
-            fights: [
-                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
-            ]
-        ))
-        .padding()
+        if let upcomingEvent = FighterDataManager.shared.getUpcomingEvents().first {
+            EventCard(event: upcomingEvent)
+                .padding()
+        } else {
+            // Fallback to sample data if no dynamic data is available
+            EventCard(event: EventInfo(
+                name: "UFC Fight Night 254 London",
+                date: "March 22, 2025",
+                location: "London, UK",
+                venue: "O2 Arena",
+                fights: [
+                    Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
+                ]
+            ))
+                .padding()
+        }
     }
     .background(AppTheme.background)
     .preferredColorScheme(.dark)
     .onAppear {
         // Initialize fighter data in preview
-        _ = FighterDataManager.shared
+        let dataManager = FighterDataManager.shared
+        
+        // Manually trigger data loading for preview
+        Task {
+            do {
+                try await dataManager.refreshData()
+            } catch {
+                print("⚠️ Error loading data in preview: \(error)")
+            }
+        }
         
         // Debug check to see which fighters have data
         for fighter in ["Leon Edwards", "Sean Brady", "Kevin Holland", "Gunnar Nelson"] {
-            if let fighterData = FighterDataManager.shared.getFighter(fighter) {
+            if let fighterData = dataManager.getFighter(fighter) {
                 print("✅ Found data for \(fighter): \(fighterData.record)")
             } else {
                 print("❌ No data found for \(fighter)")
             }
             
-            if let fightHistory = FighterDataManager.shared.getFightHistory(fighter) {
+            if let fightHistory = dataManager.getFightHistory(fighter) {
                 print("✅ Found \(fightHistory.count) fight history records for \(fighter)")
             } else {
                 print("❌ No fight history found for \(fighter)")

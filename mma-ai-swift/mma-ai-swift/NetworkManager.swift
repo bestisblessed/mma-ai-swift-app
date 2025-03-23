@@ -329,6 +329,168 @@ class NetworkManager {
         }
     }
     
+    func fetchUpcomingEvents() async throws -> [APIEvent] {
+        // Check server availability first
+        if !isServerAvailable {
+            isServerAvailable = await checkServerAvailability()
+            if !isServerAvailable {
+                print("⚠️ Server not available for fetching upcoming events")
+                throw NetworkError.serverUnavailable
+            }
+        }
+        
+        let endpoint = "\(baseURL)/data/upcoming"
+        print("🔄 Fetching upcoming events from: \(endpoint)")
+        
+        guard let url = URL(string: endpoint) else {
+            throw NetworkError.invalidURL
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                throw NetworkError.invalidResponse
+            }
+            
+            // Debug: Print the raw JSON response
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("📝 Raw upcoming events JSON response preview:")
+                let firstPart = String(jsonString.prefix(500))
+                print(firstPart)
+                print("...")
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                struct UpcomingEvent: Codable {
+                    let eventName: String
+                    let location: String?
+                    let date: String?
+                    let mainCard: [UpcomingFight]
+                    let prelims: [UpcomingFight]
+                    let allFights: [UpcomingFight]
+                    
+                    struct UpcomingFight: Codable {
+                        let fighter1: String
+                        let fighter2: String
+                        let weightClass: String?
+                        let fightType: String?
+                        let round: Int?
+                        let time: String?
+                        let winner: String?
+                        let method: String?
+                    }
+                }
+                
+                // Decode to custom structure first
+                let upcomingEvents = try decoder.decode([UpcomingEvent].self, from: data)
+                
+                // Map to APIEvent format
+                let apiEvents = upcomingEvents.flatMap { event -> [APIEvent] in
+                    // Create an array to hold all API events for this event
+                    var events: [APIEvent] = []
+                    
+                    // Process main card fights - Main Event should be at the bottom
+                    var mainCardFights: [APIEvent] = []
+                    var mainEventFight: APIEvent? = nil
+                    
+                    for fight in event.mainCard {
+                        // Format fighter names with spaces
+                        let formattedFighter1 = formatFighterName(fight.fighter1)
+                        let formattedFighter2 = formatFighterName(fight.fighter2)
+                        
+                        // Determine if this is the main event
+                        let isMainEvent = fight.fightType?.contains("Main Event") == true
+                        let fightType = isMainEvent ? "Main Event" : "Main Card"
+                        
+                        let apiEvent = APIEvent(
+                            eventName: event.eventName,
+                            location: event.location,
+                            date: event.date,
+                            fighter1: formattedFighter1,
+                            fighter2: formattedFighter2,
+                            fighter1ID: 0,
+                            fighter2ID: 0,
+                            weightClass: fight.weightClass,
+                            winner: fight.winner,
+                            method: fight.method,
+                            round: fight.round,
+                            time: fight.time,
+                            referee: nil,
+                            fightType: fightType
+                        )
+                        
+                        if isMainEvent {
+                            mainEventFight = apiEvent
+                        } else {
+                            mainCardFights.append(apiEvent)
+                        }
+                    }
+                    
+                    // Add main event at the end (will display at the bottom of the main card)
+                    if let mainEvent = mainEventFight {
+                        mainCardFights.append(mainEvent)
+                    }
+                    
+                    events.append(contentsOf: mainCardFights)
+                    
+                    // Process prelims fights
+                    for fight in event.prelims {
+                        // Format fighter names with spaces
+                        let formattedFighter1 = formatFighterName(fight.fighter1)
+                        let formattedFighter2 = formatFighterName(fight.fighter2)
+                        
+                        events.append(APIEvent(
+                            eventName: event.eventName,
+                            location: event.location,
+                            date: event.date,
+                            fighter1: formattedFighter1,
+                            fighter2: formattedFighter2,
+                            fighter1ID: 0,
+                            fighter2ID: 0,
+                            weightClass: fight.weightClass,
+                            winner: fight.winner,
+                            method: fight.method,
+                            round: fight.round,
+                            time: fight.time,
+                            referee: nil,
+                            fightType: "Prelims"
+                        ))
+                    }
+                    
+                    return events
+                }
+                
+                print("✅ Successfully fetched \(apiEvents.count) upcoming events")
+                return apiEvents
+            } catch {
+                print("⚠️ Upcoming events JSON decoding error: \(error)")
+                
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .keyNotFound(let key, let context):
+                        print("🔑 Key not found: \(key), context: \(context.debugDescription)")
+                    case .typeMismatch(let type, let context):
+                        print("📊 Type mismatch: expected \(type), context: \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("🚫 Value not found: expected \(type), context: \(context.debugDescription)")
+                    case .dataCorrupted(let context):
+                        print("🔥 Data corrupted: \(context.debugDescription)")
+                    @unknown default:
+                        print("⚠️ Unknown decoding error: \(decodingError)")
+                    }
+                }
+                
+                throw error
+            }
+        } catch {
+            print("⚠️ Upcoming events fetch error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
     private func getDataVersion() async throws -> DataVersion {
         let endpoint = "\(baseURL)/data/version"
         
@@ -401,6 +563,14 @@ class NetworkManager {
                 print("⚠️ Could not fetch sample event: \(error.localizedDescription)")
             }
         }
+    }
+    
+    // Helper function to add spaces to fighter names
+    private func formatFighterName(_ name: String) -> String {
+        // Use regular expression to insert spaces before uppercase letters
+        // that are not at the beginning of the name and not after a space or period
+        let pattern = "(?<=[a-z])(?=[A-Z])"
+        return name.replacingOccurrences(of: pattern, with: " ", options: .regularExpression)
     }
 }
 
@@ -642,6 +812,25 @@ struct APIEvent: Codable {
         } else {
             round = nil
         }
+    }
+
+    init(eventName: String, location: String?, date: String?, fighter1: String, fighter2: String, 
+         fighter1ID: Int, fighter2ID: Int, weightClass: String?, winner: String?, method: String?, 
+         round: Int?, time: String?, referee: String?, fightType: String?) {
+        self.eventName = eventName
+        self.location = location
+        self.date = date
+        self.fighter1 = fighter1
+        self.fighter2 = fighter2
+        self.fighter1ID = fighter1ID
+        self.fighter2ID = fighter2ID
+        self.weightClass = weightClass
+        self.winner = winner
+        self.method = method
+        self.round = round
+        self.time = time
+        self.referee = referee
+        self.fightType = fightType
     }
 }
 

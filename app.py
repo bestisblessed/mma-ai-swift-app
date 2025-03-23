@@ -370,6 +370,54 @@ def get_event_csv_columns():
         logger.error(f"Error reading event CSV columns: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/data/upcoming', methods=['GET'])
+def get_upcoming_events():
+    try:
+        # Load the upcoming events CSV file
+        upcoming_df = pd.read_csv('data/upcoming_event_data_sherdog.csv')
+        
+        # Group by event name to organize fights under each event
+        events = []
+        for event_name, group in upcoming_df.groupby('Event Name'):
+            first_row = group.iloc[0]
+            
+            # Get all fights for this event and convert to list
+            fights = []
+            for _, row in group.iterrows():
+                fight = {
+                    'fighter1': row['Fighter 1'],
+                    'fighter2': row['Fighter 2'],
+                    'weightClass': row['Weight Class'],
+                    'fightType': row['Fight Type'],
+                    'round': None,  # These are upcoming so no result yet
+                    'time': None,
+                    'winner': None,
+                    'method': None
+                }
+                fights.append(fight)
+            
+            # Split fights into main card and prelims
+            # Main card is last 5 fights (or all if less than 5)
+            total_fights = len(fights)
+            main_card_size = min(5, total_fights)
+            
+            # Create the event object with sections for main card and prelims
+            event = {
+                'eventName': event_name,
+                'location': first_row['Event Location'],
+                'date': first_row['Event Date'],
+                'mainCard': fights[-main_card_size:] if main_card_size > 0 else [],
+                'prelims': fights[:-main_card_size] if total_fights > main_card_size else [],
+                'allFights': fights  # Keep the full list as well
+            }
+            
+            events.append(event)
+            
+        return jsonify(events)
+    except Exception as e:
+        logger.error(f"Error fetching upcoming event data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)
 # if __name__ == "__main__":

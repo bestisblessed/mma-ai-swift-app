@@ -69,38 +69,120 @@ struct TabButton: View {
 }
 
 struct UpcomingEventsView: View {
+    @ObservedObject private var dataManager = FighterDataManager.shared
+    @State private var isRefreshing = false
+    
     var body: some View {
         VStack(spacing: 16) {
-            Text("Upcoming Events")
-                .font(.title3)
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack {
+                Text("Upcoming Events")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Button(action: {
+                    refreshData()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.headline)
+                        .foregroundColor(.yellow)
+                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                        .animation(isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isRefreshing)
+                }
+                .disabled(isRefreshing)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            // UFC Fight Night 254 London
-            EventCard(event: EventInfo(
-                name: "UFC Fight Night 254 London",
-                date: "March 22, 2025",
-                location: "London, UK",
-                venue: "O2 Arena",
-                fights: [
-                    // Main Card
-                    Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Jan Blachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+            if dataManager.loadingState == .loading {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
+                        .scaleEffect(1.5)
                     
-                    // Preliminary Card
-                    Fight(redCorner: "Jai Herbert", blueCorner: "Chris Padilla", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Lone'er Kavanagh", blueCorner: "Felipe dos Santos", weightClass: "Flyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Marcin Tybura", blueCorner: "Mick Parkin", weightClass: "Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Christian Leroy Duncan", blueCorner: "Andrey Pulyaev", weightClass: "Middleweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Shauna Bannon", blueCorner: "Puja Tomar", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Nathan Fletcher", blueCorner: "Caolan Loughran", weightClass: "Bantamweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Guram Kutateladze", blueCorner: "Kaue Fernandes", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
-                ]
-            ))
+                    Text("Loading upcoming events...")
+                        .foregroundColor(AppTheme.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(12)
+            } else if case let .error(errorMessage) = dataManager.loadingState {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.yellow)
+                    
+                    Text("Failed to load events")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.textPrimary)
+                    
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundColor(AppTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Try Again") {
+                        refreshData()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.yellow)
+                    .foregroundColor(.black)
+                    .cornerRadius(8)
+                    .padding(.top, 8)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(12)
+            } else if dataManager.getUpcomingEvents().isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.largeTitle)
+                        .foregroundColor(.yellow)
+                    
+                    Text("No upcoming events found")
+                        .font(.headline)
+                        .foregroundColor(AppTheme.textPrimary)
+                    
+                    Text("Check back later for upcoming UFC events")
+                        .font(.subheadline)
+                        .foregroundColor(AppTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .background(AppTheme.cardBackground)
+                .cornerRadius(12)
+            } else {
+                ForEach(dataManager.getUpcomingEvents(), id: \.name) { event in
+                    EventCard(event: event)
+                }
+                
+                Text("Data source: upcoming_event_data_sherdog.csv")
+                    .font(.caption)
+                    .foregroundColor(AppTheme.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 8)
+            }
+        }
+    }
+    
+    private func refreshData() {
+        isRefreshing = true
+        
+        Task {
+            do {
+                try await dataManager.refreshData()
+            } catch {
+                print("Error refreshing data: \(error)")
+            }
+            
+            DispatchQueue.main.async {
+                isRefreshing = false
+            }
         }
     }
 }
