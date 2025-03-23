@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 import logging
 import time
 import base64
+import pandas as pd
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -37,6 +39,100 @@ ASSISTANT_ID = "asst_QIEMCdBCqsX4al7O4Jg2Jjpx"
 @app.route('/')
 def home():
     return "Flask App is Running! API is available at /api/chat and /api/examples"
+
+# New endpoints for fighter and event data
+@app.route('/api/data/fighters', methods=['GET'])
+def get_fighters():
+    try:
+        # Read the CSV file
+        fighters_df = pd.read_csv('data/fighter_info.csv')
+        
+        # Replace string "None" or "NULL" values with proper None/null
+        fighters_df = fighters_df.replace(["None", "NULL", "NaN"], None)
+        
+        # Fill nullable columns that should never be null with appropriate values
+        # All numeric columns should have default values
+        fighters_df["Wins"] = fighters_df["Wins"].fillna(0)
+        fighters_df["Losses"] = fighters_df["Losses"].fillna(0)
+        fighters_df["Win_Decision"] = fighters_df["Win_Decision"].fillna(0)
+        fighters_df["Win_KO"] = fighters_df["Win_KO"].fillna(0)
+        fighters_df["Win_Sub"] = fighters_df["Win_Sub"].fillna(0)
+        fighters_df["Loss_Decision"] = fighters_df["Loss_Decision"].fillna(0)
+        fighters_df["Loss_KO"] = fighters_df["Loss_KO"].fillna(0)
+        fighters_df["Loss_Sub"] = fighters_df["Loss_Sub"].fillna(0)
+        fighters_df["Fighter_ID"] = fighters_df["Fighter_ID"].fillna(0)
+        
+        # Ensure integer fields are properly formatted as integers
+        int_columns = ["Wins", "Losses", "Win_Decision", "Win_KO", "Win_Sub", 
+                       "Loss_Decision", "Loss_KO", "Loss_Sub", "Fighter_ID"]
+        for col in int_columns:
+            fighters_df[col] = fighters_df[col].astype(int)
+        
+        # Convert to dictionary format with appropriate handling of null values
+        fighters_data = json.loads(fighters_df.to_json(orient='records', date_format='iso'))
+        
+        # Add timestamp for caching
+        response = {
+            'timestamp': datetime.now().isoformat(),
+            'fighters': fighters_data
+        }
+        
+        return jsonify(response)
+    except Exception as e:
+        logger.error(f"Error fetching fighter data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/data/events', methods=['GET'])
+def get_events():
+    try:
+        # Read the CSV file
+        events_df = pd.read_csv('data/event_data_sherdog.csv')
+        
+        # Replace string "None" or "NULL" values with proper None/null
+        events_df = events_df.replace(["None", "NULL", "NaN"], None)
+        
+        # Fill nullable columns that should never be null with appropriate values
+        events_df["Fighter 1 ID"] = events_df["Fighter 1 ID"].fillna(0)
+        events_df["Fighter 2 ID"] = events_df["Fighter 2 ID"].fillna(0)
+        events_df["Winning Round"] = events_df["Winning Round"].fillna(0)
+        
+        # Ensure integer fields are properly formatted as integers
+        int_columns = ["Fighter 1 ID", "Fighter 2 ID", "Winning Round"]
+        for col in int_columns:
+            events_df[col] = events_df[col].astype(int)
+        
+        # Convert to dictionary format with appropriate handling of null values
+        events_data = json.loads(events_df.to_json(orient='records', date_format='iso'))
+        
+        # Add timestamp for caching
+        response = {
+            'timestamp': datetime.now().isoformat(),
+            'events': events_data
+        }
+        
+        return jsonify(response)
+    except Exception as e:
+        logger.error(f"Error fetching event data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/data/version', methods=['GET'])
+def get_data_version():
+    try:
+        # Return the current version based on file modification times
+        fighter_data_path = 'data/fighter_info.csv'
+        event_data_path = 'data/event_data_sherdog.csv'
+        
+        fighter_timestamp = os.path.getmtime(fighter_data_path) if os.path.exists(fighter_data_path) else 0
+        event_timestamp = os.path.getmtime(event_data_path) if os.path.exists(event_data_path) else 0
+        
+        return jsonify({
+            'fighter_data_version': fighter_timestamp,
+            'event_data_version': event_timestamp,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error fetching data version: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -245,6 +341,34 @@ def get_chat_history():
     except Exception as e:
         logger.error(f"Chat history error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/debug/fighter_csv_columns', methods=['GET'])
+def get_fighter_csv_columns():
+    try:
+        fighters_df = pd.read_csv('data/fighter_info.csv')
+        column_info = {
+            'columns': list(fighters_df.columns),
+            'dtypes': {col: str(fighters_df[col].dtype) for col in fighters_df.columns},
+            'null_counts': {col: int(fighters_df[col].isnull().sum()) for col in fighters_df.columns}
+        }
+        return jsonify(column_info)
+    except Exception as e:
+        logger.error(f"Error reading fighter CSV columns: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/debug/event_csv_columns', methods=['GET'])
+def get_event_csv_columns():
+    try:
+        events_df = pd.read_csv('data/event_data_sherdog.csv')
+        column_info = {
+            'columns': list(events_df.columns),
+            'dtypes': {col: str(events_df[col].dtype) for col in events_df.columns},
+            'null_counts': {col: int(events_df[col].isnull().sum()) for col in events_df.columns}
+        }
+        return jsonify(column_info)
+    except Exception as e:
+        logger.error(f"Error reading event CSV columns: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)

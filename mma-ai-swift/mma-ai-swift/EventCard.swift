@@ -28,335 +28,290 @@ struct FightResult {
 }
 
 // Data manager for fighters
-class FighterDataManager {
+class FighterDataManager: ObservableObject {
     static let shared = FighterDataManager()
     
-    var fighters: [String: FighterStats] = [:]
-    var fightHistory: [String: [FightResult]] = [:]
-    var eventDetails: [String: EventInfo] = [:]
+    @Published private(set) var fighters: [String: FighterStats] = [:]
+    @Published private(set) var fightHistory: [String: [FightResult]] = [:]
+    @Published private(set) var eventDetails: [String: EventInfo] = [:]
+    @Published private(set) var loadingState: LoadingState = .idle
+    
+    private let networkManager = NetworkManager.shared
+    private let cache = UserDefaults.standard
+    
+    enum LoadingState: Equatable {
+        case idle
+        case loading
+        case success
+        case error(String)
+        
+        static func == (lhs: LoadingState, rhs: LoadingState) -> Bool {
+            switch (lhs, rhs) {
+            case (.idle, .idle), (.loading, .loading), (.success, .success):
+                return true
+            case (.error(let lhsError), .error(let rhsError)):
+                return lhsError == rhsError
+            default:
+                return false
+            }
+        }
+    }
     
     init() {
-        verifyDataFiles()
-        loadFighterData()
-        loadFightHistory()
+        Task {
+            await loadInitialData()
+        }
     }
     
-    // Utility function to verify CSV file paths
-    private func verifyDataFiles() {
-        print("Verifying data files...")
-        
-        // Check bundle paths
-        if let bundlePath = Bundle.main.resourcePath {
-            print("Bundle resource path: \(bundlePath)")
+    // MARK: - Public Methods
+    
+    func refreshData() async throws {
+        if loadingState == .loading {
+            return
         }
-        
-        // List contents of data directory if it exists
-        if let dataPath = Bundle.main.path(forResource: "", ofType: "", inDirectory: "data") {
-            print("Data directory found at: \(dataPath)")
+        await loadLatestData(force: true)
+    }
+    
+    func getFighter(_ name: String) -> FighterStats? {
+        fighters[name]
+    }
+    
+    func getFightHistory(_ name: String) -> [FightResult]? {
+        fightHistory[name]
+    }
+    
+    // MARK: - Private Methods
+    
+    private func loadInitialData() async {
+        // First try to load from cache
+        if loadFromCache() {
+            print("Data loaded from cache")
             
-            do {
-                let fileManager = FileManager.default
-                let items = try fileManager.contentsOfDirectory(atPath: dataPath)
-                print("Data directory contents: \(items)")
-            } catch {
-                print("Failed to list data directory contents: \(error)")
+            // Check for updates in background
+            Task {
+                await loadLatestData(force: false)
             }
         } else {
-            print("Data directory not found in bundle!")
-            
-            // Try to find CSV files directly
-            let fighterCSVPath = Bundle.main.path(forResource: "fighter_info", ofType: "csv")
-            let eventCSVPath = Bundle.main.path(forResource: "event_data_sherdog", ofType: "csv")
-            
-            print("Directly searching for CSV files:")
-            print("fighter_info.csv path: \(fighterCSVPath ?? "Not found")")
-            print("event_data_sherdog.csv path: \(eventCSVPath ?? "Not found")")
+            // No cache, load from network
+            await loadLatestData(force: true)
         }
     }
     
-    func loadFighterData() {
-        print("Loading fighter data from CSV...")
-        
-        // Try multiple paths to locate the CSV file
-        var fighterCSVPath: String? = Bundle.main.path(forResource: "fighter_info", ofType: "csv", inDirectory: "data")
-        
-        // Fallback options if the file isn't found in the data directory
-        if fighterCSVPath == nil {
-            // Try without directory specification
-            fighterCSVPath = Bundle.main.path(forResource: "fighter_info", ofType: "csv")
+    private func loadLatestData(force: Bool) async {
+        DispatchQueue.main.async {
+            self.loadingState = .loading
         }
         
-        if fighterCSVPath == nil {
-            // Try with documentation directory
-            if let docDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                let potentialPath = docDir.appendingPathComponent("fighter_info.csv").path
-                if FileManager.default.fileExists(atPath: potentialPath) {
-                    fighterCSVPath = potentialPath
-                }
-            }
-        }
-        
-        // Check if we found a valid path
-        guard let finalPath = fighterCSVPath else {
-            print("Error: fighter_info.csv not found in any expected location")
-            loadSampleFighterData() // Fallback to sample data if file not found
-            return
+        // Debug CSV columns
+        Task {
+            await networkManager.debugCSVColumns()
         }
         
         do {
-            let csvString = try String(contentsOfFile: finalPath, encoding: .utf8)
-            let rows = csvString.components(separatedBy: "\n")
-            
-            // Skip header row
-            for i in 1..<rows.count {
-                let row = rows[i]
-                if row.isEmpty { continue }
-                
-                let columns = parseCSVRow(row)
-                if columns.count >= 17 { // Ensure we have enough columns
-                    let name = columns[0]
-                    let nickname = columns[1].isEmpty || columns[1] == "-" ? nil : columns[1]
-                    let birthDate = columns[2]
-                    let nationality = columns[3].isEmpty ? "N/A" : columns[3]
-                    let hometown = columns[4].isEmpty ? "N/A" : columns[4]
-                    let team = columns[5]
-                    let weightClass = columns[6]
-                    let height = columns[7]
-                    
-                    let wins = Int(columns[8]) ?? 0
-                    let losses = Int(columns[9]) ?? 0
-                    let record = "\(wins)-\(losses)-0"
-                    
-                    // Parse win method statistics based on actual CSV column order:
-                    // Win_Decision (10), Win_KO (11), Win_Sub (12)
-                    let winsByDec = Int(columns[10]) ?? 0    // Win_Decision column
-                    let winsByKO = Int(columns[11]) ?? 0     // Win_KO column
-                    let winsBySub = Int(columns[12]) ?? 0    // Win_Sub column
-                    
-                    // Verify the totals match for debugging
-                    let totalWinMethods = winsByKO + winsBySub + winsByDec
-                    if totalWinMethods != wins {
-                        print("Win method total (\(totalWinMethods)) doesn't match win total (\(wins)) for \(name)")
-                    }
-                    
-                    fighters[name] = FighterStats(
-                        name: name,
-                        nickname: nickname,
-                        record: record,
-                        weightClass: weightClass,
-                        age: calculateAge(from: birthDate),
-                        height: height,
-                        teamAffiliation: team,
-                        nationality: nationality,
-                        hometown: hometown,
-                        birthDate: birthDate,
-                        winsByKO: winsByKO,
-                        winsBySubmission: winsBySub,
-                        winsByDecision: winsByDec
-                    )
-                }
+            // Check if update is needed
+            var needsUpdate = force
+            if !force {
+                needsUpdate = try await networkManager.checkForUpdates()
             }
             
-            print("Successfully loaded \(fighters.count) fighters from CSV")
-        } catch {
-            print("Error loading fighter_info.csv: \(error)")
-            loadSampleFighterData() // Fallback to sample data if file can't be read
-        }
-    }
-    
-    // Helper function to parse CSV row (handles quoted fields with commas)
-    private func parseCSVRow(_ row: String) -> [String] {
-        var columns: [String] = []
-        var currentField = ""
-        var inQuotes = false
-        
-        for char in row {
-            if char == "\"" {
-                inQuotes.toggle()
-            } else if char == "," && !inQuotes {
-                columns.append(currentField)
-                currentField = ""
+            if needsUpdate {
+                print("Fetching new data from server...")
+                // Fetch new data
+                let apiFighters = try await networkManager.fetchFighters()
+                let apiEvents = try await networkManager.fetchEvents()
+                
+                // Process and store the new data
+                processNewData(fighters: apiFighters, events: apiEvents)
+                
+                // Save to cache
+                saveToCache()
+                
+                DispatchQueue.main.async {
+                    self.loadingState = .success
+                }
             } else {
-                currentField.append(char)
-            }
-        }
-        columns.append(currentField) // Add the last field
-        
-        return columns
-    }
-    
-    func loadFightHistory() {
-        print("Loading fight history from CSV...")
-        
-        // Try multiple paths to locate the CSV file
-        var eventCSVPath: String? = Bundle.main.path(forResource: "event_data_sherdog", ofType: "csv", inDirectory: "data")
-        
-        // Fallback options if the file isn't found in the data directory
-        if eventCSVPath == nil {
-            // Try without directory specification
-            eventCSVPath = Bundle.main.path(forResource: "event_data_sherdog", ofType: "csv")
-        }
-        
-        if eventCSVPath == nil {
-            // Try with documentation directory
-            if let docDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                let potentialPath = docDir.appendingPathComponent("event_data_sherdog.csv").path
-                if FileManager.default.fileExists(atPath: potentialPath) {
-                    eventCSVPath = potentialPath
+                print("Data is up to date")
+                DispatchQueue.main.async {
+                    self.loadingState = .success
                 }
             }
-        }
-        
-        // Check if we found a valid path
-        guard let finalPath = eventCSVPath else {
-            print("Error: event_data_sherdog.csv not found in any expected location")
-            loadSampleFightHistory() // Fallback to sample data if file not found
-            return
-        }
-        
-        do {
-            let csvString = try String(contentsOfFile: finalPath, encoding: .utf8)
-            let rows = csvString.components(separatedBy: "\n")
-            
-            // Temporary dictionary to organize fights by fighter
-            var tempFightHistory: [String: [FightResult]] = [:]
-            var tempEventDetails: [String: EventInfo] = [:]
-            
-            // Skip header row
-            for i in 1..<rows.count {
-                let row = rows[i]
-                if row.isEmpty { continue }
-                
-                let columns = parseCSVRow(row)
-                if columns.count >= 14 { // Ensure we have enough columns
-                    let eventName = columns[0]
-                    let location = columns[1]
-                    let eventDate = formatDate(columns[2])
-                    let fighter1 = columns[3]
-                    let fighter2 = columns[4]
-                    let weightClass = columns[7]
-                    let winner = columns[8]
-                    let method = columns[9]
-                    let round = columns.count > 10 ? columns[10] : "N/A"
-                    let time = columns.count > 11 ? columns[11] : "N/A"
-                    
-                    // Create fight results for fighter 1
-                    let outcome1 = fighter1 == winner ? "Win" : "Loss"
-                    let result1 = FightResult(
-                        opponent: fighter2,
-                        outcome: outcome1,
-                        method: method,
-                        date: eventDate,
-                        event: eventName
-                    )
-                    
-                    // Create fight results for fighter 2
-                    let outcome2 = fighter2 == winner ? "Win" : "Loss"
-                    let result2 = FightResult(
-                        opponent: fighter1,
-                        outcome: outcome2,
-                        method: method,
-                        date: eventDate,
-                        event: eventName
-                    )
-                    
-                    // Add to our temp dictionary
-                    if tempFightHistory[fighter1] == nil {
-                        tempFightHistory[fighter1] = []
-                    }
-                    tempFightHistory[fighter1]?.append(result1)
-                    
-                    if tempFightHistory[fighter2] == nil {
-                        tempFightHistory[fighter2] = []
-                    }
-                    tempFightHistory[fighter2]?.append(result2)
-                    
-                    // Create or update event info
-                    if tempEventDetails[eventName] == nil {
-                        tempEventDetails[eventName] = EventInfo(
-                            name: eventName,
-                            date: eventDate,
-                            location: location,
-                            venue: "N/A", // Not available in our CSV
-                            fights: []
-                        )
-                    }
-                    
-                    // Add the fight to the event
-                    let fight = Fight(
-                        redCorner: fighter1,
-                        blueCorner: fighter2,
-                        weightClass: weightClass,
-                        isMainEvent: false, // Could be determined by event order or specific tags
-                        isTitleFight: method.lowercased().contains("title"),
-                        round: round,
-                        time: time
-                    )
-                    
-                    // Add additional fight details
-                    var fights = tempEventDetails[eventName]!.fights
-                    fights.append(fight)
-                    
-                    // Update the event with this fight
-                    tempEventDetails[eventName] = EventInfo(
-                        name: eventName,
-                        date: eventDate,
-                        location: location,
-                        venue: tempEventDetails[eventName]!.venue,
-                        fights: fights
-                    )
-                }
-            }
-            
-            // Sort fights by date (newest first) and include all fights
-            for (fighter, fights) in tempFightHistory {
-                // Sort by date (newest first)
-                let sortedFights = fights.sorted { fight1, fight2 in
-                    return compareDates(fight1.date, fight2.date)
-                }
-                
-                // Include all fights
-                fightHistory[fighter] = sortedFights
-            }
-            
-            // Store the event details
-            eventDetails = tempEventDetails
-            
-            print("Successfully loaded fight history for \(fightHistory.count) fighters from CSV")
-            print("Successfully loaded \(eventDetails.count) events from CSV")
         } catch {
-            print("Error loading event_data_sherdog.csv: \(error)")
-            loadSampleFightHistory() // Fallback to sample data if file can't be read
+            print("Error loading data: \(error)")
+            DispatchQueue.main.async {
+                self.loadingState = .error(error.localizedDescription)
+            }
+            
+            // If we have no data, load sample data as fallback
+            if fighters.isEmpty {
+                loadSampleFighterData()
+                loadSampleFightHistory()
+            }
         }
     }
     
-    // Helper function to format ISO date to readable format
-    private func formatDate(_ isoDateString: String) -> String {
-        // Handle ISO date format (2024-11-09T00:00:00+00:00)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+    private func processNewData(fighters apiFighters: [APIFighter], events apiEvents: [APIEvent]) {
+        var newFighters: [String: FighterStats] = [:]
+        var newFightHistory: [String: [FightResult]] = [:]
+        var newEventDetails: [String: EventInfo] = [:]
         
-        if let date = dateFormatter.date(from: isoDateString) {
-            let outputFormatter = DateFormatter()
-            outputFormatter.dateFormat = "MMM d, yyyy"
-            return outputFormatter.string(from: date)
+        // Process fighters
+        for apiFighter in apiFighters {
+            let record = "\(apiFighter.wins)-\(apiFighter.losses)-0"
+            
+            // Print fighter details for debugging
+            print("📊 Processing fighter: \(apiFighter.name), Wins: \(apiFighter.wins), Losses: \(apiFighter.losses), Win Methods: \(apiFighter.win_KO)/\(apiFighter.win_Sub)/\(apiFighter.win_Decision)")
+            
+            newFighters[apiFighter.name] = FighterStats(
+                name: apiFighter.name,
+                nickname: apiFighter.nickname,
+                record: record,
+                weightClass: apiFighter.weightClass ?? <#default value#>,
+                age: calculateAge(from: apiFighter.birthDate!),
+                height: apiFighter.height ?? <#default value#>,
+                teamAffiliation: apiFighter.team!,
+                nationality: apiFighter.nationality,
+                hometown: apiFighter.hometown,
+                birthDate: apiFighter.birthDate ?? <#default value#>,
+                winsByKO: apiFighter.win_KO,
+                winsBySubmission: apiFighter.win_Sub,
+                winsByDecision: apiFighter.win_Decision
+            )
         }
         
-        return isoDateString // Return original string if parsing fails
+        print("📊 Successfully processed \(newFighters.count) fighters")
+        
+        // Process events and fight history
+        var tempEventMap: [String: [Fight]] = [:]
+        
+        for apiEvent in apiEvents {
+            let formattedDate = formatDate(apiEvent.date ?? <#default value#>)
+            
+            // Create fight results for fighter 1
+            let outcome1 = apiEvent.fighter1 == apiEvent.winner ? "Win" : "Loss"
+            let result1 = FightResult(
+                opponent: apiEvent.fighter2,
+                outcome: outcome1,
+                method: apiEvent.method ?? <#default value#>,
+                date: formattedDate,
+                event: apiEvent.eventName
+            )
+            
+            // Create fight results for fighter 2
+            let outcome2 = apiEvent.fighter2 == apiEvent.winner ? "Win" : "Loss"
+            let result2 = FightResult(
+                opponent: apiEvent.fighter1,
+                outcome: outcome2,
+                method: apiEvent.method ?? <#default value#>,
+                date: formattedDate,
+                event: apiEvent.eventName
+            )
+            
+            // Add to fight history
+            if newFightHistory[apiEvent.fighter1] == nil {
+                newFightHistory[apiEvent.fighter1] = []
+            }
+            newFightHistory[apiEvent.fighter1]?.append(result1)
+            
+            if newFightHistory[apiEvent.fighter2] == nil {
+                newFightHistory[apiEvent.fighter2] = []
+            }
+            newFightHistory[apiEvent.fighter2]?.append(result2)
+            
+            // Create or update event
+            if tempEventMap[apiEvent.eventName] == nil {
+                tempEventMap[apiEvent.eventName] = []
+            }
+            
+            // Add the fight to the event
+            let fight = Fight(
+                redCorner: apiEvent.fighter1,
+                blueCorner: apiEvent.fighter2,
+                weightClass: apiEvent.weightClass ?? <#default value#>,
+                isMainEvent: false, // Could be determined by event order
+                isTitleFight: apiEvent.method?.lowercased().contains("title") ?? <#default value#>,
+                round: apiEvent.round ?? "N/A",
+                time: apiEvent.time ?? "N/A"
+            )
+            
+            tempEventMap[apiEvent.eventName]?.append(fight)
+        }
+        
+        // Create final event details
+        for (eventName, fights) in tempEventMap {
+            // Find a sample event to get location and date
+            if let sampleEvent = apiEvents.first(where: { $0.eventName == eventName }) {
+                newEventDetails[eventName] = EventInfo(
+                    name: eventName,
+                    date: formatDate(sampleEvent.date ?? <#default value#>),
+                    location: sampleEvent.location ?? <#default value#>,
+                    venue: "N/A", // Not available in our CSV
+                    fights: fights
+                )
+            }
+        }
+        
+        // Sort fights by date (newest first)
+        for (fighter, fights) in newFightHistory {
+            newFightHistory[fighter] = fights.sorted { fight1, fight2 in
+                return compareDates(fight1.date, fight2.date)
+            }
+        }
+        
+        // Update on main thread
+        DispatchQueue.main.async {
+            self.fighters = newFighters
+            self.fightHistory = newFightHistory
+            self.eventDetails = newEventDetails
+        }
     }
     
-    // Helper function to compare dates for sorting
-    private func compareDates(_ date1: String, _ date2: String) -> Bool {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        
-        guard let d1 = dateFormatter.date(from: date1),
-              let d2 = dateFormatter.date(from: date2) else {
+    // MARK: - Cache Management
+    
+    private func saveToCache() {
+        // Convert data to JSON and save to UserDefaults
+        do {
+            let fightersData = try JSONEncoder().encode(fighters)
+            let fightHistoryData = try JSONEncoder().encode(fightHistory)
+            let eventDetailsData = try JSONEncoder().encode(eventDetails)
+            
+            cache.set(fightersData, forKey: "cachedFighters")
+            cache.set(fightHistoryData, forKey: "cachedFightHistory")
+            cache.set(eventDetailsData, forKey: "cachedEventDetails")
+            cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
+            
+            print("Data saved to cache")
+        } catch {
+            print("Failed to save data to cache: \(error)")
+        }
+    }
+    
+    private func loadFromCache() -> Bool {
+        guard let fightersData = cache.data(forKey: "cachedFighters"),
+              let fightHistoryData = cache.data(forKey: "cachedFightHistory"),
+              let eventDetailsData = cache.data(forKey: "cachedEventDetails") else {
             return false
         }
         
-        return d1 > d2 // Return true if date1 is newer than date2
+        do {
+            let cachedFighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
+            let cachedFightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
+            let cachedEventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
+            
+            DispatchQueue.main.async {
+                self.fighters = cachedFighters
+                self.fightHistory = cachedFightHistory
+                self.eventDetails = cachedEventDetails
+                self.loadingState = .success
+            }
+            
+            return true
+        } catch {
+            print("Failed to load data from cache: \(error)")
+            return false
+        }
     }
+    
+    // MARK: - Helper Methods
     
     private func calculateAge(from birthDateString: String) -> Int {
         // Simple age calculation from birth date string
@@ -488,31 +443,80 @@ class FighterDataManager {
         print("Loaded sample fight history for \(fightHistory.count) fighters")
     }
     
-    func getFighter(_ name: String) -> FighterStats? {
-        return fighters[name]
-    }
-    
-    func getFightHistory(_ name: String) -> [FightResult]? {
-        return fightHistory[name]
-    }
-    
-    // Preload fighter and history data, returning the fighter if loaded successfully
-    func preloadFighterData(for name: String) -> FighterStats? {
-        print("🔄 Pre-loading data for fighter: \(name)")
+    private func formatDate(_ isoDateString: String) -> String {
+        // Handle ISO date format (2024-11-09T00:00:00+00:00)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
         
-        // First check if fighter exists
-        guard let fighter = getFighter(name) else {
-            print("❌ Fighter not found: \(name)")
-            return nil
+        if let date = dateFormatter.date(from: isoDateString) {
+            let outputFormatter = DateFormatter()
+            outputFormatter.dateFormat = "MMM d, yyyy"
+            return outputFormatter.string(from: date)
         }
         
-        // Ensure history is loaded too
-        _ = getFightHistory(name)
+        return isoDateString // Return original string if parsing fails
+    }
+    
+    private func compareDates(_ date1: String, _ date2: String) -> Bool {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d, yyyy"
         
-        // Return the fighter data
-        return fighter
+        guard let d1 = dateFormatter.date(from: date1),
+              let d2 = dateFormatter.date(from: date2) else {
+            return false
+        }
+        
+        return d1 > d2 // Return true if date1 is newer than date2
     }
 }
+
+// Make models Codable for caching
+extension FighterStats: Codable {
+    enum CodingKeys: String, CodingKey {
+        case name, nickname, record, weightClass, age, height
+        case teamAffiliation, nationality, hometown, birthDate
+        case winsByKO, winsBySubmission, winsByDecision
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        name = try container.decode(String.self, forKey: .name)
+        nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
+        record = try container.decode(String.self, forKey: .record)
+        weightClass = try container.decode(String.self, forKey: .weightClass)
+        age = try container.decode(Int.self, forKey: .age)
+        height = try container.decode(String.self, forKey: .height)
+        teamAffiliation = try container.decode(String.self, forKey: .teamAffiliation)
+        nationality = try container.decodeIfPresent(String.self, forKey: .nationality)
+        hometown = try container.decodeIfPresent(String.self, forKey: .hometown)
+        birthDate = try container.decode(String.self, forKey: .birthDate)
+        winsByKO = try container.decodeIfPresent(Int.self, forKey: .winsByKO)
+        winsBySubmission = try container.decodeIfPresent(Int.self, forKey: .winsBySubmission)
+        winsByDecision = try container.decodeIfPresent(Int.self, forKey: .winsByDecision)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(nickname, forKey: .nickname)
+        try container.encode(record, forKey: .record)
+        try container.encode(weightClass, forKey: .weightClass)
+        try container.encode(age, forKey: .age)
+        try container.encode(height, forKey: .height)
+        try container.encode(teamAffiliation, forKey: .teamAffiliation)
+        try container.encodeIfPresent(nationality, forKey: .nationality)
+        try container.encodeIfPresent(hometown, forKey: .hometown)
+        try container.encode(birthDate, forKey: .birthDate)
+        try container.encodeIfPresent(winsByKO, forKey: .winsByKO)
+        try container.encodeIfPresent(winsBySubmission, forKey: .winsBySubmission)
+        try container.encodeIfPresent(winsByDecision, forKey: .winsByDecision)
+    }
+}
+extension FightResult: Codable {}
+extension EventInfo: Codable {}
+extension Fight: Codable {}
 
 struct EventCard: View {
     let event: EventInfo
