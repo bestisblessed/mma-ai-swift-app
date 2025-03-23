@@ -20,11 +20,11 @@ class ChatViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isFirstLaunch = true
     @Published var exampleQuestions: [String] = []
-    @Published var conversationId: String?
+    @Published var threadId: String?
     
     // Store saved conversation when going to welcome screen
     private var savedMessages: [Message] = []
-    private var savedConversationId: String?
+    private var savedThreadId: String?
     
     private var apiUrl = "https://mma-ai.duckdns.org/api"
     
@@ -43,36 +43,35 @@ class ChatViewModel: ObservableObject {
         print("API endpoint updated to: \(apiUrl)")
     }
     
-    func loadConversation(id: String) {
-        print("Loading conversation with ID: \(id)")
-        
-        // Check if we're already in this conversation
-        if conversationId == id {
-            // If we're already viewing this conversation, go to welcome screen instead
-            goToWelcomeScreen()
-            return
-        }
+    func loadConversation(threadId: String) {
+        print("Loading conversation with thread ID: \(threadId)")
         
         isLoading = true
-        conversationId = id
+        self.threadId = threadId
         
-        let url = URL(string: "\(apiUrl)/conversation/\(id)")!
-        print("Loading conversation from: \(url.absoluteString)")
+        let url = URL(string: "\(apiUrl)/chat/history")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["conversation_id": threadId]
+        request.httpBody = try? JSONEncoder().encode(body)
         
         let sessionConfig = URLSessionConfiguration.default
         let sslHandler = SSLCertificateHandler()
         let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
         
-        session.dataTask(with: url) { [weak self] data, response, error in
+        session.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 
-                if let httpResponse = response as? HTTPURLResponse {
-                    print("HTTP Status Code: \(httpResponse.statusCode)")
+                if let error = error {
+                    print("Error loading conversation: \(error.localizedDescription)")
+                    return
                 }
                 
-                guard let data = data, error == nil else {
-                    print("Error loading conversation: \(error?.localizedDescription ?? "Unknown error")")
+                guard let data = data else {
+                    print("No data received")
                     return
                 }
                 
@@ -82,12 +81,31 @@ class ChatViewModel: ObservableObject {
                 }
                 
                 do {
-                    let decodedResponse = try JSONDecoder().decode(ConversationResponse.self, from: data)
-                    self?.messages = decodedResponse.messages.map { msg in
-                        Message(
-                            content: msg.content,
+                    let response = try JSONDecoder().decode(ChatHistoryResponse.self, from: data)
+                    self?.messages = response.messages.map { msg in
+                        var content = ""
+                        var imageData: Data? = nil
+                        
+                        // Handle different content types
+                        for contentItem in msg.content {
+                            switch contentItem.type {
+                            case "text":
+                                content = contentItem.content
+                            case "image":
+                                if let base64String = contentItem.content.components(separatedBy: ",").last,
+                                   let data = Data(base64Encoded: base64String) {
+                                    imageData = data
+                                }
+                            default:
+                                break
+                            }
+                        }
+                        
+                        return Message(
+                            content: content,
                             isUser: msg.role == "user",
-                            timestamp: ISO8601DateFormatter().date(from: msg.timestamp) ?? Date()
+                            timestamp: Date(),
+                            imageData: imageData
                         )
                     }
                     self?.isFirstLaunch = false
@@ -167,7 +185,7 @@ class ChatViewModel: ObservableObject {
         
         let requestBody: [String: Any] = [
             "message": content,
-            "conversation_id": conversationId as Any
+            "conversation_id": threadId as Any
         ]
         
         do {
@@ -250,7 +268,7 @@ class ChatViewModel: ObservableObject {
                             self?.messages.append(newMessage)
                         }
                         
-                        self?.conversationId = decodedResponse.conversation_id
+                        self?.threadId = decodedResponse.conversation_id
                     } catch {
                         print("Decoding error: \(error.localizedDescription)")
                         let errorMessage = Message(
@@ -283,12 +301,12 @@ class ChatViewModel: ObservableObject {
     
     func startNewChat() {
         self.messages = []
-        self.conversationId = nil
+        self.threadId = nil
         self.isFirstLaunch = false
         
         // Clear saved conversation
         self.savedMessages = []
-        self.savedConversationId = nil
+        self.savedThreadId = nil
         
         print("Started new chat")
     }
@@ -297,12 +315,12 @@ class ChatViewModel: ObservableObject {
         // Save the current conversation
         if !messages.isEmpty {
             self.savedMessages = self.messages
-            self.savedConversationId = self.conversationId
+            self.savedThreadId = self.threadId
         }
         
         // Clear the current view but don't delete the conversation
         self.messages = []
-        self.conversationId = nil
+        self.threadId = nil
         self.isFirstLaunch = true
         
         print("Returned to welcome screen (conversation saved)")
@@ -313,8 +331,10 @@ class ChatViewModel: ObservableObject {
     func restoreConversation() -> Bool {
         if !savedMessages.isEmpty {
             self.messages = self.savedMessages
-            self.conversationId = self.savedConversationId
-            print("Restored conversation with \(savedMessages.count) messages")
+            if let threadId = self.savedThreadId {
+                self.threadId = threadId
+                print("Restored conversation with \(savedMessages.count) messages, thread ID: \(threadId)")
+            }
             return true
         } else {
             print("No saved conversation to restore")
@@ -391,4 +411,20 @@ struct Annotation: Decodable {
     let type: String
     let text: String
     let file_id: String
+}
+
+// Response types for chat history
+struct ChatHistoryResponse: Codable {
+    let messages: [ChatMessage]
+    let conversation_id: String
+}
+
+struct ChatMessage: Codable {
+    let role: String
+    let content: [ContentItem]
+}
+
+struct ContentItem: Codable {
+    let type: String
+    let content: String
 }

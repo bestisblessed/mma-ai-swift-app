@@ -437,6 +437,14 @@ struct MessageBubble: View {
                                 .offset(x: isAnimated ? 0 : -50)
                                 .opacity(isAnimated ? 1.0 : 0.0)
                         }
+                        .contextMenu {
+                            Button(action: {
+                                shareImage(uiImage)
+                            }) {
+                                Text("Share")
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                        }
                     } else {
                         // Fallback if image data is invalid
                         Text("Unable to display image")
@@ -489,6 +497,22 @@ struct MessageBubble: View {
     }
 }
 
+func shareImage(_ image: UIImage) {
+    let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+    
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+       let rootViewController = windowScene.windows.first?.rootViewController {
+        
+        // Find the topmost view controller
+        var topController = rootViewController
+        while let presentedViewController = topController.presentedViewController {
+            topController = presentedViewController
+        }
+        
+        // Present the activity view controller
+        topController.present(activityVC, animated: true)
+    }
+}
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

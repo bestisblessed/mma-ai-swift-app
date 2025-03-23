@@ -153,6 +153,50 @@ def get_examples():
     ]
     return jsonify({"examples": examples})
 
+@app.route('/api/chat/history', methods=['POST'])
+def get_chat_history():
+    try:
+        data = request.json
+        thread_id = data.get('conversation_id')
+        
+        if not thread_id:
+            return jsonify({"error": "No thread ID provided"}), 400
+            
+        # Fetch messages from the thread
+        messages = client.beta.threads.messages.list(thread_id=thread_id)
+        
+        # Format messages for response
+        formatted_messages = []
+        for msg in messages.data:
+            response_data = []
+            if msg.role == "assistant":
+                for content_item in msg.content:
+                    if content_item.type == "text":
+                        response_data.append({
+                            "type": "text",
+                            "content": content_item.text.value
+                        })
+                    elif content_item.type == "image_file":
+                        image_file = content_item.image_file.file_id
+                        image_data = client.files.content(image_file)
+                        encoded_image = base64.b64encode(image_data.content).decode('utf-8')
+                        response_data.append({
+                            "type": "image",
+                            "content": f"data:image/png;base64,{encoded_image}"
+                        })
+            formatted_messages.append({
+                "role": msg.role,
+                "content": response_data
+            })
+            
+        return jsonify({
+            "messages": formatted_messages,
+            "conversation_id": thread_id
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)
 # if __name__ == "__main__":

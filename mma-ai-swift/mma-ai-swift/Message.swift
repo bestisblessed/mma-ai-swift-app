@@ -23,6 +23,16 @@ struct Message: Identifiable, Codable {
         self.isLoading = isLoading
     }
     
+    // Add a new initializer that accepts an id parameter
+    init(id: String, content: String, isUser: Bool, timestamp: Date, imageData: Data? = nil, isLoading: Bool = false) {
+        self.id = UUID()
+        self.content = content
+        self.isUser = isUser
+        self.timestamp = timestamp
+        self.imageData = imageData
+        self.isLoading = isLoading
+    }
+    
     var formattedTime: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short

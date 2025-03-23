@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct Conversation: Identifiable, Codable {
-    var id: String
+    let id: String  // This will now store the Assistant API thread ID
     var title: String
     var previewText: String
     var timestamp: Date
     var messages: [Message]?
+    var threadId: String  // Add this to store the Assistant API thread ID
 }
 
 class ConversationHistoryManager: ObservableObject {
@@ -29,9 +30,9 @@ class ConversationHistoryManager: ObservableObject {
         }
     }
     
-    func addConversation(title: String, previewText: String, id: String, messages: [Message]? = nil) {
-        // Check if conversation with this ID already exists
-        if let index = conversations.firstIndex(where: { $0.id == id }) {
+    func addConversation(title: String, previewText: String, threadId: String, messages: [Message]? = nil) {
+        // Check if conversation with this thread ID already exists
+        if let index = conversations.firstIndex(where: { $0.threadId == threadId }) {
             // Update existing conversation
             conversations[index].title = title
             conversations[index].previewText = previewText
@@ -40,15 +41,16 @@ class ConversationHistoryManager: ObservableObject {
         } else {
             // Add new conversation
             let newConversation = Conversation(
-                id: id,
+                id: UUID().uuidString,
                 title: title,
                 previewText: previewText,
                 timestamp: Date(),
-                messages: messages
+                messages: messages,
+                threadId: threadId
             )
             conversations.insert(newConversation, at: 0)
         }
-
+        
         // Sort by most recent
         conversations.sort { $0.timestamp > $1.timestamp }
         
@@ -77,7 +79,7 @@ struct ConversationHistoryView: View {
                 } else {
                     ForEach(historyManager.conversations) { conversation in
                         Button(action: {
-                            chatViewModel.loadConversation(id: conversation.id)
+                            chatViewModel.loadConversation(threadId: conversation.threadId)
                             chatViewModel.isFirstLaunch = false
                             presentationMode.wrappedValue.dismiss()
                         }) {
@@ -137,19 +139,19 @@ struct SaveConversationView: View {
                     // Get first user message for the preview if available
                     let previewText = chatViewModel.messages.first(where: { $0.isUser })?.content ?? "Conversation"
                     
-                    // Generate a unique ID if none exists
-                    let id = chatViewModel.conversationId ?? UUID().uuidString
+                    // Use the thread ID
+                    guard let threadId = chatViewModel.threadId else {
+                        print("Error: No thread ID available")
+                        return
+                    }
                     
                     // Save to history
                     historyManager.addConversation(
                         title: title.isEmpty ? String(previewText.prefix(30)) : title,
                         previewText: previewText,
-                        id: id,
+                        threadId: threadId,
                         messages: chatViewModel.messages
                     )
-                    
-                    // Update the current conversation ID
-                    chatViewModel.conversationId = id
                     
                     presentationMode.wrappedValue.dismiss()
                 }

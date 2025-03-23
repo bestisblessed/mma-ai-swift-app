@@ -98,6 +98,7 @@
 				738B03142D82DE4B0065813D /* FighterCard.swift */,
 				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
 				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
+				73C1B5412D8FE78700E9D50D /* FullScreenImageView.swift */,
 				738B030F2D82DD5B0065813D /* LaunchScreen.swift */,
 				738B03102D82DD5B0065813D /* LoadingView.swift */,
 				731D8CC52D8AC1B4004F58E6 /* Message.swift */,
@@ -105,7 +106,6 @@
 				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
 				7345C3062D82DB4F00839854 /* Theme.swift */,
 				8A1234561234567800000023 /* Assets.xcassets */,
-				73C1B5412D8FE78700E9D50D /* FullScreenImageView.swift */,
 			);
 			path = "mma-ai-swift";
 			sourceTree = "<group>";
