@@ -389,58 +389,20 @@ class NetworkManager {
                 
                 // Map to APIEvent format
                 let apiEvents = upcomingEvents.flatMap { event -> [APIEvent] in
-                    // Create an array to hold all API events for this event
                     var events: [APIEvent] = []
                     
-                    // Process main card fights - Main Event should be at the bottom
-                    var mainCardFights: [APIEvent] = []
-                    var mainEventFight: APIEvent? = nil
-                    
-                    for fight in event.mainCard {
+                    // Process all fights in order
+                    for fight in event.allFights {
                         // Format fighter names with spaces
                         let formattedFighter1 = formatFighterName(fight.fighter1)
                         let formattedFighter2 = formatFighterName(fight.fighter2)
                         
-                        // Determine if this is the main event
-                        let isMainEvent = fight.fightType?.contains("Main Event") == true
-                        let fightType = isMainEvent ? "Main Event" : "Main Card"
-                        
-                        let apiEvent = APIEvent(
-                            eventName: event.eventName,
-                            location: event.location,
-                            date: event.date,
-                            fighter1: formattedFighter1,
-                            fighter2: formattedFighter2,
-                            fighter1ID: 0,
-                            fighter2ID: 0,
-                            weightClass: fight.weightClass,
-                            winner: fight.winner,
-                            method: fight.method,
-                            round: fight.round,
-                            time: fight.time,
-                            referee: nil,
-                            fightType: fightType
-                        )
-                        
-                        if isMainEvent {
-                            mainEventFight = apiEvent
+                        // Determine fight type from the CSV data
+                        let fightType = if fight.fightType?.contains("Main Event") == true {
+                            "Main Event"
                         } else {
-                            mainCardFights.append(apiEvent)
+                            "Main Card"  // All other fights go to main card
                         }
-                    }
-                    
-                    // Add main event at the end (will display at the bottom of the main card)
-                    if let mainEvent = mainEventFight {
-                        mainCardFights.append(mainEvent)
-                    }
-                    
-                    events.append(contentsOf: mainCardFights)
-                    
-                    // Process prelims fights
-                    for fight in event.prelims {
-                        // Format fighter names with spaces
-                        let formattedFighter1 = formatFighterName(fight.fighter1)
-                        let formattedFighter2 = formatFighterName(fight.fighter2)
                         
                         events.append(APIEvent(
                             eventName: event.eventName,
@@ -456,7 +418,7 @@ class NetworkManager {
                             round: fight.round,
                             time: fight.time,
                             referee: nil,
-                            fightType: "Prelims"
+                            fightType: fightType
                         ))
                     }
                     
