@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "boxing.png",
+      "filename" : "boxing_no_alpha.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
