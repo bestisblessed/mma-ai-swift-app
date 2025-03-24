@@ -168,11 +168,11 @@ struct UpcomingEventsView: View {
                     EventCard(event: event)
                 }
                 
-                Text("Data source: upcoming_event_data_sherdog.csv")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 8)
+//                Text("Data source: upcoming_event_data_sherdog.csv")
+//                    .font(.caption)
+//                    .foregroundColor(AppTheme.textSecondary)
+//                    .frame(maxWidth: .infinity, alignment: .center)
+//                    .padding(.top, 8)
             }
         }
         .onChange(of: scenePhase) { newPhase in
