@@ -14,7 +14,7 @@ class SettingsManager: ObservableObject {
     }
     
     init() {
-        self.useDarkMode = UserDefaults.standard.bool(forKey: "useDarkMode")
+        self.useDarkMode = UserDefaults.standard.object(forKey: "useDarkMode") as? Bool ?? true
         self.apiEndpoint = UserDefaults.standard.string(forKey: "apiEndpoint") ?? "https://mma-ai.duckdns.org/api"
     }
 }
