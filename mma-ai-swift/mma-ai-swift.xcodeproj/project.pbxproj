@@ -12,6 +12,7 @@
 		733DFFE72D8AECA1004EC7B8 /* FighterProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */; };
 		7345C3072D82DB4F00839854 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7345C3062D82DB4F00839854 /* Theme.swift */; };
 		736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736B5A772D82E22A008D7A55 /* DashboardView.swift */; };
+		736CEE982D9289680007C978 /* FighterChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736CEE972D9289680007C978 /* FighterChartView.swift */; };
 		7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7378521A2D8AFB6400023875 /* FighterDashboardView.swift */; };
 		737E315E2D908A53009EBF34 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737E315D2D908A53009EBF34 /* NetworkManager.swift */; };
 		738B03112D82DD5B0065813D /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B030F2D82DD5B0065813D /* LaunchScreen.swift */; };
@@ -34,6 +35,7 @@
 		733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterProfileView.swift; sourceTree = "<group>"; };
 		7345C3062D82DB4F00839854 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		736B5A772D82E22A008D7A55 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		736CEE972D9289680007C978 /* FighterChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterChartView.swift; sourceTree = "<group>"; };
 		7378521A2D8AFB6400023875 /* FighterDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterDashboardView.swift; sourceTree = "<group>"; };
 		737E315D2D908A53009EBF34 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
 		738B030F2D82DD5B0065813D /* LaunchScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreen.swift; sourceTree = "<group>"; };
@@ -83,6 +85,7 @@
 				738B03132D82DE4B0065813D /* EventCard.swift */,
 				73130C472D8AC8B6004A6AD5 /* ExportView.swift */,
 				738B03142D82DE4B0065813D /* FighterCard.swift */,
+				736CEE972D9289680007C978 /* FighterChartView.swift */,
 				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
 				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
 				73C1B5412D8FE78700E9D50D /* FullScreenImageView.swift */,
@@ -178,6 +181,7 @@
 				737E315E2D908A53009EBF34 /* NetworkManager.swift in Sources */,
 				8A1234561234567800000003 /* ContentView.swift in Sources */,
 				7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */,
+				736CEE982D9289680007C978 /* FighterChartView.swift in Sources */,
 				738B03162D82DE4B0065813D /* EventCard.swift in Sources */,
 				73C1B5422D8FE78700E9D50D /* FullScreenImageView.swift in Sources */,
 				738B03172D82DE4B0065813D /* FighterCard.swift in Sources */,

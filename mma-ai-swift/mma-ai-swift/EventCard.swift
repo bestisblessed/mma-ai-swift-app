@@ -4,6 +4,8 @@ import Foundation
 struct Fight {
     let redCorner: String
     let blueCorner: String
+    let redCornerID: Int
+    let blueCornerID: Int
     let weightClass: String
     let isMainEvent: Bool
     let isTitleFight: Bool
@@ -30,6 +32,7 @@ struct EventInfo {
 
 struct FightResult {
     let opponent: String
+    let opponentID: Int
     let outcome: String // Win or Loss
     let method: String  // e.g., "Decision (Unanimous)", "KO (Punch)"
     let date: String
@@ -184,22 +187,28 @@ class FighterDataManager: ObservableObject {
             let record = "\(apiFighter.wins)-\(apiFighter.losses)-0"
             
             // Print fighter details for debugging
-            print("📊 Processing fighter: \(apiFighter.name), Wins: \(apiFighter.wins), Losses: \(apiFighter.losses), Win Methods: \(apiFighter.win_KO)/\(apiFighter.win_Sub)/\(apiFighter.win_Decision)")
+            print("📊 Processing fighter: \(apiFighter.name), Wins: \(apiFighter.wins), Losses: \(apiFighter.losses), Win Methods: \(apiFighter.win_KO)/\(apiFighter.win_Sub)/\(apiFighter.win_Decision), Loss Methods: \(apiFighter.loss_KO)/\(apiFighter.loss_Sub)/\(apiFighter.loss_Decision)")
             
             newFighters[apiFighter.name] = FighterStats(
                 name: apiFighter.name,
                 nickname: apiFighter.nickname,
                 record: record,
                 weightClass: apiFighter.weightClass ?? "Unknown",
-                age: calculateAge(from: apiFighter.birthDate!),
+                age: calculateAge(from: apiFighter.birthDate ?? "Unknown"),
                 height: apiFighter.height ?? "N/A",
-                teamAffiliation: apiFighter.team!,
+                reach: apiFighter.reach ?? "N/A",
+                stance: apiFighter.stance ?? "N/A",
+                teamAffiliation: apiFighter.team ?? "Unknown",
                 nationality: apiFighter.nationality,
                 hometown: apiFighter.hometown,
-                birthDate: apiFighter.birthDate ?? "Unknown",
+                birthDate: apiFighter.birthDate ?? "",
+                fighterID: apiFighter.fighterID,
                 winsByKO: apiFighter.win_KO,
                 winsBySubmission: apiFighter.win_Sub,
-                winsByDecision: apiFighter.win_Decision
+                winsByDecision: apiFighter.win_Decision,
+                lossesByKO: apiFighter.loss_KO,
+                lossesBySubmission: apiFighter.loss_Sub,
+                lossesByDecision: apiFighter.loss_Decision
             )
         }
         
@@ -215,6 +224,7 @@ class FighterDataManager: ObservableObject {
             let outcome1 = apiEvent.fighter1 == apiEvent.winner ? "Win" : "Loss"
             let result1 = FightResult(
                 opponent: apiEvent.fighter2,
+                opponentID: apiEvent.fighter2ID,
                 outcome: outcome1,
                 method: apiEvent.method ?? "Unknown",
                 date: formattedDate,
@@ -225,6 +235,7 @@ class FighterDataManager: ObservableObject {
             let outcome2 = apiEvent.fighter2 == apiEvent.winner ? "Win" : "Loss"
             let result2 = FightResult(
                 opponent: apiEvent.fighter1,
+                opponentID: apiEvent.fighter1ID,
                 outcome: outcome2,
                 method: apiEvent.method ?? "Unknown",
                 date: formattedDate,
@@ -251,6 +262,8 @@ class FighterDataManager: ObservableObject {
             let fight = Fight(
                 redCorner: apiEvent.fighter1,
                 blueCorner: apiEvent.fighter2,
+                redCornerID: apiEvent.fighter1ID,
+                blueCornerID: apiEvent.fighter2ID,
                 weightClass: apiEvent.weightClass ?? "Unknown",
                 isMainEvent: false, // Could be determined by event order
                 isTitleFight: apiEvent.method?.lowercased().contains("title") ?? false,
@@ -313,6 +326,8 @@ class FighterDataManager: ObservableObject {
                     let fight = Fight(
                         redCorner: apiEvent.fighter1,
                         blueCorner: apiEvent.fighter2,
+                        redCornerID: apiEvent.fighter1ID,
+                        blueCornerID: apiEvent.fighter2ID,
                         weightClass: apiEvent.weightClass ?? "Unknown",
                         isMainEvent: isMainEvent,
                         isTitleFight: isTitleFight,
@@ -381,6 +396,8 @@ class FighterDataManager: ObservableObject {
                     let fight = Fight(
                         redCorner: apiEvent.fighter1,
                         blueCorner: apiEvent.fighter2,
+                        redCornerID: apiEvent.fighter1ID,
+                        blueCornerID: apiEvent.fighter2ID,
                         weightClass: apiEvent.weightClass ?? "Unknown",
                         isMainEvent: isMainEvent,
                         isTitleFight: isTitleFight,
@@ -503,13 +520,19 @@ class FighterDataManager: ObservableObject {
             weightClass: "Welterweight",
             age: 33,
             height: "6'0\"",
+            reach: "N/A",
+            stance: "Southpaw",
             teamAffiliation: "N/A",
             nationality: nil,
             hometown: nil,
             birthDate: "",
+            fighterID: 0,
             winsByKO: nil,
             winsBySubmission: nil,
-            winsByDecision: nil
+            winsByDecision: nil,
+            lossesByKO: nil,
+            lossesBySubmission: nil,
+            lossesByDecision: nil
         )
         
         
@@ -560,6 +583,7 @@ class FighterDataManager: ObservableObject {
         fightHistory["Leon Edwards"] = [
             FightResult(
                 opponent: "Colby Covington",
+                opponentID: 2,
                 outcome: "Win",
                 method: "Decision (Unanimous)",
                 date: "Dec 16, 2023",
@@ -567,6 +591,7 @@ class FighterDataManager: ObservableObject {
             ),
             FightResult(
                 opponent: "Kamaru Usman",
+                opponentID: 1,
                 outcome: "Win",
                 method: "Decision (Majority)",
                 date: "Mar 18, 2023",
@@ -574,6 +599,7 @@ class FighterDataManager: ObservableObject {
             ),
             FightResult(
                 opponent: "Kamaru Usman",
+                opponentID: 1,
                 outcome: "Win",
                 method: "KO (Head Kick)",
                 date: "Aug 20, 2022",
@@ -584,6 +610,7 @@ class FighterDataManager: ObservableObject {
         fightHistory["Sean Brady"] = [
             FightResult(
                 opponent: "Gilbert Burns",
+                opponentID: 4,
                 outcome: "Win",
                 method: "Decision (Unanimous)",
                 date: "Sep 7, 2024",
@@ -591,6 +618,7 @@ class FighterDataManager: ObservableObject {
             ),
             FightResult(
                 opponent: "Kelvin Gastelum",
+                opponentID: 3,
                 outcome: "Win",
                 method: "Submission (Arm-Triangle Choke)",
                 date: "Dec 2, 2023",
@@ -598,6 +626,7 @@ class FighterDataManager: ObservableObject {
             ),
             FightResult(
                 opponent: "Belal Muhammad",
+                opponentID: 5,
                 outcome: "Loss",
                 method: "TKO (Punches)",
                 date: "Oct 22, 2022",
@@ -617,9 +646,9 @@ class FighterDataManager: ObservableObject {
             location: "London, UK",
             venue: "O2 Arena",
             fights: [
-                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
+                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", redCornerID: 1, blueCornerID: 2, weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", redCornerID: 6, blueCornerID: 7, weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", redCornerID: 8, blueCornerID: 9, weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
             ]
         )
         
@@ -663,6 +692,9 @@ extension FighterStats: Codable {
         case name, nickname, record, weightClass, age, height
         case teamAffiliation, nationality, hometown, birthDate
         case winsByKO, winsBySubmission, winsByDecision
+        case reach, stance
+        case fighterID
+        case lossesByKO, lossesBySubmission, lossesByDecision
     }
     
     init(from decoder: Decoder) throws {
@@ -674,13 +706,19 @@ extension FighterStats: Codable {
         weightClass = try container.decode(String.self, forKey: .weightClass)
         age = try container.decode(Int.self, forKey: .age)
         height = try container.decode(String.self, forKey: .height)
+        reach = try container.decodeIfPresent(String.self, forKey: .reach)
+        stance = try container.decodeIfPresent(String.self, forKey: .stance)
         teamAffiliation = try container.decode(String.self, forKey: .teamAffiliation)
         nationality = try container.decodeIfPresent(String.self, forKey: .nationality)
         hometown = try container.decodeIfPresent(String.self, forKey: .hometown)
         birthDate = try container.decode(String.self, forKey: .birthDate)
+        fighterID = try container.decodeIfPresent(Int.self, forKey: .fighterID) ?? 0
         winsByKO = try container.decodeIfPresent(Int.self, forKey: .winsByKO)
         winsBySubmission = try container.decodeIfPresent(Int.self, forKey: .winsBySubmission)
         winsByDecision = try container.decodeIfPresent(Int.self, forKey: .winsByDecision)
+        lossesByKO = try container.decodeIfPresent(Int.self, forKey: .lossesByKO)
+        lossesBySubmission = try container.decodeIfPresent(Int.self, forKey: .lossesBySubmission)
+        lossesByDecision = try container.decodeIfPresent(Int.self, forKey: .lossesByDecision)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -692,13 +730,19 @@ extension FighterStats: Codable {
         try container.encode(weightClass, forKey: .weightClass)
         try container.encode(age, forKey: .age)
         try container.encode(height, forKey: .height)
+        try container.encodeIfPresent(reach, forKey: .reach)
+        try container.encodeIfPresent(stance, forKey: .stance)
         try container.encode(teamAffiliation, forKey: .teamAffiliation)
         try container.encodeIfPresent(nationality, forKey: .nationality)
         try container.encodeIfPresent(hometown, forKey: .hometown)
         try container.encode(birthDate, forKey: .birthDate)
+        try container.encode(fighterID, forKey: .fighterID)
         try container.encodeIfPresent(winsByKO, forKey: .winsByKO)
         try container.encodeIfPresent(winsBySubmission, forKey: .winsBySubmission)
         try container.encodeIfPresent(winsByDecision, forKey: .winsByDecision)
+        try container.encodeIfPresent(lossesByKO, forKey: .lossesByKO)
+        try container.encodeIfPresent(lossesBySubmission, forKey: .lossesBySubmission)
+        try container.encodeIfPresent(lossesByDecision, forKey: .lossesByDecision)
     }
 }
 extension FightResult: Codable {}
@@ -937,12 +981,12 @@ struct EventCard: View {
                 location: "London, UK",
                 venue: "O2 Arena",
                 fights: [
-                    Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                    Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
+                    Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", redCornerID: 1, blueCornerID: 2, weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", redCornerID: 6, blueCornerID: 7, weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", redCornerID: 8, blueCornerID: 9, weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Molly McCann", blueCorner: "Alexia Thainara", redCornerID: 10, blueCornerID: 11, weightClass: "Women's Strawweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", redCornerID: 12, blueCornerID: 13, weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
+                    Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", redCornerID: 14, blueCornerID: 15, weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
                 ]
             ))
                 .padding()

@@ -1,19 +1,24 @@
 import SwiftUI
 
-struct AppTheme {
+class AppTheme {
     // Main colors
-    static let primary = Color(red: 0.8, green: 0.0, blue: 0.0)  // UFC Red
-    static let secondary = Color(red: 0.1, green: 0.1, blue: 0.2)  // Dark Blue/Black
-    static let accent = Color(red: 0.9, green: 0.7, blue: 0.0)  // Gold
-    
-    // Background colors
-    static let background = Color(red: 0.05, green: 0.05, blue: 0.1)  // Near Black
-    static let cardBackground = Color(red: 0.15, green: 0.15, blue: 0.2)  // Dark Gray
+    static let primary = Color("PrimaryColor", default: Color.red)
+    static let accent = Color("AccentColor", default: Color.yellow)
+    static let background = Color("BackgroundColor", default: Color.black)
+    static let cardBackground = Color("CardBackgroundColor", default: Color(UIColor.systemGray6))
     
     // Text colors
-    static let textPrimary = Color.white
-    static let textSecondary = Color(white: 0.8)
-    static let textMuted = Color(white: 0.6)
+    static let textPrimary = Color("TextPrimaryColor", default: Color.white)
+    static let textSecondary = Color("TextSecondaryColor", default: Color.gray)
+    static let textMuted = Color.gray // Add the missing text muted color
+    
+    // Chart colors
+    static let koColor = Color("KOColor", default: Color.red)
+    static let submissionColor = Color("SubmissionColor", default: Color.blue)
+    static let decisionColor = Color("DecisionColor", default: Color.green)
+    
+    // Background colors
+    static let secondary = Color(red: 0.1, green: 0.1, blue: 0.2)  // Dark Blue/Black
     
     // Message bubbles
     static let userBubble = primary
@@ -41,6 +46,15 @@ struct AppTheme {
         startPoint: .top,
         endPoint: .bottom
     )
+    
+    // Static accessor for ColorScheme
+    static var colorScheme: ColorScheme? = nil // Initialize with nil to avoid binding issue
+}
+
+extension Color {
+    init(_ name: String, default defaultColor: Color) {
+        self = Color(UIColor(named: name) ?? UIColor(defaultColor))
+    }
 }
 
 // Custom button style
@@ -115,6 +129,15 @@ struct ThinkingView: View {
             withAnimation(Animation.linear(duration: 1.5).repeatForever(autoreverses: false)) {
                 animationOffset = animationOffset.isNaN ? 0 : 2 * .pi
             }
+        }
+    }
+}
+
+// Extension to handle ColorScheme for preview providers
+extension AppTheme {
+    static func preview(_ colorScheme: ColorScheme? = nil) -> some View {
+        EmptyView().onAppear {
+            AppTheme.colorScheme = colorScheme
         }
     }
 } 

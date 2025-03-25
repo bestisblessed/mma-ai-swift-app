@@ -1,64 +1,87 @@
 
-Let me examine your Swift project structure first.
+# MMA AI Swift App Components
 
-Ran tool
+## Swift Files:
 
+### ContentView.swift
+- Main interface controller showing chat, dashboard, and settings
+- Manages navigation and tab selection between different views
+- Handles authentication state and user session
 
-Ran tool
+### DashboardView.swift
+- Displays fighter and event statistics in a dashboard format
+- Shows visualization of fighter data and upcoming events
+- Allows filtering and search of fighter/event information
 
+### ChatViewModel.swift
+- Manages chat interactions with the Flask backend
+- Handles message processing, sending/receiving, and storage
+- Manages conversation history and message threading
 
-Ran tool
+### NetworkManager.swift
+- Handles all API requests to the Flask backend
+- Processes fighter and event data from CSV files
+- Manages caching of data and API responses
 
-# Swift App Files
-- **MMAApp.swift**: 
-  - Main app entry point and configuration
-  - Sets up navigation and app structure
+### EventCard.swift
+- Displays detailed information about MMA events
+- Shows fight cards with matchups and results
+- Visualizes event statistics and fight outcomes
 
-- **ContentView.swift**: 
-  - Main container view with tab navigation
-  - Manages primary user interface and flow
+### FighterProfileView.swift
+- Shows detailed fighter statistics and information
+- Displays win/loss record and fight history
+- Visualizes fighter performance metrics
 
-- **ChatViewModel.swift**: 
-  - Handles AI chat conversation logic
-  - Manages message state and API communication 
+### FighterDashboardView.swift
+- Comprehensive dashboard for fighter statistics
+- Generates visualizations of fighter performance
+- Allows comparison between different fighters
 
-- **NetworkManager.swift**: 
-  - Implements API requests to the Flask backend
-  - Handles data fetching and error management
+### Message.swift
+- Defines data structures for chat messages
+- Handles different message types (text, images)
+- Manages message metadata and formatting
 
-- **DashboardView.swift**: 
-  - Displays main statistics and MMA information
-  - Provides navigation to detailed content
+### ConversationHistoryView.swift
+- Displays history of chat conversations
+- Allows navigation through past interactions
+- Manages conversation deletion and persistence
 
-- **EventCard.swift**: 
-  - Renders MMA event cards with fight details
-  - Manages event data visualization
+### SettingsView.swift
+- Provides app configuration options
+- Manages user preferences and appearance settings
+- Controls API connection settings
 
-- **FighterDashboardView.swift**: 
-  - Fighter search and browse functionality
-  - Displays fighter statistics and metrics
+### ExportView.swift
+- Handles exporting of data and conversations
+- Provides sharing options for statistics and insights
+- Manages file format selection for exports
 
-- **FighterProfileView.swift**: 
-  - Shows detailed fighter information
-  - Displays fight history and statistics
+### MMAApp.swift
+- Main app entry point and lifecycle controller
+- Initializes core services and view hierarchy
+- Manages global app state and dependencies
 
-- **Message.swift**: 
-  - Data model for chat messages
-  - Handles different content types (text/images)
+### FighterCard.swift
+- Displays condensed fighter information in card format
+- Shows key stats and record information
+- Provides navigation to detailed fighter profile
 
-- **ConversationHistoryView.swift**: 
-  - Displays chat history interface
-  - Manages conversation state and navigation
+### AppTheme.swift
+- Defines app-wide styling and theming
+- Manages color schemes and visual appearance
+- Provides consistent UI elements across the app
 
-# Flask Server (app.py)
-- **API Endpoints**: 
-  - Provides fighter and event data via JSON
-  - Handles chat via OpenAI Assistant API
+### LoadingView.swift
+- Shows loading indicators during async operations
+- Provides feedback during data retrieval
+- Handles loading state transitions
 
-- **Data Management**: 
-  - Reads and processes CSV data for fighters/events
-  - Formats response data for Swift app consumption
+## Flask Server (app.py):
 
-- **Chat Functionality**: 
-  - Manages conversation threads with OpenAI
-  - Processes images and text responses
+### Server Components:
+- Provides RESTful API endpoints for fighter and event data from CSV files
+- Manages chat functionality using OpenAI Assistant API for MMA analysis
+- Handles conversation history, threading, and image generation
+- Serves upcoming event data and statistics for the Swift app

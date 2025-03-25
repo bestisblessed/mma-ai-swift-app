@@ -6,6 +6,8 @@ class NetworkManager {
     private let baseURL = "https://mma-ai.duckdns.org/api"
     private let cache = UserDefaults.standard
     var isServerAvailable = false
+    private var fighterIdLookup: [String: Int] = [:]
+    private var fighterNameLookup: [Int: String] = [:]
     
     private init() {
         print("🌐 NetworkManager initialized with base URL: \(baseURL)")
@@ -172,6 +174,9 @@ class NetworkManager {
                     cache.set(version.fighter_data_version, forKey: "lastFighterVersion")
                 }
                 
+                // Build lookup tables for fighter IDs
+                buildFighterLookups(fighters: fighterResponse.fighters)
+                
                 return fighterResponse.fighters
             } catch {
                 print("⚠️ JSON decoding error details: \(error)")
@@ -276,7 +281,10 @@ class NetworkManager {
                     cache.set(version.event_data_version, forKey: "lastEventVersion")
                 }
                 
-                return eventResponse.events
+                // Enrich events with fighter IDs
+                let enrichedEvents = enrichEventsWithFighterIds(events: eventResponse.events)
+                
+                return enrichedEvents
             } catch {
                 print("⚠️ Event JSON decoding error details: \(error)")
                 
@@ -534,6 +542,52 @@ class NetworkManager {
         let pattern = "(?<=[a-z])(?=[A-Z])"
         return name.replacingOccurrences(of: pattern, with: " ", options: .regularExpression)
     }
+    
+    // MARK: - Fighter ID Utilities
+    
+    // Get fighter ID from name
+    func getFighterId(name: String) -> Int? {
+        return fighterIdLookup[name]
+    }
+    
+    // Get fighter name from ID
+    func getFighterName(id: Int) -> String? {
+        return fighterNameLookup[id]
+    }
+    
+    // Build lookup tables after fetching fighter data
+    func buildFighterLookups(fighters: [APIFighter]) {
+        var idLookup: [String: Int] = [:]
+        var nameLookup: [Int: String] = [:]
+        
+        for fighter in fighters {
+            idLookup[fighter.name] = fighter.fighterID
+            nameLookup[fighter.fighterID] = fighter.name
+        }
+        
+        self.fighterIdLookup = idLookup
+        self.fighterNameLookup = nameLookup
+        
+        print("📊 Built fighter ID lookup tables with \(idLookup.count) entries")
+    }
+    
+    // Helper to map fighter names to IDs in events
+    func enrichEventsWithFighterIds(events: [APIEvent]) -> [APIEvent] {
+        return events.map { event in
+            var updatedEvent = event
+            
+            // Update fighter IDs if they're not already set
+            if event.fighter1ID == 0, let id = getFighterId(name: event.fighter1) {
+                updatedEvent.fighter1ID = id
+            }
+            
+            if event.fighter2ID == 0, let id = getFighterId(name: event.fighter2) {
+                updatedEvent.fighter2ID = id
+            }
+            
+            return updatedEvent
+        }
+    }
 }
 
 // MARK: - Data Models
@@ -563,6 +617,8 @@ struct APIFighter: Codable {
     let team: String?
     let weightClass: String?
     let height: String?
+    let reach: String?
+    let stance: String?
     let wins: Int
     let losses: Int
     let win_Decision: Int
@@ -582,6 +638,8 @@ struct APIFighter: Codable {
         case team = "Association"
         case weightClass = "Weight Class"
         case height = "Height"
+        case reach = "Reach"
+        case stance = "Stance"
         case wins = "Wins"
         case losses = "Losses"
         case win_Decision = "Win_Decision"
@@ -607,6 +665,8 @@ struct APIFighter: Codable {
         team = try container.decodeIfPresent(String.self, forKey: .team)
         weightClass = try container.decodeIfPresent(String.self, forKey: .weightClass) // Has nulls in CSV
         height = try container.decodeIfPresent(String.self, forKey: .height)
+        reach = try container.decodeIfPresent(String.self, forKey: .reach)
+        stance = try container.decodeIfPresent(String.self, forKey: .stance)
         
         // Integer fields with fallbacks for different formats
         if let winsInt = try? container.decode(Int.self, forKey: .wins) {
@@ -701,8 +761,8 @@ struct APIEvent: Codable {
     let date: String?
     let fighter1: String
     let fighter2: String
-    let fighter1ID: Int
-    let fighter2ID: Int
+    var fighter1ID: Int
+    var fighter2ID: Int
     let weightClass: String?
     let winner: String?
     let method: String?

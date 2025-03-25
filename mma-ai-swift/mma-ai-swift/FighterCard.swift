@@ -1,36 +1,5 @@
 import SwiftUI
 
-// struct FighterStats: Identifiable {
-//     var id: String { name }
-//     let name: String
-//     let nickname: String?
-//     let record: String // e.g., "21-6-0"
-//     let weightClass: String
-//     let age: Int
-//     let height: String
-//     // let reach: String
-//     // let stance: String
-//     let teamAffiliation: String
-// }
-//struct FighterStats: Identifiable {
-//    var id: String { name }
-//    let name: String
-//    let nickname: String?
-//    let record: String // e.g., "21-6-0"
-//    let weightClass: String
-//    let age: Int
-//    let height: String
-//    let reach: String?
-//    let stance: String?
-//    let teamAffiliation: String
-//    let nationality: String?
-//    let hometown: String?
-//    let birthDate: String
-//    let winsByKO: Int?
-//    let winsBySubmission: Int?
-//    let winsByDecision: Int?
-//} 
-
 struct FighterCard: View {
     let fighter: FighterStats
     
@@ -76,19 +45,18 @@ struct FighterCard: View {
             .padding(.vertical, 8)
             .background(AppTheme.cardBackground)
             
-            VStack(spacing: 4) {
-                Text("Win Methods")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
-                    .padding(.top, 4)
-                
-                HStack(spacing: 20) {
-                    statValue(value: "\(fighter.winsByKO ?? 0)", label: "KO/TKO")
-                    statValue(value: "\(fighter.winsBySubmission ?? 0)", label: "SUB")
-                    statValue(value: "\(fighter.winsByDecision ?? 0)", label: "DEC")
-                }
-                .padding(.bottom, 8)
-            }
+            // Replace text stats with pie chart
+            FighterChartView(
+                winsByKO: fighter.winsByKO ?? 0,
+                winsBySubmission: fighter.winsBySubmission ?? 0,
+                winsByDecision: fighter.winsByDecision ?? 0,
+                lossesByKO: fighter.lossesByKO ?? 0,
+                lossesBySubmission: fighter.lossesBySubmission ?? 0,
+                lossesByDecision: fighter.lossesByDecision ?? 0,
+                chartSize: 100,
+                showBothCharts: false // Only show wins on the card
+            )
+            .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .background(AppTheme.cardBackground)
         }
@@ -109,20 +77,6 @@ struct FighterCard: View {
                 .foregroundColor(AppTheme.textPrimary)
         }
     }
-    
-    private func statValue(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(AppTheme.textPrimary)
-            
-            Text(label)
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
 }
 
 #Preview {
@@ -134,18 +88,21 @@ struct FighterCard: View {
             weightClass: "Featherweight",
             age: 32,
             height: "5'11\"",
-            // reach: "69\"",
-            // stance: "Orthodox",
+            reach: "69\"",
+            stance: "Orthodox",
             teamAffiliation: "Hawaii Elite MMA",
             nationality: "American",
             hometown: "Waianae, Hawaii",
             birthDate: "Dec 4, 1991",
-            winsByKO: 12,
+            fighterID: 12345, winsByKO: 12,
             winsBySubmission: 4,
-            winsByDecision: 9
+            winsByDecision: 9,
+            lossesByKO: 1,
+            lossesBySubmission: 1,
+            lossesByDecision: 5
         ))
         .padding()
     }
     .background(AppTheme.background)
     .preferredColorScheme(.dark)
-} 
+}

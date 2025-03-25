@@ -211,7 +211,7 @@ struct WelcomeView: View {
                 }
                 
                 Button("Start Chatting") {
-                    chatViewModel.restoreConversation()
+                    _ = chatViewModel.restoreConversation()
                     chatViewModel.isFirstLaunch = false
                 }
                 .padding()

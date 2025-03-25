@@ -175,7 +175,7 @@ struct UpcomingEventsView: View {
 //                    .padding(.top, 8)
             }
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 refreshData()
             }
@@ -303,7 +303,7 @@ struct PastEventsView: View {
                     .padding(.top, 8)
             }
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 refreshData()
             }

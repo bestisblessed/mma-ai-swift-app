@@ -175,8 +175,11 @@ struct FightDetails: Identifiable {
     let date: String
     let redCorner: String
     let blueCorner: String
+    let redCornerID: Int
+    let blueCornerID: Int
     let weightClass: String
     let winner: String
+    let winnerID: Int
     let method: String
     let round: String
     let time: String
@@ -190,7 +193,8 @@ struct FightDetails: Identifiable {
 
 @MainActor
 class FighterDashboardViewModel: ObservableObject {
-    @Published private(set) var fighters: [String: FighterStats] = [:]
+    @Published private(set) var fighters: [Int: FighterStats] = [:] // Key by ID instead of name
+    @Published private(set) var fightersByName: [String: FighterStats] = [:] // Secondary index by name
     @Published private(set) var fights: [Fight] = []
     @Published private(set) var fightDetails: [String: FightDetails] = [:]
     @Published private(set) var isLoading = true
@@ -202,11 +206,22 @@ class FighterDashboardViewModel: ObservableObject {
         // Load fighters from FighterDataManager
         DispatchQueue.global().async { [weak self] in
             let loadedFighters = FighterDataManager.shared.fighters
+            var fightersById: [Int: FighterStats] = [:]
+            var fightersByName: [String: FighterStats] = [:]
+            
+            // Build lookups by both ID and name
+            for (_, fighter) in loadedFighters {
+                if fighter.fighterID > 0 {
+                    fightersById[fighter.fighterID] = fighter
+                }
+                fightersByName[fighter.name] = fighter
+            }
             
             DispatchQueue.main.async {
-                self?.fighters = loadedFighters
+                self?.fighters = fightersById
+                self?.fightersByName = fightersByName
                 self?.isLoading = false
-                debugPrint("✅ Loaded \(loadedFighters.count) fighters in dashboard")
+                debugPrint("✅ Loaded \(fightersById.count) fighters by ID and \(fightersByName.count) by name in dashboard")
             }
         }
     }
@@ -231,6 +246,8 @@ class FighterDashboardViewModel: ObservableObject {
                         let fight = Fight(
                             redCorner: fighter,
                             blueCorner: result.opponent,
+                            redCornerID: self?.fightersByName[fighter]?.fighterID ?? 0,
+                            blueCornerID: self?.fightersByName[result.opponent]?.fighterID ?? 0,
                             weightClass: FighterDataManager.shared.fighters[fighter]?.weightClass ?? "Unknown",
                             isMainEvent: false,
                             isTitleFight: false,
@@ -263,6 +280,9 @@ class FighterDashboardViewModel: ObservableObject {
     }
     
     private func createFightDetails(fighter: String, result: FightResult, eventDetails: [String: EventInfo]) -> FightDetails {
+        // Try to find the fighter ID
+        let fighterID = self.fightersByName[fighter]?.fighterID ?? 0
+        
         // Try to find the event
         if let eventDetail = eventDetails[result.event] {
             // Find the specific fight in the event
@@ -274,51 +294,63 @@ class FighterDashboardViewModel: ObservableObject {
             // If we found the specific fight
             if let fightDetail = fightDetail {
                 // Create detailed fight record
+                let winner = result.outcome == "Win" ? fighter : result.opponent
+                let winnerID = result.outcome == "Win" ? fighterID : result.opponentID
+                
                 return FightDetails(
                     eventName: result.event,
                     date: result.date,
                     redCorner: fighter,
                     blueCorner: result.opponent,
-                    weightClass: FighterDataManager.shared.fighters[fighter]?.weightClass ?? "Unknown",
-                    winner: result.outcome == "Win" ? fighter : result.opponent,
+                    redCornerID: fighterID,
+                    blueCornerID: result.opponentID,
+                    weightClass: self.fightersByName[fighter]?.weightClass ?? "Unknown",
+                    winner: winner,
+                    winnerID: winnerID,
                     method: result.method,
                     round: eventDetail.fights.first?.round ?? "N/A",
                     time: eventDetail.fights.first?.time ?? "N/A",
                     isMainEvent: fightDetail.isMainEvent,
                     isTitleFight: fightDetail.isTitleFight,
-                    redCornerStats: FighterDataManager.shared.fighters[fighter],
-                    blueCornerStats: FighterDataManager.shared.fighters[result.opponent]
+                    redCornerStats: self.fightersByName[fighter],
+                    blueCornerStats: self.fightersByName[result.opponent]
                 )
             } else {
                 // Fallback if no specific fight details found
-                return createBasicFightDetails(fighter: fighter, result: result, isTitleFight: result.method.lowercased().contains("title"))
+                return createBasicFightDetails(fighter: fighter, fighterID: fighterID, result: result, isTitleFight: result.method.lowercased().contains("title"))
             }
         } else {
             // Create basic fight details if event not found
-            return createBasicFightDetails(fighter: fighter, result: result, isTitleFight: result.method.lowercased().contains("title"))
+            return createBasicFightDetails(fighter: fighter, fighterID: fighterID, result: result, isTitleFight: result.method.lowercased().contains("title"))
         }
     }
     
-    private func createBasicFightDetails(fighter: String, result: FightResult, isTitleFight: Bool) -> FightDetails {
+    private func createBasicFightDetails(fighter: String, fighterID: Int, result: FightResult, isTitleFight: Bool) -> FightDetails {
+        let winner = result.outcome == "Win" ? fighter : result.opponent
+        let winnerID = result.outcome == "Win" ? fighterID : result.opponentID
+        
         return FightDetails(
             eventName: result.event,
             date: result.date,
             redCorner: fighter,
             blueCorner: result.opponent,
-            weightClass: FighterDataManager.shared.fighters[fighter]?.weightClass ?? "Unknown",
-            winner: result.outcome == "Win" ? fighter : result.opponent,
+            redCornerID: fighterID,
+            blueCornerID: result.opponentID,
+            weightClass: self.fightersByName[fighter]?.weightClass ?? "Unknown",
+            winner: winner,
+            winnerID: winnerID,
             method: result.method,
             round: "N/A",
             time: "N/A",
             isMainEvent: false,
             isTitleFight: isTitleFight,
-            redCornerStats: FighterDataManager.shared.fighters[fighter],
-            blueCornerStats: FighterDataManager.shared.fighters[result.opponent]
+            redCornerStats: self.fightersByName[fighter],
+            blueCornerStats: self.fightersByName[result.opponent]
         )
     }
     
     func getFilteredFighters(division: String, searchText: String) -> [FighterStats] {
-        var result = fighters.values.map { $0 }
+        var result = self.fightersByName.values.map { $0 }
         
         // Filter by division
         if division != "All" {
@@ -369,33 +401,45 @@ class FighterDashboardViewModel: ObservableObject {
     }
     
     func getFightDetails(for fight: FightWithId) -> FightDetails? {
-        // Create an ID to look up the fight details
-        let redCorner = fight.redCorner < fight.blueCorner ? fight.redCorner : fight.blueCorner
-        let blueCorner = fight.redCorner < fight.blueCorner ? fight.blueCorner : fight.redCorner
+        // Try to find fighter IDs from the lookup
+        let fighter1ID = self.fightersByName[fight.redCorner]?.fighterID ?? 0
+        let fighter2ID = self.fightersByName[fight.blueCorner]?.fighterID ?? 0
         
-        // Try to find the fight details
-        for (_, detail) in fightDetails {
-            if (detail.redCorner == redCorner && detail.blueCorner == blueCorner) ||
-               (detail.redCorner == blueCorner && detail.blueCorner == redCorner) {
+        // Try to find the fight details by comparing both names and IDs
+        for (_, detail) in self.fightDetails {
+            // Check using names
+            if (detail.redCorner == fight.redCorner && detail.blueCorner == fight.blueCorner) ||
+               (detail.redCorner == fight.blueCorner && detail.blueCorner == fight.redCorner) {
                 return detail
+            }
+            
+            // Check using IDs if available
+            if fighter1ID > 0 && fighter2ID > 0 {
+                if (detail.redCornerID == fighter1ID && detail.blueCornerID == fighter2ID) ||
+                   (detail.redCornerID == fighter2ID && detail.blueCornerID == fighter1ID) {
+                    return detail
+                }
             }
         }
         
-        // Fallback: create a basic FightDetails object if we can't find the detailed record
+        // Fallback: create a basic FightDetails object
         return FightDetails(
             eventName: "UFC Event",
             date: "N/A",
             redCorner: fight.redCorner,
             blueCorner: fight.blueCorner,
+            redCornerID: fighter1ID,
+            blueCornerID: fighter2ID,
             weightClass: fight.weightClass,
             winner: "Unknown",
+            winnerID: 0,
             method: "N/A",
             round: "N/A",
             time: "N/A",
             isMainEvent: fight.isMainEvent,
             isTitleFight: fight.isTitleFight,
-            redCornerStats: fighters[fight.redCorner],
-            blueCornerStats: fighters[fight.blueCorner]
+            redCornerStats: self.fightersByName[fight.redCorner],
+            blueCornerStats: self.fightersByName[fight.blueCorner]
         )
     }
 }
@@ -771,13 +815,21 @@ struct FighterStats: Identifiable {
     let weightClass: String
     let age: Int
     let height: String
-    // let reach: String?
-    // let stance: String?
+    let reach: String?
+    let stance: String?
     let teamAffiliation: String
     let nationality: String?
     let hometown: String?
     let birthDate: String
+    let fighterID: Int
+    
+    // Win methods
     let winsByKO: Int?
     let winsBySubmission: Int?
     let winsByDecision: Int?
+    
+    // Loss methods
+    let lossesByKO: Int?
+    let lossesBySubmission: Int?
+    let lossesByDecision: Int?
 } 
