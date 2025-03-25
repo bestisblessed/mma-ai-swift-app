@@ -30,9 +30,9 @@ struct AppTheme {
     static let buttonDisabled = Color(white: 0.4)
     
     // Chart colors
-    static let koColor = Color.red
-    static let submissionColor = Color.blue
-    static let decisionColor = Color.green
+    static let koColor = Color.green // green ko
+    static let submissionColor = Color(red: 0.3, green: 0.6, blue: 0.9) // blue submission
+    static let decisionColor = Color(red: 0.5, green: 0.4, blue: 0.8) // purple decision
     
     // Status colors
     static let success = Color.green
