@@ -1,28 +1,23 @@
 import SwiftUI
 
-class AppTheme {
+struct AppTheme {
     // Main colors
-    static let primary = Color("PrimaryColor", default: Color.red)
-    static let accent = Color("AccentColor", default: Color.yellow)
-    static let background = Color("BackgroundColor", default: Color.black)
-    static let cardBackground = Color("CardBackgroundColor", default: Color(UIColor.systemGray6))
-    
-    // Text colors
-    static let textPrimary = Color("TextPrimaryColor", default: Color.white)
-    static let textSecondary = Color("TextSecondaryColor", default: Color.gray)
-    static let textMuted = Color.gray // Add the missing text muted color
-    
-    // Chart colors
-    static let koColor = Color("KOColor", default: Color.red)
-    static let submissionColor = Color("SubmissionColor", default: Color.blue)
-    static let decisionColor = Color("DecisionColor", default: Color.green)
+    static let primary = Color(red: 0.8, green: 0.0, blue: 0.0)  // UFC Red
+    static let secondary = Color(red: 0.1, green: 0.1, blue: 0.2)  // Dark Blue/Black
+    static let accent = Color(red: 0.9, green: 0.7, blue: 0.0)  // Gold
     
     // Background colors
-    static let secondary = Color(red: 0.1, green: 0.1, blue: 0.2)  // Dark Blue/Black
+    static let background = Color(red: 0.05, green: 0.05, blue: 0.1)  // Near Black
+    static let cardBackground = Color(red: 0.15, green: 0.15, blue: 0.2)  // Dark Gray
+    
+    // Text colors
+    static let textPrimary = Color.white
+    static let textSecondary = Color(white: 0.8)
+    static let textMuted = Color(white: 0.6)
     
     // Message bubbles
     static let userBubble = primary
-    static let botBubble = cardBackground
+    static let botBubble = secondary
     static let userBubbleText = Color.white
     static let botBubbleText = Color.white
     
@@ -34,6 +29,22 @@ class AppTheme {
     // Button states
     static let buttonDisabled = Color(white: 0.4)
     
+    // Chart colors
+    static let koColor = Color.red
+    static let submissionColor = Color.blue
+    static let decisionColor = Color.green
+    
+    // Status colors
+    static let success = Color.green
+    static let error = Color.red
+    static let warning = Color(red: 0.9, green: 0.7, blue: 0.0)  // Gold
+    
+    // Shadows
+    static let shadowColor = Color.black.opacity(0.3)
+    static let shadowRadius: CGFloat = 5
+    static let shadowX: CGFloat = 0
+    static let shadowY: CGFloat = 2
+    
     // Gradients
     static let headerGradient = LinearGradient(
         gradient: Gradient(colors: [primary, primary.opacity(0.8)]),
@@ -42,19 +53,10 @@ class AppTheme {
     )
     
     static let backgroundGradient = LinearGradient(
-        gradient: Gradient(colors: [background, secondary]),
+        gradient: Gradient(colors: [background, background.opacity(0.9)]),
         startPoint: .top,
         endPoint: .bottom
     )
-    
-    // Static accessor for ColorScheme
-    static var colorScheme: ColorScheme? = nil // Initialize with nil to avoid binding issue
-}
-
-extension Color {
-    init(_ name: String, default defaultColor: Color) {
-        self = Color(UIColor(named: name) ?? UIColor(defaultColor))
-    }
 }
 
 // Custom button style
@@ -71,6 +73,20 @@ struct PrimaryButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .opacity(configuration.isPressed ? 0.9 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(AppTheme.primary, lineWidth: 2)
+            )
+            .foregroundColor(AppTheme.primary)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.spring(), value: configuration.isPressed)
     }
 }
 
@@ -111,33 +127,25 @@ extension View {
 }
 
 struct ThinkingView: View {
-    @State private var animationOffset = 0.0
+    @State private var isAnimating = false
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
             ForEach(0..<3) { index in
                 Circle()
                     .fill(AppTheme.accent)
                     .frame(width: 8, height: 8)
-                    .offset(y: animationOffset.isNaN ? 0 : sin(animationOffset + Double(index) * 0.5) * 5)
+                    .scaleEffect(isAnimating && index == 0 ? 1.0 : 0.7)
+                    .animation(
+                        Animation.easeInOut(duration: 0.5)
+                            .repeatForever()
+                            .delay(0.2 * Double(index)),
+                        value: isAnimating
+                    )
             }
         }
-        .padding(12)
-        .background(AppTheme.botBubble)
-        .cornerRadius(18)
         .onAppear {
-            withAnimation(Animation.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                animationOffset = animationOffset.isNaN ? 0 : 2 * .pi
-            }
+            isAnimating = true
         }
     }
 }
-
-// Extension to handle ColorScheme for preview providers
-extension AppTheme {
-    static func preview(_ colorScheme: ColorScheme? = nil) -> some View {
-        EmptyView().onAppear {
-            AppTheme.colorScheme = colorScheme
-        }
-    }
-} 
