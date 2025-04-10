@@ -458,5 +458,5 @@ def scrape_single_event(event_url):
 if __name__ == "__main__":
     # You can input a single event URL here
     # event_url = input("Enter the Sherdog event URL: ")
-    event_url = 'https://www.sherdog.com/events/UFC-on-ESPN-64-Moreno-vs-Erceg-105790'
+    event_url = 'https://www.sherdog.com/events/UFC-314-Volkanovski-vs-Lopes-106606'
     scrape_single_event(event_url)
