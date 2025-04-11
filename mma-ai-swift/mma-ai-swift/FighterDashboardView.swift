@@ -232,22 +232,23 @@ class FighterDashboardViewModel: ObservableObject {
         // Extract fights from fighter history to create a unified fight list
         DispatchQueue.global().async { [weak self] in
             var allFights: [Fight] = []
-            var allFightDetails: [String: FightDetails] = [:]
+            var fightDataTuples: [(fighter: String, result: FightResult, fightId: String)] = []
             let fightHistory = FighterDataManager.shared.fightHistory
             let eventDetails = FighterDataManager.shared.eventDetails
             
-            // Process each fighter's history
+            // Process each fighter's history - collect data on background thread
             for (fighter, results) in fightHistory {
                 for result in results {
                     // Only add each fight once by checking if red corner is the current fighter
                     let isRedCorner = fighter < result.opponent
                     
                     if isRedCorner {
+                        // Create fight without accessing main actor properties
                         let fight = Fight(
                             redCorner: fighter,
                             blueCorner: result.opponent,
-                            redCornerID: self?.fightersByName[fighter]?.fighterID ?? 0,
-                            blueCornerID: self?.fightersByName[result.opponent]?.fighterID ?? 0,
+                            redCornerID: FighterDataManager.shared.fighters[fighter]?.fighterID ?? 0,
+                            blueCornerID: FighterDataManager.shared.fighters[result.opponent]?.fighterID ?? 0,
                             weightClass: FighterDataManager.shared.fighters[fighter]?.weightClass ?? "Unknown",
                             isMainEvent: false,
                             isTitleFight: false,
@@ -256,29 +257,37 @@ class FighterDashboardViewModel: ObservableObject {
                         )
                         allFights.append(fight)
                         
-                        // Create fight details for this fight
+                        // Save data for creating fight details on main thread
                         let fightId = "\(fighter)-\(result.opponent)-\(result.date)"
-                        let details = self?.createFightDetails(
-                            fighter: fighter,
-                            result: result,
-                            eventDetails: eventDetails
-                        )
-                        
-                        if let details = details {
-                            allFightDetails[fightId] = details
-                        }
+                        fightDataTuples.append((fighter: fighter, result: result, fightId: fightId))
                     }
                 }
             }
             
-            DispatchQueue.main.async {
-                self?.fights = allFights
-                self?.fightDetails = allFightDetails
+            // Process details on the main thread where actor isolation is available
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                var allFightDetails: [String: FightDetails] = [:]
+                
+                // Now create the fight details on the main actor
+                for data in fightDataTuples {
+                    let details = self.createFightDetails(
+                        fighter: data.fighter,
+                        result: data.result,
+                        eventDetails: eventDetails
+                    )
+                    allFightDetails[data.fightId] = details
+                }
+                
+                // Update state
+                self.fights = allFights
+                self.fightDetails = allFightDetails
                 debugPrint("✅ Loaded \(allFights.count) fights with \(allFightDetails.count) detailed records in dashboard")
             }
         }
     }
     
+    @MainActor
     private func createFightDetails(fighter: String, result: FightResult, eventDetails: [String: EventInfo]) -> FightDetails {
         // Try to find the fighter ID
         let fighterID = self.fightersByName[fighter]?.fighterID ?? 0
@@ -325,6 +334,7 @@ class FighterDashboardViewModel: ObservableObject {
         }
     }
     
+    @MainActor
     private func createBasicFightDetails(fighter: String, fighterID: Int, result: FightResult, isTitleFight: Bool) -> FightDetails {
         let winner = result.outcome == "Win" ? fighter : result.opponent
         let winnerID = result.outcome == "Win" ? fighterID : result.opponentID
@@ -400,6 +410,7 @@ class FighterDashboardViewModel: ObservableObject {
         }
     }
     
+    @MainActor
     func getFightDetails(for fight: FightWithId) -> FightDetails? {
         // Try to find fighter IDs from the lookup
         let fighter1ID = self.fightersByName[fight.redCorner]?.fighterID ?? 0
@@ -434,8 +445,8 @@ class FighterDashboardViewModel: ObservableObject {
             winner: "Unknown",
             winnerID: 0,
             method: "N/A",
-            round: "N/A",
-            time: "N/A",
+            round: fight.round,
+            time: fight.time,
             isMainEvent: fight.isMainEvent,
             isTitleFight: fight.isTitleFight,
             redCornerStats: self.fightersByName[fight.redCorner],

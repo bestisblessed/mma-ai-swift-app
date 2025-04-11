@@ -295,15 +295,34 @@ struct EventCard: View {
     }
     
     private func requestFightPrediction(fight: Fight) {
-        let matchup = "\(fight.redCorner) vs \(fight.blueCorner)"
+        // Get the fighter IDs directly from the data manager
+        let redFighter = FighterDataManager.shared.getFighter(fight.redCorner)
+        let blueFighter = FighterDataManager.shared.getFighter(fight.blueCorner)
+        
+        // Use the IDs from the fighter objects, not from the Fight model
+        let redID = redFighter?.fighterID ?? 0
+        let blueID = blueFighter?.fighterID ?? 0
+        
+        // Create ID-based matchup string in format "ID1 vs ID2"
+        let idMatchup = "\(redID) vs \(blueID)"
+        
         // Add "(5 rounder)" to the prompt if this is a main event
-        let predictionPrompt = fight.isMainEvent ? "\(matchup) (5 rounder)" : "\(matchup)"
+        let predictionPrompt = fight.isMainEvent ? "\(idMatchup) (5 rounder)" : idMatchup
+        
+        // Log the IDs to debug
+        debugPrint("🔵 Requesting prediction for fighters - red: \(fight.redCorner) (ID: \(redID)), blue: \(fight.blueCorner) (ID: \(blueID))")
         
         // Create notification to show prediction is being processed
         NotificationCenter.default.post(
             name: NSNotification.Name("RequestFightPrediction"),
             object: nil,
-            userInfo: ["prompt": predictionPrompt]
+            userInfo: [
+                "prompt": predictionPrompt,
+                "redCornerID": redID,
+                "blueCornerID": blueID,
+                "isMainEvent": fight.isMainEvent,
+                "weightClass": fight.weightClass
+            ]
         )
     }
 }

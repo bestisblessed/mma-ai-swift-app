@@ -172,9 +172,10 @@ struct ContentView: View {
                     chatViewModel.isFirstLaunch = false
                 }
                 
-                // Send the prediction prompt with the specialized report generator assistant ID
-                chatViewModel.sendMessage(
-                    prompt,
+                // Instead of using standard sendMessage, we'll use a special version
+                // that doesn't show the user input in the chat UI
+                chatViewModel.sendPredictionRequest(
+                    prompt: prompt,
                     assistantId: "asst_n6LeaUZ7n2zYwMeGzIon47B5"
                 )
             }
@@ -432,15 +433,16 @@ struct MessageBubble: View {
             
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
                 if message.isLoading {
-                    // Display a loading spinner in a bubble
+                    // Display a loading spinner with appropriate text
                     HStack {
+                        // Use the custom message content if provided, otherwise default to "Thinking..."
+                        Text(message.content.isEmpty ? "Thinking..." : message.content)
+                            .font(.system(size: 16))
+                            .foregroundColor(AppTheme.botBubbleText)
+                        
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle())
                             .scaleEffect(0.8)
-                        
-                        Text("Thinking...")
-                            .font(.system(size: 16))
-                            .foregroundColor(AppTheme.botBubbleText)
                             .padding(.leading, 8)
                     }
                     .padding(16)

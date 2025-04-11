@@ -324,6 +324,162 @@ class ChatViewModel: ObservableObject {
         }
     }
     
+    // Function for fight predictions that doesn't show the fighter ID input in the chat
+    func sendPredictionRequest(prompt: String, assistantId: String) {
+        // Skip adding user message to UI, directly go to loading state
+        isLoading = true
+        
+        // Create a placeholder for the assistant's response that shows it's generating a prediction
+        let loadingMessage = Message(content: "Generating prediction...", isUser: false, timestamp: Date(), isLoading: true)
+        messages.append(loadingMessage)
+        let loadingIndex = messages.count - 1
+        
+        // Extract fighter IDs from the prompt (format: "ID1 vs ID2" or "ID1 vs ID2 (5 rounder)")
+        var fighterNames = ("Unknown Fighter", "Unknown Fighter")
+        if let idMatch = prompt.range(of: #"(\d+)\s+vs\s+(\d+)"#, options: .regularExpression) {
+            let idText = prompt[idMatch]
+            let components = idText.components(separatedBy: " vs ")
+            if components.count == 2, 
+               let fighter1ID = Int(components[0].trimmingCharacters(in: .whitespaces)),
+               let fighter2ID = Int(components[1].trimmingCharacters(in: .whitespaces)) {
+                
+                // Look up fighter names by ID
+                if let fighter1 = FighterDataManager.shared.getFighterByID(fighter1ID) {
+                    fighterNames.0 = fighter1.name
+                }
+                
+                if let fighter2 = FighterDataManager.shared.getFighterByID(fighter2ID) {
+                    fighterNames.1 = fighter2.name
+                }
+                
+                print("🔵 Fighter prediction: \(fighterNames.0) (ID: \(fighter1ID)) vs \(fighterNames.1) (ID: \(fighter2ID))")
+            }
+        }
+        
+        // Prepare the request
+        let url = URL(string: "\(apiUrl)/chat")!
+        print("Sending fight prediction request to: \(url.absoluteString)")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let requestBody: [String: Any] = [
+            "message": prompt,
+            "conversation_id": threadId as Any,
+            "assistant_id": assistantId
+        ]
+        
+        print("Using prediction assistant ID: \(assistantId)")
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+            print("Request body (IDs only): \(requestBody)")
+            
+            // Create a URLSession configuration that allows self-signed certificates
+            let sessionConfig = URLSessionConfiguration.default
+            sessionConfig.timeoutIntervalForRequest = 180
+            let sslHandler = SSLCertificateHandler()
+            let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
+            
+            session.dataTask(with: request) { [weak self] data, response, error in
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                    
+                    // Remove only the loading message
+                    if let self = self, self.messages.count > loadingIndex {
+                        self.messages.remove(at: loadingIndex)
+                    }
+                    
+                    if let error = error {
+                        print("Network error: \(error.localizedDescription)")
+                        let errorMessage = Message(
+                            content: "Network error: \(error.localizedDescription)",
+                            isUser: false,
+                            timestamp: Date()
+                        )
+                        self?.messages.append(errorMessage)
+                        return
+                    }
+                    
+                    guard let data = data else {
+                        let errorMessage = Message(
+                            content: "No data received from server",
+                            isUser: false,
+                            timestamp: Date()
+                        )
+                        self?.messages.append(errorMessage)
+                        return
+                    }
+                    
+                    // Print the raw response for debugging
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        print("API Response: \(responseString)")
+                    }
+                    
+                    do {
+                        let decodedResponse = try JSONDecoder().decode(ChatResponse.self, from: data)
+                        
+                        if let errorMsg = decodedResponse.error {
+                            print("Server error: \(errorMsg)")
+                            let errorMessage = Message(
+                                content: "Server error: \(errorMsg)",
+                                isUser: false,
+                                timestamp: Date()
+                            )
+                            self?.messages.append(errorMessage)
+                            return
+                        }
+                        
+                        let responseItems = decodedResponse.response
+                        for item in responseItems {
+                            var messageContent = "\(fighterNames.0) vs \(fighterNames.1):\n\n"
+                            messageContent += item.content
+                            
+                            if let annotations = item.annotations, !annotations.isEmpty {
+                                messageContent += "\n\nReferences:\n" + annotations.map { $0.text }.joined(separator: "\n")
+                            }
+                            
+                            let newMessage = Message(
+                                content: messageContent,
+                                isUser: false,
+                                timestamp: Date(),
+                                imageData: item.type == "image" ? self?.extractImageData(from: item.content) : nil
+                            )
+                            self?.messages.append(newMessage)
+                        }
+                        
+                        self?.threadId = decodedResponse.conversation_id
+                    } catch {
+                        print("Decoding error: \(error.localizedDescription)")
+                        let errorMessage = Message(
+                            content: "Error parsing response: \(error.localizedDescription)",
+                            isUser: false,
+                            timestamp: Date()
+                        )
+                        self?.messages.append(errorMessage)
+                    }
+                }
+            }.resume()
+        } catch {
+            DispatchQueue.main.async {
+                self.isLoading = false
+                
+                // Remove only the loading message
+                if self.messages.count > loadingIndex {
+                    self.messages.remove(at: loadingIndex)
+                }
+                
+                let errorMessage = Message(
+                    content: "Error preparing request: \(error.localizedDescription)",
+                    isUser: false,
+                    timestamp: Date()
+                )
+                self.messages.append(errorMessage)
+            }
+        }
+    }
+    
     func startNewChat() {
         self.messages = []
         self.threadId = nil
