@@ -10,6 +10,7 @@ import time
 import base64
 import pandas as pd
 from datetime import datetime
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -35,6 +36,19 @@ threads = {}
 
 # Assistant ID from your assistants.py script
 ASSISTANT_ID = "asst_QIEMCdBCqsX4al7O4Jg2Jjpx"
+
+def clean_markdown_simple(text):
+    """Remove basic markdown symbols (# and *) from text."""
+    if not text:
+        return text
+    
+    # Remove heading symbols
+    text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove bold/italic asterisks
+    text = re.sub(r'\*+', '', text)
+    
+    return text
 
 @app.route('/')
 def home():
@@ -173,8 +187,9 @@ def chat():
         # Create run with text response format
         run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=assistant_id,
-            response_format={"type": "text"}
+            assistant_id=assistant_id
+            # response_format={"type": "text"},
+            # instructions="Please provide responses in plain text only. Avoid using markdown formatting symbols like asterisks and hash symbols."
         )
 
         # Wait for completion
@@ -204,6 +219,8 @@ def chat():
                     if content_item.type == "text":
                         # Capture text annotations
                         text_content = content_item.text.value
+                        # Clean markdown symbols
+                        text_content = clean_markdown_simple(text_content)
                         annotations = [
                             {
                                 "type": "file",

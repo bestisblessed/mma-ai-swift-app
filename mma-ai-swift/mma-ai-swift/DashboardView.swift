@@ -82,10 +82,6 @@ struct UpcomingEventsView: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("Upcoming Events")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                
                 Spacer()
                 
                 Button(action: {
@@ -99,7 +95,7 @@ struct UpcomingEventsView: View {
                 }
                 .disabled(isRefreshing)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             
             if dataManager.loadingState == .loading {
                 VStack(spacing: 20) {
@@ -210,10 +206,6 @@ struct PastEventsView: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("Past Events")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                
                 Spacer()
                 
                 Button(action: {
@@ -227,7 +219,7 @@ struct PastEventsView: View {
                 }
                 .disabled(isRefreshing)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .trailing)
             
             if dataManager.loadingState == .loading {
                 VStack(spacing: 20) {
@@ -293,7 +285,7 @@ struct PastEventsView: View {
                 .cornerRadius(12)
             } else {
                 ForEach(dataManager.getPastEvents(), id: \.name) { event in
-                    EventCard(event: event)
+                    EventCard(event: event, isPastEvent: true)
                 }
                 
                 Text("Data source: event_data_sherdog.csv")

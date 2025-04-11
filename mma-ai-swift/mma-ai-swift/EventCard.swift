@@ -32,6 +32,12 @@ struct EventCard: View {
     @State private var showMainCard = true
     @State private var showPrelims = false
     @State private var selectedFighter: FighterStats? = nil
+    let isPastEvent: Bool
+    
+    init(event: EventInfo, isPastEvent: Bool = false) {
+        self.event = event
+        self.isPastEvent = isPastEvent
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -45,26 +51,21 @@ struct EventCard: View {
                 
                 Text(event.date)
                     .font(.headline)
-                    .foregroundColor(Color.yellow)
+                    .foregroundColor(Color(hex: "#BDBDBD")) // Light gray for date
                 
                 Text(event.displayLocation)
                     .font(.subheadline)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "#BDBDBD")) // Light gray for location
                     .multilineTextAlignment(.center)
                     .padding(.top, 2)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
-            .background(Color.red)
+            .background(Color(hex: "#1C1C23")) // Dark background
             
-            // Fight Card
+            // Fight Card Section (removed "Fight Card" text)
             VStack(spacing: 16) {
-                Text("Fight Card")
-                    .font(.headline)
-                    .foregroundColor(AppTheme.textPrimary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
                 // Main Card Section
                 VStack(spacing: 8) {
                     Button(action: {
@@ -85,13 +86,13 @@ struct EventCard: View {
                         }
                         .padding(.vertical, 8)
                         .padding(.horizontal, 12)
-                        .background(Color.red.opacity(0.7))
+                        .background(Color(hex: "#1C1C23").opacity(0.7)) // Dark background instead of red
                         .cornerRadius(8)
                     }
                     
                     if showMainCard {
                         Divider()
-                            .background(AppTheme.accent.opacity(0.3))
+                            .background(Color(hex: "#9E9E9E").opacity(0.3)) // Gray for dividers
                         
                         // Main Event is always shown
                         if event.fights.count > 0 {
@@ -102,7 +103,7 @@ struct EventCard: View {
                         if event.fights.count > 1 {
                             ForEach(1..<min(6, event.fights.count), id: \.self) { index in
                                 Divider()
-                                    .background(AppTheme.accent.opacity(0.2))
+                                    .background(Color(hex: "#9E9E9E").opacity(0.2)) // Gray for dividers
                                 fightRow(fight: event.fights[index])
                             }
                         }
@@ -130,18 +131,18 @@ struct EventCard: View {
                             }
                             .padding(.vertical, 8)
                             .padding(.horizontal, 12)
-                            .background(Color.gray.opacity(0.7))
+                            .background(Color(hex: "#1C1C23").opacity(0.7)) // Dark background instead of gray
                             .cornerRadius(8)
                         }
                         
                         if showPrelims {
                             Divider()
-                                .background(AppTheme.accent.opacity(0.3))
+                                .background(Color(hex: "#9E9E9E").opacity(0.3)) // Gray for dividers
                             
                             ForEach(6..<event.fights.count, id: \.self) { index in
                                 if index > 6 {
                                     Divider()
-                                        .background(AppTheme.accent.opacity(0.2))
+                                        .background(Color(hex: "#9E9E9E").opacity(0.2)) // Gray for dividers
                                 }
                                 fightRow(fight: event.fights[index])
                             }
@@ -150,7 +151,7 @@ struct EventCard: View {
                 }
             }
             .padding()
-            .background(Color(red: 0.2, green: 0.2, blue: 0.25))
+            .background(Color(hex: "#1C1C23")) // Dark background for fight card
         }
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
@@ -191,13 +192,13 @@ struct EventCard: View {
                 HStack(spacing: 8) {
                     if fight.isMainEvent {
                         Text("Main Event")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .cornerRadius(4)
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color(hex: "#333333").opacity(0.6)) // Darker, more subtle background
+                            .foregroundColor(Color(hex: "#BDBDBD").opacity(0.8)) // Lighter gray text with some opacity
+                            .cornerRadius(3)
                     }
                     
                     if fight.isTitleFight {
@@ -206,8 +207,8 @@ struct EventCard: View {
                             .fontWeight(.semibold)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.purple)
-                            .foregroundColor(.white)
+                            .background(Color(hex: "#FFD700")) // Gold
+                            .foregroundColor(Color(hex: "#1C1C23")) // Dark text
                             .cornerRadius(4)
                     }
                 }
@@ -223,8 +224,9 @@ struct EventCard: View {
                     Text(abbreviateName(fight.redCorner))
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.red)
+                        .foregroundColor(Color(hex: "#FFD700")) // Gold color for left fighter
                         .lineLimit(1)
+                        .underline(FighterDataManager.shared.getFighter(fight.redCorner) != nil)
                 }
                 .buttonStyle(PlainButtonStyle())
                 
@@ -240,8 +242,9 @@ struct EventCard: View {
                     Text(abbreviateName(fight.blueCorner))
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(Color.blue)
+                        .foregroundColor(Color(hex: "#FF9800")) // Orange color for right fighter
                         .lineLimit(1)
+                        .underline(FighterDataManager.shared.getFighter(fight.blueCorner) != nil)
                 }
                 .buttonStyle(PlainButtonStyle())
                 
@@ -250,25 +253,28 @@ struct EventCard: View {
                 // Weight class
                 Text(fight.weightClass)
                     .font(.caption2)
-                    .foregroundColor(AppTheme.textSecondary)
+                    .foregroundColor(Color(hex: "#9E9E9E")) // Gray for weight class
                     .lineLimit(1)
                 
-                // Prediction button
-                Button(action: {
-                    requestFightPrediction(fight: fight)
-                }) {
-                    Text("🔮")
-                        .font(.caption)
+                // Only show prediction button if not a past event
+                if !isPastEvent {
+                    // Prediction button
+                    Button(action: {
+                        requestFightPrediction(fight: fight)
+                    }) {
+                        Text("🔮")
+                            .font(.caption)
+                            .padding(4)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                            )
+                    }
+                    .padding(.leading, 4)
+                    .buttonStyle(BorderlessButtonStyle())
+                    .hoverEffect(.highlight)
+                    .help("Generate AI fight prediction")
                 }
-                .padding(.leading, 4)
-                
-                // Alternative emoji options:
-                // Text("🥊") - Boxing glove
-                // Text("🏆") - Trophy
-                // Text("🧠") - Brain
-                // Text("📊") - Chart
-                // Text("🤖") - Robot face
-                // Text("🔮") - Crystal ball
             }
         }
         .padding(.vertical, 4)
@@ -290,7 +296,8 @@ struct EventCard: View {
     
     private func requestFightPrediction(fight: Fight) {
         let matchup = "\(fight.redCorner) vs \(fight.blueCorner)"
-        let predictionPrompt = "\(matchup)"
+        // Add "(5 rounder)" to the prompt if this is a main event
+        let predictionPrompt = fight.isMainEvent ? "\(matchup) (5 rounder)" : "\(matchup)"
         
         // Create notification to show prediction is being processed
         NotificationCenter.default.post(
