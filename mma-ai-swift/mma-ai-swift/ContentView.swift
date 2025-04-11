@@ -172,10 +172,10 @@ struct ContentView: View {
                     chatViewModel.isFirstLaunch = false
                 }
                 
-                // Send the prediction prompt with the specialized assistant ID
+                // Send the prediction prompt with the specialized report generator assistant ID
                 chatViewModel.sendMessage(
                     prompt,
-                    assistantId: "asst_O9GIfBjUVDunQCOnnUl7LhrH"
+                    assistantId: "asst_n6LeaUZ7n2zYwMeGzIon47B5"
                 )
             }
         }

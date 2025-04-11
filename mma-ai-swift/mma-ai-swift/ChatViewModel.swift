@@ -207,6 +207,10 @@ class ChatViewModel: ObservableObject {
         if let assistantId = assistantId {
             requestBody["assistant_id"] = assistantId
             print("Using custom assistant ID: \(assistantId)")
+        } else {
+            // Use default chat assistant ID
+            requestBody["assistant_id"] = "asst_QIEMCdBCqsX4al7O4Jg2Jjpx"
+            print("Using default chat assistant ID: asst_QIEMCdBCqsX4al7O4Jg2Jjpx")
         }
         
         do {
