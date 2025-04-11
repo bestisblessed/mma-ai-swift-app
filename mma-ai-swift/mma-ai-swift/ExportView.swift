@@ -54,7 +54,7 @@ struct ExportView: View {
     }
     
     private func shareContent() {
-        var activityItems: [Any] = [text] + images.compactMap { UIImage(data: $0) }
+        let activityItems: [Any] = [text] + images.compactMap { UIImage(data: $0) }
         
         let activityVC = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
         

@@ -178,7 +178,7 @@ class ChatViewModel: ObservableObject {
         }.resume()
     }
     
-    func sendMessage(_ content: String) {
+    func sendMessage(_ content: String, assistantId: String? = nil) {
         // Create and add the user message
         let userMessage = Message(content: content, isUser: true, timestamp: Date())
         messages.append(userMessage)
@@ -198,10 +198,16 @@ class ChatViewModel: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        let requestBody: [String: Any] = [
+        var requestBody: [String: Any] = [
             "message": content,
             "conversation_id": threadId as Any
         ]
+        
+        // Add custom assistant ID if provided (for fight predictions)
+        if let assistantId = assistantId {
+            requestBody["assistant_id"] = assistantId
+            print("Using custom assistant ID: \(assistantId)")
+        }
         
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)

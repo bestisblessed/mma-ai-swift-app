@@ -140,9 +140,13 @@ def chat():
         data = request.json
         user_input = data.get('message', '')
         conversation_id = data.get('conversation_id')
+        custom_assistant_id = data.get('assistant_id')  # Get custom assistant ID if provided
         
+        # Log information about the request
         logger.info(f"Received message: '{user_input}'")
         logger.info(f"Conversation ID: {conversation_id}")
+        if custom_assistant_id:
+            logger.info(f"Using custom assistant ID: {custom_assistant_id}")
         
         # Create new thread if none exists
         if not conversation_id or conversation_id not in threads:
@@ -162,10 +166,16 @@ def chat():
             content=user_input
         )
         
+        # Use custom assistant ID if provided, otherwise use default
+        assistant_id = custom_assistant_id if custom_assistant_id else ASSISTANT_ID
+        logger.info(f"Running assistant with ID: {assistant_id}")
+        
+        # Create run with text response format
         run = client.beta.threads.runs.create(
             thread_id=thread_id,
-            assistant_id=ASSISTANT_ID
-        ) 
+            assistant_id=assistant_id,
+            response_format={"type": "text"}
+        )
 
         # Wait for completion
         while run.status not in ["completed", "failed", "cancelled", "expired"]:

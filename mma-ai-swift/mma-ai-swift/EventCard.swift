@@ -206,51 +206,98 @@ struct EventCard: View {
                             .fontWeight(.semibold)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.yellow)
-                            .foregroundColor(.black)
+                            .background(Color.purple)
+                            .foregroundColor(.white)
                             .cornerRadius(4)
                     }
-                    
-                    Spacer()
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             
-            // Fighter names
-            HStack {
+            // All in one row: fighters, weight class, and prediction button
+            HStack(spacing: 4) {
+                // Red corner with abbreviated name
                 Button(action: {
                     loadFighterData(name: fight.redCorner, id: fight.redCornerID)
                 }) {
-                    Text(fight.redCorner)
+                    Text(abbreviateName(fight.redCorner))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(Color.red)
-                        .underline(FighterDataManager.shared.getFighterByID(fight.redCornerID) != nil || 
-                                 FighterDataManager.shared.getFighter(fight.redCorner) != nil)
+                        .lineLimit(1)
                 }
+                .buttonStyle(PlainButtonStyle())
                 
                 Text("vs")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
-                    .padding(.horizontal, 4)
+                    .font(.caption2)
+                    .foregroundColor(Color.gray)
+                    .padding(.horizontal, 2)
                 
+                // Blue corner with abbreviated name
                 Button(action: {
                     loadFighterData(name: fight.blueCorner, id: fight.blueCornerID)
                 }) {
-                    Text(fight.blueCorner)
+                    Text(abbreviateName(fight.blueCorner))
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppTheme.accent)
-                        .underline(FighterDataManager.shared.getFighterByID(fight.blueCornerID) != nil || 
-                                 FighterDataManager.shared.getFighter(fight.blueCorner) != nil)
+                        .foregroundColor(Color.blue)
+                        .lineLimit(1)
                 }
+                .buttonStyle(PlainButtonStyle())
                 
                 Spacer()
                 
+                // Weight class
                 Text(fight.weightClass)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundColor(AppTheme.textSecondary)
+                    .lineLimit(1)
+                
+                // Prediction button
+                Button(action: {
+                    requestFightPrediction(fight: fight)
+                }) {
+                    Text("🔮")
+                        .font(.caption)
+                }
+                .padding(.leading, 4)
+                
+                // Alternative emoji options:
+                // Text("🥊") - Boxing glove
+                // Text("🏆") - Trophy
+                // Text("🧠") - Brain
+                // Text("📊") - Chart
+                // Text("🤖") - Robot face
+                // Text("🔮") - Crystal ball
             }
         }
+        .padding(.vertical, 4)
+    }
+    
+    // Helper function to abbreviate first names
+    private func abbreviateName(_ fullName: String) -> String {
+        let components = fullName.components(separatedBy: " ")
+        if components.count > 1 {
+            // Get first letter of first name and add period
+            let firstInitial = String(components[0].prefix(1))
+            
+            // Join with the rest of the name components
+            let lastName = components.dropFirst().joined(separator: " ")
+            return "\(firstInitial). \(lastName)"
+        }
+        return fullName // Return original if can't split
+    }
+    
+    private func requestFightPrediction(fight: Fight) {
+        let matchup = "\(fight.redCorner) vs \(fight.blueCorner)"
+        let predictionPrompt = "\(matchup)"
+        
+        // Create notification to show prediction is being processed
+        NotificationCenter.default.post(
+            name: NSNotification.Name("RequestFightPrediction"),
+            object: nil,
+            userInfo: ["prompt": predictionPrompt]
+        )
     }
 }
 

@@ -107,6 +107,8 @@ struct ContentView: View {
                 .onAppear {
                     // Update ChatViewModel with settings
                     chatViewModel.updateApiEndpoint(settingsManager.apiEndpoint)
+                    // Set up the notification observer when the view appears
+                    setupPredictionObserver()
                 }
                 .onChange(of: settingsManager.apiEndpoint) { _, newValue in
                     chatViewModel.updateApiEndpoint(newValue)
@@ -150,6 +152,33 @@ struct ContentView: View {
         }
         .accentColor(AppTheme.accent)
         .font(.system(size: 14, weight: .medium))
+    }
+    
+    // Move the notification observer setup to a separate function
+    private func setupPredictionObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("RequestFightPrediction"),
+            object: nil,
+            queue: .main
+        ) { [weak chatViewModel] notification in
+            guard let chatViewModel = chatViewModel else { return }
+            
+            if let prompt = notification.userInfo?["prompt"] as? String {
+                // Switch to the chat tab
+                selectedTab = 1
+                
+                // If we're in welcome view, start a new chat
+                if chatViewModel.isFirstLaunch {
+                    chatViewModel.isFirstLaunch = false
+                }
+                
+                // Send the prediction prompt with the specialized assistant ID
+                chatViewModel.sendMessage(
+                    prompt,
+                    assistantId: "asst_O9GIfBjUVDunQCOnnUl7LhrH"
+                )
+            }
+        }
     }
 }
 

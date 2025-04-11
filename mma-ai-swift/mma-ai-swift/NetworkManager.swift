@@ -435,7 +435,7 @@ class NetworkManager {
                             weightClass: fight.weightClass,
                             winner: fight.winner,
                             method: fight.method,
-                            round: fight.round != nil ? Int(fight.round!) ?? nil : nil,
+                            round: fight.round != nil ? Int(fight.round!) : nil,
                             time: fight.time,
                             referee: nil,
                             fightType: fightType

@@ -1,7 +1,8 @@
 import Foundation
 import SwiftUI
 
-class FighterDataManager: ObservableObject {
+// Make FighterDataManager conform to @unchecked Sendable to fix closure warnings
+class FighterDataManager: ObservableObject, @unchecked Sendable {
     static let shared = FighterDataManager()
     
     @Published private(set) var fighters: [String: FighterStats] = [:]
