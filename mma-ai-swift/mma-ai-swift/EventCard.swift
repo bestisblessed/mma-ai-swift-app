@@ -1,753 +1,30 @@
 import SwiftUI
 import Foundation
+// Import required model files
 
-struct Fight {
-    let redCorner: String
-    let blueCorner: String
-    let redCornerID: Int
-    let blueCornerID: Int
-    let weightClass: String
-    let isMainEvent: Bool
-    let isTitleFight: Bool
-    let round: String
-    let time: String
-}
+// Add necessary imports to use models
+// No need to specify 'class' or 'struct' when importing
 
-struct EventInfo {
-    let name: String
-    let date: String
-    let location: String
-    let venue: String
-    let fights: [Fight]
-    
-    // Add a computed property for displaying location
-    var displayLocation: String {
-        if venue.isEmpty || venue == "N/A" {
-            return location
-        } else {
-            return "\(venue) • \(location)"
-        }
-    }
-}
+// Remove all duplicate model declarations and keep only the UI components
 
-struct FightResult {
-    let opponent: String
-    let opponentID: Int
-    let outcome: String // Win or Loss
-    let method: String  // e.g., "Decision (Unanimous)", "KO (Punch)"
-    let date: String
-    let event: String
-}
-
-// Data manager for fighters
-class FighterDataManager: ObservableObject {
-    static let shared = FighterDataManager()
+// Define LoadingState enum here if needed
+enum LoadingState: Equatable {
+    case idle
+    case loading
+    case success
+    case error(String)
     
-    @Published private(set) var fighters: [String: FighterStats] = [:]
-    @Published private(set) var fightHistory: [String: [FightResult]] = [:]
-    @Published private(set) var eventDetails: [String: EventInfo] = [:]
-    @Published private(set) var upcomingEvents: [EventInfo] = []
-    @Published private(set) var pastEvents: [EventInfo] = []
-    @Published private(set) var loadingState: LoadingState = .idle
-    
-    private let networkManager = NetworkManager.shared
-    private let cache = UserDefaults.standard
-    
-    enum LoadingState: Equatable {
-        case idle
-        case loading
-        case success
-        case error(String)
-        
-        static func == (lhs: LoadingState, rhs: LoadingState) -> Bool {
-            switch (lhs, rhs) {
-            case (.idle, .idle), (.loading, .loading), (.success, .success):
-                return true
-            case (.error(let lhsError), .error(let rhsError)):
-                return lhsError == rhsError
-            default:
-                return false
-            }
-        }
-    }
-    
-    init() {
-        Task {
-            await loadInitialData()
-        }
-    }
-    
-    // MARK: - Public Methods
-    
-    func refreshData() async throws {
-        if loadingState == .loading {
-            return
-        }
-        await loadLatestData(force: true)
-    }
-    
-    func getFighter(_ name: String) -> FighterStats? {
-        fighters[name]
-    }
-    
-    func getFightHistory(_ name: String) -> [FightResult]? {
-        fightHistory[name]
-    }
-    
-    func getUpcomingEvents() -> [EventInfo] {
-        return upcomingEvents
-    }
-    
-    func getPastEvents() -> [EventInfo] {
-        return pastEvents
-    }
-    
-    // MARK: - Private Methods
-    
-    private func loadInitialData() async {
-        // First try to load from cache
-        if loadFromCache() {
-            print("Data loaded from cache")
-            
-            // Check for updates in background
-            Task {
-                await loadLatestData(force: false)
-            }
-        } else {
-            // No cache, load from network
-            await loadLatestData(force: true)
-        }
-    }
-    
-    private func loadLatestData(force: Bool) async {
-        DispatchQueue.main.async {
-            self.loadingState = .loading
-        }
-        
-        // Debug CSV columns
-        Task {
-            await networkManager.debugCSVColumns()
-        }
-        
-        do {
-            // Skip network requests if not forced and within update time window
-            if !force {
-                if let needsUpdate = try? await networkManager.checkForUpdates(), !needsUpdate {
-                    print("No update needed, data is current")
-                    
-                    DispatchQueue.main.async {
-                        self.loadingState = .success
-                    }
-                    return
-                }
-            }
-            
-            print("Fetching latest data from server...")
-            
-            // Fetch updated fighter and event data
-            async let fightersTask = networkManager.fetchFighters()
-            async let eventsTask = networkManager.fetchEvents()
-            async let upcomingEventsTask = networkManager.fetchUpcomingEvents()
-            
-            let (apiFighters, apiEvents, upcomingApiEvents) = try await (fightersTask, eventsTask, upcomingEventsTask)
-            
-            print("✅ Successfully fetched data - \(apiFighters.count) fighters, \(apiEvents.count) events, and upcoming events")
-            
-            // Process data
-            processNewData(fighters: apiFighters, events: apiEvents)
-            
-            // Process upcoming events
-            processUpcomingEvents(events: upcomingApiEvents)
-            
-            // Process past events
-            processPastEvents(events: apiEvents)
-            
-            // Save to cache
-            saveToCache()
-            
-            DispatchQueue.main.async {
-                self.loadingState = .success
-            }
-        } catch {
-            print("Failed to fetch data: \(error.localizedDescription)")
-            
-            DispatchQueue.main.async {
-                self.loadingState = .error(error.localizedDescription)
-            }
-        }
-    }
-    
-    private func processNewData(fighters apiFighters: [APIFighter], events apiEvents: [APIEvent]) {
-        var newFighters: [String: FighterStats] = [:]
-        var newFightHistory: [String: [FightResult]] = [:]
-        var newEventDetails: [String: EventInfo] = [:]
-        
-        // Process fighters
-        for apiFighter in apiFighters {
-            let record = "\(apiFighter.wins)-\(apiFighter.losses)-0"
-            
-            // Print fighter details for debugging
-            print("📊 Processing fighter: \(apiFighter.name), Wins: \(apiFighter.wins), Losses: \(apiFighter.losses), Win Methods: \(apiFighter.win_KO)/\(apiFighter.win_Sub)/\(apiFighter.win_Decision), Loss Methods: \(apiFighter.loss_KO)/\(apiFighter.loss_Sub)/\(apiFighter.loss_Decision)")
-            
-            newFighters[apiFighter.name] = FighterStats(
-                name: apiFighter.name,
-                nickname: apiFighter.nickname,
-                record: record,
-                weightClass: apiFighter.weightClass ?? "Unknown",
-                age: calculateAge(from: apiFighter.birthDate ?? "Unknown"),
-                height: apiFighter.height ?? "N/A",
-                reach: apiFighter.reach ?? "N/A",
-                stance: apiFighter.stance ?? "N/A",
-                teamAffiliation: apiFighter.team ?? "Unknown",
-                nationality: apiFighter.nationality,
-                hometown: apiFighter.hometown,
-                birthDate: apiFighter.birthDate ?? "",
-                fighterID: apiFighter.fighterID,
-                winsByKO: apiFighter.win_KO,
-                winsBySubmission: apiFighter.win_Sub,
-                winsByDecision: apiFighter.win_Decision,
-                lossesByKO: apiFighter.loss_KO,
-                lossesBySubmission: apiFighter.loss_Sub,
-                lossesByDecision: apiFighter.loss_Decision
-            )
-        }
-        
-        print("📊 Successfully processed \(newFighters.count) fighters")
-        
-        // Process events and fight history
-        var tempEventMap: [String: [Fight]] = [:]
-        
-        for apiEvent in apiEvents {
-            let formattedDate = formatDate(apiEvent.date ?? "Unknown")
-            
-            // Create fight results for fighter 1
-            let outcome1 = apiEvent.fighter1 == apiEvent.winner ? "Win" : "Loss"
-            let result1 = FightResult(
-                opponent: apiEvent.fighter2,
-                opponentID: apiEvent.fighter2ID,
-                outcome: outcome1,
-                method: apiEvent.method ?? "Unknown",
-                date: formattedDate,
-                event: apiEvent.eventName
-            )
-            
-            // Create fight results for fighter 2
-            let outcome2 = apiEvent.fighter2 == apiEvent.winner ? "Win" : "Loss"
-            let result2 = FightResult(
-                opponent: apiEvent.fighter1,
-                opponentID: apiEvent.fighter1ID,
-                outcome: outcome2,
-                method: apiEvent.method ?? "Unknown",
-                date: formattedDate,
-                event: apiEvent.eventName
-            )
-            
-            // Add to fight history
-            if newFightHistory[apiEvent.fighter1] == nil {
-                newFightHistory[apiEvent.fighter1] = []
-            }
-            newFightHistory[apiEvent.fighter1]?.append(result1)
-            
-            if newFightHistory[apiEvent.fighter2] == nil {
-                newFightHistory[apiEvent.fighter2] = []
-            }
-            newFightHistory[apiEvent.fighter2]?.append(result2)
-            
-            // Create or update event
-            if tempEventMap[apiEvent.eventName] == nil {
-                tempEventMap[apiEvent.eventName] = []
-            }
-            
-            // Add the fight to the event
-            let fight = Fight(
-                redCorner: apiEvent.fighter1,
-                blueCorner: apiEvent.fighter2,
-                redCornerID: apiEvent.fighter1ID,
-                blueCornerID: apiEvent.fighter2ID,
-                weightClass: apiEvent.weightClass ?? "Unknown",
-                isMainEvent: false, // Could be determined by event order
-                isTitleFight: apiEvent.method?.lowercased().contains("title") ?? false,
-                round: apiEvent.round != nil ? String(apiEvent.round!) : "N/A",
-                time: apiEvent.time ?? "N/A"
-            )
-            
-            tempEventMap[apiEvent.eventName]?.append(fight)
-        }
-        
-        // Create final event details
-        for (eventName, fights) in tempEventMap {
-            // Find a sample event to get location and date
-            if let sampleEvent = apiEvents.first(where: { $0.eventName == eventName }) {
-                newEventDetails[eventName] = EventInfo(
-                    name: eventName,
-                    date: formatDate(sampleEvent.date ?? "Unknown"),
-                    location: sampleEvent.location ?? "Unknown",
-                    venue: "N/A", // Not available in our CSV
-                    fights: fights
-                )
-            }
-        }
-        
-        // Sort fights by date (newest first)
-        for (fighter, fights) in newFightHistory {
-            newFightHistory[fighter] = fights.sorted { fight1, fight2 in
-                return compareDates(fight1.date, fight2.date)
-            }
-        }
-        
-        // Update on main thread
-        DispatchQueue.main.async {
-            self.fighters = newFighters
-            self.fightHistory = newFightHistory
-            self.eventDetails = newEventDetails
-        }
-    }
-    
-    // Process upcoming events data
-    private func processUpcomingEvents(events apiEvents: [APIEvent]) {
-        print("🔄 Processing \(apiEvents.count) upcoming events...")
-        
-        // Group events by event name to organize fights under each event
-        let eventsByName = Dictionary(grouping: apiEvents) { $0.eventName }
-        var newUpcomingEvents: [EventInfo] = []
-        
-        // Process each event
-        for (eventName, eventFights) in eventsByName {
-            // Get the first event to extract common data
-            if let firstEvent = eventFights.first {
-                // Convert fights to our app's format
-                var fights: [Fight] = []
-                
-                for apiEvent in eventFights {
-                    // Determine if this is a main event or title fight
-                    let isMainEvent = apiEvent.fightType?.lowercased().contains("main event") ?? false
-                    let isTitleFight = apiEvent.fightType?.lowercased().contains("title") ?? false
-                    
-                    let fight = Fight(
-                        redCorner: apiEvent.fighter1,
-                        blueCorner: apiEvent.fighter2,
-                        redCornerID: apiEvent.fighter1ID,
-                        blueCornerID: apiEvent.fighter2ID,
-                        weightClass: apiEvent.weightClass ?? "Unknown",
-                        isMainEvent: isMainEvent,
-                        isTitleFight: isTitleFight,
-                        round: "N/A", // Upcoming fights don't have results
-                        time: "N/A"   // Upcoming fights don't have times
-                    )
-                    
-                    fights.append(fight)
-                }
-                
-                // Create the event info
-                let eventInfo = EventInfo(
-                    name: eventName,
-                    date: formatDate(firstEvent.date ?? "Unknown"),
-                    location: firstEvent.location ?? "Unknown",
-                    venue: "N/A", // Venue not available in CSV
-                    fights: fights
-                )
-                
-                newUpcomingEvents.append(eventInfo)
-                print("✅ Processed upcoming event: \(eventName) with \(fights.count) fights")
-            }
-        }
-        
-        // Sort events by date (soonest first)
-        newUpcomingEvents.sort { event1, event2 in
-            // Later date should come first in the list
-            let result = compareDates(event1.date, event2.date)
-            // If compareDates returns true, event1 is more recent than event2,
-            // but for upcoming events, we want earlier dates first
-            return !result
-        }
-        
-        // Update on main thread
-        DispatchQueue.main.async {
-            self.upcomingEvents = newUpcomingEvents
-        }
-        
-        print("✅ Finished processing \(newUpcomingEvents.count) upcoming events")
-    }
-    
-    // Process past events data
-    private func processPastEvents(events apiEvents: [APIEvent]) {
-        print("🔄 Processing past events...")
-        
-        // Group events by event name
-        let eventsByName = Dictionary(grouping: apiEvents) { $0.eventName }
-        var newPastEvents: [EventInfo] = []
-        
-        // Process each event
-        for (eventName, eventFights) in eventsByName {
-            // Skip if there are no fights with winners (incomplete data)
-            if eventFights.allSatisfy({ $0.winner == nil || $0.winner == "TBD" }) {
-                continue
-            }
-            
-            // Get the first event to extract common data
-            if let firstEvent = eventFights.first {
-                // Convert fights to our app's format
-                var fights: [Fight] = []
-                
-                for apiEvent in eventFights {
-                    let isMainEvent = apiEvent.fightType?.lowercased().contains("main event") ?? false
-                    let isTitleFight = apiEvent.method?.lowercased().contains("title") ?? false
-                    
-                    let fight = Fight(
-                        redCorner: apiEvent.fighter1,
-                        blueCorner: apiEvent.fighter2,
-                        redCornerID: apiEvent.fighter1ID,
-                        blueCornerID: apiEvent.fighter2ID,
-                        weightClass: apiEvent.weightClass ?? "Unknown",
-                        isMainEvent: isMainEvent,
-                        isTitleFight: isTitleFight,
-                        round: apiEvent.round != nil ? String(apiEvent.round!) : "N/A",
-                        time: apiEvent.time ?? "N/A"
-                    )
-                    
-                    fights.append(fight)
-                }
-                
-                // Create the event info
-                let eventInfo = EventInfo(
-                    name: eventName,
-                    date: formatDate(firstEvent.date ?? "Unknown"),
-                    location: firstEvent.location ?? "Unknown",
-                    venue: "N/A", // Venue not available in CSV
-                    fights: fights
-                )
-                
-                newPastEvents.append(eventInfo)
-                print("✅ Processed past event: \(eventName) with \(fights.count) fights")
-            }
-        }
-        
-        // Sort events by date (most recent first)
-        newPastEvents.sort { event1, event2 in
-            // Later date should come first in the list
-            compareDates(event1.date, event2.date)
-        }
-        
-        // Keep only the most recent 3 events
-        if newPastEvents.count > 3 {
-            newPastEvents = Array(newPastEvents.prefix(3))
-        }
-        
-        // Update on main thread
-        DispatchQueue.main.async {
-            self.pastEvents = newPastEvents
-        }
-        
-        print("✅ Finished processing \(newPastEvents.count) past events")
-    }
-    
-    // MARK: - Cache Management
-    
-    private func saveToCache() {
-        // Convert data to JSON and save to UserDefaults
-        do {
-            let fightersData = try JSONEncoder().encode(fighters)
-            let fightHistoryData = try JSONEncoder().encode(fightHistory)
-            let eventDetailsData = try JSONEncoder().encode(eventDetails)
-            let upcomingEventsData = try JSONEncoder().encode(upcomingEvents)
-            let pastEventsData = try JSONEncoder().encode(pastEvents)
-            
-            cache.set(fightersData, forKey: "cachedFighters")
-            cache.set(fightHistoryData, forKey: "cachedFightHistory")
-            cache.set(eventDetailsData, forKey: "cachedEventDetails")
-            cache.set(upcomingEventsData, forKey: "cachedUpcomingEvents")
-            cache.set(pastEventsData, forKey: "cachedPastEvents")
-            cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
-            
-            print("Data saved to cache")
-        } catch {
-            print("Failed to save data to cache: \(error)")
-        }
-    }
-    
-    private func loadFromCache() -> Bool {
-        // Try to load data from UserDefaults
-        if let fightersData = cache.data(forKey: "cachedFighters"),
-           let fightHistoryData = cache.data(forKey: "cachedFightHistory"),
-           let eventDetailsData = cache.data(forKey: "cachedEventDetails"),
-           let upcomingEventsData = cache.data(forKey: "cachedUpcomingEvents") {
-            
-            do {
-                fighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
-                fightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
-                eventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
-                upcomingEvents = try JSONDecoder().decode([EventInfo].self, from: upcomingEventsData)
-                
-                // Load past events if available, otherwise use empty array
-                if let pastEventsData = cache.data(forKey: "cachedPastEvents") {
-                    pastEvents = try JSONDecoder().decode([EventInfo].self, from: pastEventsData)
-                }
-                
-                return true
-            } catch {
-                print("Failed to decode cached data: \(error)")
-                return false
-            }
-        }
-        
-        return false
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func calculateAge(from birthDateString: String) -> Int {
-        // Simple age calculation from birth date string
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        
-        guard let birthDate = dateFormatter.date(from: birthDateString) else {
-            return 0
-        }
-        
-        let calendar = Calendar.current
-        let ageComponents = calendar.dateComponents([.year], from: birthDate, to: Date())
-        return ageComponents.year ?? 0
-    }
-    
-    // Fallback method if CSV loading fails
-    private func loadSampleFighterData() {
-        print("Loading sample fighter data as fallback...")
-        
-        fighters["Leon Edwards"] = FighterStats(
-            name: "Leon Edwards",
-            nickname: "Rocky",
-            record: "22-4-0, 1NC",
-            weightClass: "Welterweight",
-            age: 33,
-            height: "6'0\"",
-            reach: "N/A",
-            stance: "Southpaw",
-            teamAffiliation: "N/A",
-            nationality: nil,
-            hometown: nil,
-            birthDate: "",
-            fighterID: 0,
-            winsByKO: nil,
-            winsBySubmission: nil,
-            winsByDecision: nil,
-            lossesByKO: nil,
-            lossesBySubmission: nil,
-            lossesByDecision: nil
-        )
-        
-        
-//        fighters["Sean Brady"] = FighterStats(
-//            name: "Sean Brady",
-//            nickname: nil,
-//            record: "17-1-0",
-//            weightClass: "Welterweight",
-//            age: 31,
-//            height: "5'10\"",
-////            reach: "N/A",
-////            stance: "N/A",
-//            teamAffiliation: "Renzo Gracie Philly"
-//        )
-//        
-//        // Add a few more important fighters from our event
-//        fighters["Kevin Holland"] = FighterStats(
-//            name: "Kevin Holland",
-//            nickname: "Trailblazer",
-//            record: "26-13-0, 1NC",
-//            weightClass: "Welterweight",
-//            age: 32,
-//            height: "6'3\"",
-////            reach: "N/A",
-////            stance: "N/A",
-//            teamAffiliation: "Phalanx MMA Academy"
-//        )
-//        
-//        fighters["Gunnar Nelson"] = FighterStats(
-//            name: "Gunnar Nelson",
-//            nickname: "Gunni",
-//            record: "19-5-1",
-//            weightClass: "Welterweight",
-//            age: 36,
-//            height: "5'11\"",
-////            reach: "N/A",
-////            stance: "N/A",
-//            teamAffiliation: "Mjölnir MMA"
-//        )
-        
-        print("Loaded \(fighters.count) sample fighters")
-    }
-    
-    // Fallback method if CSV loading fails
-    private func loadSampleFightHistory() {
-        print("Loading sample fight history as fallback...")
-        
-        fightHistory["Leon Edwards"] = [
-            FightResult(
-                opponent: "Colby Covington",
-                opponentID: 2,
-                outcome: "Win",
-                method: "Decision (Unanimous)",
-                date: "Dec 16, 2023",
-                event: "UFC 296"
-            ),
-            FightResult(
-                opponent: "Kamaru Usman",
-                opponentID: 1,
-                outcome: "Win",
-                method: "Decision (Majority)",
-                date: "Mar 18, 2023",
-                event: "UFC 286"
-            ),
-            FightResult(
-                opponent: "Kamaru Usman",
-                opponentID: 1,
-                outcome: "Win",
-                method: "KO (Head Kick)",
-                date: "Aug 20, 2022",
-                event: "UFC 278"
-            )
-        ]
-        
-        fightHistory["Sean Brady"] = [
-            FightResult(
-                opponent: "Gilbert Burns",
-                opponentID: 4,
-                outcome: "Win",
-                method: "Decision (Unanimous)",
-                date: "Sep 7, 2024",
-                event: "UFC Fight Night 242"
-            ),
-            FightResult(
-                opponent: "Kelvin Gastelum",
-                opponentID: 3,
-                outcome: "Win",
-                method: "Submission (Arm-Triangle Choke)",
-                date: "Dec 2, 2023",
-                event: "UFC Fight Night 233"
-            ),
-            FightResult(
-                opponent: "Belal Muhammad",
-                opponentID: 5,
-                outcome: "Loss",
-                method: "TKO (Punches)",
-                date: "Oct 22, 2022",
-                event: "UFC 280"
-            )
-        ]
-        
-        print("Loaded sample fight history for \(fightHistory.count) fighters")
-    }
-    
-    private func loadSampleUpcomingEvents() {
-        print("Loading sample upcoming events as fallback...")
-        
-        let sampleEvent = EventInfo(
-            name: "UFC Fight Night 254 London",
-            date: "March 22, 2025",
-            location: "London, UK",
-            venue: "O2 Arena",
-            fights: [
-                Fight(redCorner: "Leon Edwards", blueCorner: "Sean Brady", redCornerID: 1, blueCornerID: 2, weightClass: "Welterweight", isMainEvent: true, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Jan Błachowicz", blueCorner: "Carlos Ulberg", redCornerID: 6, blueCornerID: 7, weightClass: "Light Heavyweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
-                Fight(redCorner: "Gunnar Nelson", blueCorner: "Kevin Holland", redCornerID: 8, blueCornerID: 9, weightClass: "Welterweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
-            ]
-        )
-        
-        DispatchQueue.main.async {
-            self.upcomingEvents = [sampleEvent]
-        }
-        
-        print("Loaded 1 sample upcoming event")
-    }
-    
-    private func formatDate(_ isoDateString: String) -> String {
-        // Handle ISO date format (2024-11-09T00:00:00+00:00)
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
-        if let date = dateFormatter.date(from: isoDateString) {
-            let outputFormatter = DateFormatter()
-            outputFormatter.dateFormat = "MMM d, yyyy"
-            return outputFormatter.string(from: date)
-        }
-        
-        return isoDateString // Return original string if parsing fails
-    }
-    
-    private func compareDates(_ date1: String, _ date2: String) -> Bool {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMM d, yyyy"
-        
-        guard let d1 = dateFormatter.date(from: date1),
-              let d2 = dateFormatter.date(from: date2) else {
+    static func == (lhs: LoadingState, rhs: LoadingState) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle), (.loading, .loading), (.success, .success):
+            return true
+        case (.error(let lhsMsg), .error(let rhsMsg)):
+            return lhsMsg == rhsMsg
+        default:
             return false
         }
-        
-        return d1 > d2 // Return true if date1 is newer than date2
     }
 }
-
-// Make models Codable for caching
-extension FighterStats: Codable {
-    enum CodingKeys: String, CodingKey {
-        case name, nickname, record, weightClass, age, height
-        case teamAffiliation, nationality, hometown, birthDate
-        case winsByKO, winsBySubmission, winsByDecision
-        case reach, stance
-        case fighterID
-        case lossesByKO, lossesBySubmission, lossesByDecision
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        name = try container.decode(String.self, forKey: .name)
-        nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
-        record = try container.decode(String.self, forKey: .record)
-        weightClass = try container.decode(String.self, forKey: .weightClass)
-        age = try container.decode(Int.self, forKey: .age)
-        height = try container.decode(String.self, forKey: .height)
-        reach = try container.decodeIfPresent(String.self, forKey: .reach)
-        stance = try container.decodeIfPresent(String.self, forKey: .stance)
-        teamAffiliation = try container.decode(String.self, forKey: .teamAffiliation)
-        nationality = try container.decodeIfPresent(String.self, forKey: .nationality)
-        hometown = try container.decodeIfPresent(String.self, forKey: .hometown)
-        birthDate = try container.decode(String.self, forKey: .birthDate)
-        fighterID = try container.decodeIfPresent(Int.self, forKey: .fighterID) ?? 0
-        winsByKO = try container.decodeIfPresent(Int.self, forKey: .winsByKO)
-        winsBySubmission = try container.decodeIfPresent(Int.self, forKey: .winsBySubmission)
-        winsByDecision = try container.decodeIfPresent(Int.self, forKey: .winsByDecision)
-        lossesByKO = try container.decodeIfPresent(Int.self, forKey: .lossesByKO)
-        lossesBySubmission = try container.decodeIfPresent(Int.self, forKey: .lossesBySubmission)
-        lossesByDecision = try container.decodeIfPresent(Int.self, forKey: .lossesByDecision)
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        try container.encode(name, forKey: .name)
-        try container.encodeIfPresent(nickname, forKey: .nickname)
-        try container.encode(record, forKey: .record)
-        try container.encode(weightClass, forKey: .weightClass)
-        try container.encode(age, forKey: .age)
-        try container.encode(height, forKey: .height)
-        try container.encodeIfPresent(reach, forKey: .reach)
-        try container.encodeIfPresent(stance, forKey: .stance)
-        try container.encode(teamAffiliation, forKey: .teamAffiliation)
-        try container.encodeIfPresent(nationality, forKey: .nationality)
-        try container.encodeIfPresent(hometown, forKey: .hometown)
-        try container.encode(birthDate, forKey: .birthDate)
-        try container.encode(fighterID, forKey: .fighterID)
-        try container.encodeIfPresent(winsByKO, forKey: .winsByKO)
-        try container.encodeIfPresent(winsBySubmission, forKey: .winsBySubmission)
-        try container.encodeIfPresent(winsByDecision, forKey: .winsByDecision)
-        try container.encodeIfPresent(lossesByKO, forKey: .lossesByKO)
-        try container.encodeIfPresent(lossesBySubmission, forKey: .lossesBySubmission)
-        try container.encodeIfPresent(lossesByDecision, forKey: .lossesByDecision)
-    }
-}
-extension FightResult: Codable {}
-extension EventInfo: Codable {}
-extension Fight: Codable {}
 
 struct EventCard: View {
     let event: EventInfo
@@ -888,15 +165,22 @@ struct EventCard: View {
         }
     }
     
-    private func loadFighterData(name: String) {
-        debugPrint("🔵 Selected fighter from event card: \(name)")
+    private func loadFighterData(name: String, id: Int) {
+        debugPrint("🔵 Selected fighter from event card: \(name) (ID: \(id))")
         
-        // Pre-load data and show profile
-        if let fighter = FighterDataManager.shared.getFighter(name) {
+        // Try to load by ID first, then fall back to name
+        var fighter = FighterDataManager.shared.getFighterByID(id)
+        
+        // Fall back to name lookup if ID lookup fails
+        if fighter == nil {
+            fighter = FighterDataManager.shared.getFighter(name)
+        }
+        
+        if let fighter = fighter {
             debugPrint("✅ Successfully loaded data for: \(name)")
             selectedFighter = fighter
         } else {
-            debugPrint("⚠️ Could not load fighter data for: \(name)")
+            debugPrint("⚠️ Could not load fighter data for: \(name) (ID: \(id))")
         }
     }
     
@@ -934,13 +218,14 @@ struct EventCard: View {
             // Fighter names
             HStack {
                 Button(action: {
-                    loadFighterData(name: fight.redCorner)
+                    loadFighterData(name: fight.redCorner, id: fight.redCornerID)
                 }) {
                     Text(fight.redCorner)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(Color.red)
-                        .underline(FighterDataManager.shared.getFighter(fight.redCorner) != nil)
+                        .underline(FighterDataManager.shared.getFighterByID(fight.redCornerID) != nil || 
+                                 FighterDataManager.shared.getFighter(fight.redCorner) != nil)
                 }
                 
                 Text("vs")
@@ -949,13 +234,14 @@ struct EventCard: View {
                     .padding(.horizontal, 4)
                 
                 Button(action: {
-                    loadFighterData(name: fight.blueCorner)
+                    loadFighterData(name: fight.blueCorner, id: fight.blueCornerID)
                 }) {
                     Text(fight.blueCorner)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(AppTheme.accent)
-                        .underline(FighterDataManager.shared.getFighter(fight.blueCorner) != nil)
+                        .underline(FighterDataManager.shared.getFighterByID(fight.blueCornerID) != nil || 
+                                 FighterDataManager.shared.getFighter(fight.blueCorner) != nil)
                 }
                 
                 Spacer()
@@ -1023,3 +309,6 @@ struct EventCard: View {
         }
     }
 }
+
+// AppTheme and FighterProfileView should be imported from their respective files
+// Don't define them here

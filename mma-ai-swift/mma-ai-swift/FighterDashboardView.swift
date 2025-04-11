@@ -806,30 +806,3 @@ struct FightProfileView: View {
     FighterDashboardView()
         .preferredColorScheme(.dark)
 } 
-
-struct FighterStats: Identifiable {
-    var id: String { name }
-    let name: String
-    let nickname: String?
-    let record: String // e.g., "21-6-0"
-    let weightClass: String
-    let age: Int
-    let height: String
-    let reach: String?
-    let stance: String?
-    let teamAffiliation: String
-    let nationality: String?
-    let hometown: String?
-    let birthDate: String
-    let fighterID: Int
-    
-    // Win methods
-    let winsByKO: Int?
-    let winsBySubmission: Int?
-    let winsByDecision: Int?
-    
-    // Loss methods
-    let lossesByKO: Int?
-    let lossesBySubmission: Int?
-    let lossesByDecision: Int?
-} 

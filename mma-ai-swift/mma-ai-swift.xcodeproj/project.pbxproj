@@ -9,8 +9,11 @@
 /* Begin PBXBuildFile section */
 		73130C482D8AC8B6004A6AD5 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73130C472D8AC8B6004A6AD5 /* ExportView.swift */; };
 		731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731D8CC52D8AC1B4004F58E6 /* Message.swift */; };
+		732A66B32DA8CB7A003842BA /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A66B22DA8CB7A003842BA /* Models.swift */; };
+		732A66B52DA8CBA5003842BA /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732A66B42DA8CBA5003842BA /* DataManager.swift */; };
 		733DFFE72D8AECA1004EC7B8 /* FighterProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */; };
 		7345C3072D82DB4F00839854 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7345C3062D82DB4F00839854 /* Theme.swift */; };
+		735960F42DA8CDAA00BCF6A2 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735960F32DA8CDAA00BCF6A2 /* APIModels.swift */; };
 		736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736B5A772D82E22A008D7A55 /* DashboardView.swift */; };
 		736CEE982D9289680007C978 /* FighterChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736CEE972D9289680007C978 /* FighterChartView.swift */; };
 		7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7378521A2D8AFB6400023875 /* FighterDashboardView.swift */; };
@@ -32,8 +35,11 @@
 /* Begin PBXFileReference section */
 		73130C472D8AC8B6004A6AD5 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		731D8CC52D8AC1B4004F58E6 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		732A66B22DA8CB7A003842BA /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		732A66B42DA8CBA5003842BA /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterProfileView.swift; sourceTree = "<group>"; };
 		7345C3062D82DB4F00839854 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		735960F32DA8CDAA00BCF6A2 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		736B5A772D82E22A008D7A55 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		736CEE972D9289680007C978 /* FighterChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterChartView.swift; sourceTree = "<group>"; };
 		7378521A2D8AFB6400023875 /* FighterDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterDashboardView.swift; sourceTree = "<group>"; };
@@ -77,11 +83,13 @@
 			isa = PBXGroup;
 			children = (
 				8A1234561234567800000022 /* Info.plist */,
+				735960F32DA8CDAA00BCF6A2 /* APIModels.swift */,
 				73A9603F2D82E0ED009B6A7E /* AppTheme.swift */,
 				8A1234561234567800000006 /* ChatViewModel.swift */,
 				8A1234561234567800000004 /* ContentView.swift */,
 				73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */,
 				736B5A772D82E22A008D7A55 /* DashboardView.swift */,
+				732A66B42DA8CBA5003842BA /* DataManager.swift */,
 				738B03132D82DE4B0065813D /* EventCard.swift */,
 				73130C472D8AC8B6004A6AD5 /* ExportView.swift */,
 				738B03142D82DE4B0065813D /* FighterCard.swift */,
@@ -93,6 +101,7 @@
 				738B03102D82DD5B0065813D /* LoadingView.swift */,
 				731D8CC52D8AC1B4004F58E6 /* Message.swift */,
 				8A1234561234567800000002 /* MMAApp.swift */,
+				732A66B22DA8CB7A003842BA /* Models.swift */,
 				737E315D2D908A53009EBF34 /* NetworkManager.swift */,
 				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
 				7345C3062D82DB4F00839854 /* Theme.swift */,
@@ -182,13 +191,16 @@
 				8A1234561234567800000003 /* ContentView.swift in Sources */,
 				7378521B2D8AFB6400023875 /* FighterDashboardView.swift in Sources */,
 				736CEE982D9289680007C978 /* FighterChartView.swift in Sources */,
+				735960F42DA8CDAA00BCF6A2 /* APIModels.swift in Sources */,
 				738B03162D82DE4B0065813D /* EventCard.swift in Sources */,
 				73C1B5422D8FE78700E9D50D /* FullScreenImageView.swift in Sources */,
 				738B03172D82DE4B0065813D /* FighterCard.swift in Sources */,
 				7345C3072D82DB4F00839854 /* Theme.swift in Sources */,
 				738B03112D82DD5B0065813D /* LaunchScreen.swift in Sources */,
 				73A960422D82E0ED009B6A7E /* AppTheme.swift in Sources */,
+				732A66B52DA8CBA5003842BA /* DataManager.swift in Sources */,
 				73130C482D8AC8B6004A6AD5 /* ExportView.swift in Sources */,
+				732A66B32DA8CB7A003842BA /* Models.swift in Sources */,
 				73A960432D82E0ED009B6A7E /* SettingsView.swift in Sources */,
 				73A960442D82E0ED009B6A7E /* ConversationHistoryView.swift in Sources */,
 				738B03122D82DD5B0065813D /* LoadingView.swift in Sources */,

@@ -1,227 +1,320 @@
 import SwiftUI
+import Charts
 
 struct FighterProfileView: View {
     let fighter: FighterStats
     let onDismiss: () -> Void
-    @StateObject private var viewModel = FighterProfileViewModel()
+    
+    @State private var selectedTab = 0
+    @State private var showingFightHistory = false
+    @State private var fightHistory: [FightRecord]?
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
-            Group {
-                if viewModel.isLoading {
-                    loadingView
-                } else if let fighterData = viewModel.fighter {
-                    fighterContentView(fighter: fighterData)
-                } else {
-                    errorView
-                }
-            }
-            .navigationTitle(fighter.name)
-            .navigationBarItems(trailing: Button("Close") {
-                onDismiss()
-            })
-        }
-        .onAppear {
-            debugPrint("🔵 FighterProfileView appeared for: \(fighter.name) (ID: \(fighter.fighterID))")
-            viewModel.loadFighter(fighter: fighter)
-        }
-    }
-    
-    private var loadingView: some View {
-        VStack {
-            ProgressView("Loading fighter data...")
-                .progressViewStyle(CircularProgressViewStyle())
-            Text(fighter.name)
-                .foregroundColor(.secondary)
-                .padding(.top, 8)
-        }
-        .padding(.vertical, 50)
-    }
-    
-    private var errorView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
-                .foregroundColor(.yellow)
-            Text("Could not load fighter data")
-                .font(.headline)
-            Button("Retry") {
-                viewModel.loadFighter(fighter: fighter)
-            }
-        }
-        .padding()
-    }
-    
-    private func fighterContentView(fighter: FighterStats) -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Basic fighter info
-                VStack(spacing: 4) {
-                    Text(fighter.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.textPrimary)
-                    
-                    if let nickname = fighter.nickname {
-                        Text("\"\(nickname)\"")
-                            .font(.caption)
-                            .italic()
-                            .foregroundColor(AppTheme.accent)
-                    }
-                    
-                    Text(fighter.record)
-                        .font(.subheadline)
-                        .foregroundColor(AppTheme.textSecondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(AppTheme.primary)
-                
-                // Fighter stats
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        statRow(label: "Weight", value: fighter.weightClass)
-                        statRow(label: "Age", value: "\(fighter.age)")
-                        statRow(label: "Height", value: fighter.height)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        statRow(label: "Team", value: fighter.teamAffiliation)
-                        statRow(label: "Country", value: fighter.nationality ?? "N/A")
-                        statRow(label: "Hometown", value: fighter.hometown ?? "N/A")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(AppTheme.cardBackground)
-                .cornerRadius(10)
-                .padding(.horizontal)
-                
-                // Performance Analysis with Win/Loss Charts
-                VStack {
-                    Text("Performance Analysis")
-                        .font(.headline)
-                        .foregroundColor(AppTheme.textPrimary)
-                        .padding(.top, 8)
-
-                    // Win/Loss charts
-                    FighterChartView(
-                        winsByKO: fighter.winsByKO ?? 0,
-                        winsBySubmission: fighter.winsBySubmission ?? 0,
-                        winsByDecision: fighter.winsByDecision ?? 0,
-                        lossesByKO: fighter.lossesByKO ?? 0,
-                        lossesBySubmission: fighter.lossesBySubmission ?? 0,
-                        lossesByDecision: fighter.lossesByDecision ?? 0,
-                        chartSize: 120,
-                        showBothCharts: true
-                    )
-                    .padding(.vertical, 8)
-                }
-                .background(AppTheme.cardBackground)
-                .cornerRadius(10)
-                .padding(.horizontal)
-                
-                // Fight history
-                if !viewModel.fightHistory.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Recent Fights")
-                            .font(.headline)
-                            .padding(.horizontal)
-                            .padding(.top, 10)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    VStack(spacing: 8) {
+                        Text(fighter.name)
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
                         
-                        ForEach(viewModel.fightHistory, id: \.opponent) { fight in
-                            FightHistoryRow(fight: fight)
+                        Text(fighter.nickname ?? "")
+                            .font(.headline)
+                            .foregroundColor(.yellow)
+                            .opacity(fighter.nickname == nil ? 0 : 1)
+                        
+                        Text(fighter.weightClass)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            
+                        if !fighter.teamAffiliation.isEmpty {
+                            Text(fighter.teamAffiliation)
+                                .font(.caption)
+                                .foregroundColor(.gray)
                         }
                     }
-                    .padding(.bottom)
+                    .padding(.top)
+                    
+                    // Stats Grid
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: 20) {
+                        StatBox(title: "Record", value: fighter.record)
+                        StatBox(title: "Age", value: "\(fighter.age)")
+                        
+                        // Origin/Location Box
+                        VStack(spacing: 4) {
+                            Text("Nationality")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            
+                            Text(fighter.nationality ?? "N/A")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.3))
+                        .cornerRadius(8)
+                        
+                        StatBox(title: "Height", value: fighter.height)
+                        StatBox(title: "Reach", value: fighter.reach ?? "N/A")
+                        StatBox(title: "Stance", value: fighter.stance ?? "N/A")
+                    }
+                    .padding(.horizontal)
+                    
+                    // Stats Charts
+                    VStack(alignment: .leading, spacing: 16) {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 30) {
+                                Spacer(minLength: 0)
+                                
+                                // Win Method Distribution
+                                VStack {
+                                    Chart {
+                                        SectorMark(
+                                            angle: .value("KO/TKO", fighter.winsByKO ?? 0),
+                                            innerRadius: .ratio(0.8),
+                                            angularInset: 2.0
+                                        )
+                                        .foregroundStyle(.red)
+                                        
+                                        SectorMark(
+                                            angle: .value("Submission", fighter.winsBySubmission ?? 0),
+                                            innerRadius: .ratio(0.8),
+                                            angularInset: 2.0
+                                        )
+                                        .foregroundStyle(.purple)
+                                        
+                                        SectorMark(
+                                            angle: .value("Decision", fighter.winsByDecision ?? 0),
+                                            innerRadius: .ratio(0.8),
+                                            angularInset: 2.0
+                                        )
+                                        .foregroundStyle(.orange)
+                                    }
+                                    .frame(width: 120, height: 120)
+                                    
+                                    Text("Win Methods")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    
+                                    HStack(spacing: 8) {
+                                        Text("KO: \(fighter.winsByKO ?? 0)")
+                                            .foregroundColor(.red)
+                                        Text("SUB: \(fighter.winsBySubmission ?? 0)")
+                                            .foregroundColor(.purple)
+                                        Text("DEC: \(fighter.winsByDecision ?? 0)")
+                                            .foregroundColor(.orange)
+                                    }
+                                    .font(.caption)
+                                }
+                                
+                                // Loss Method Distribution
+                                VStack {
+                                    Chart {
+                                        SectorMark(
+                                            angle: .value("KO/TKO", fighter.lossesByKO ?? 0),
+                                            innerRadius: .ratio(0.8),
+                                            angularInset: 2.0
+                                        )
+                                        .foregroundStyle(.red.opacity(0.7))
+                                        
+                                        SectorMark(
+                                            angle: .value("Submission", fighter.lossesBySubmission ?? 0),
+                                            innerRadius: .ratio(0.8),
+                                            angularInset: 2.0
+                                        )
+                                        .foregroundStyle(.purple.opacity(0.7))
+                                        
+                                        SectorMark(
+                                            angle: .value("Decision", fighter.lossesByDecision ?? 0),
+                                            innerRadius: .ratio(0.8),
+                                            angularInset: 2.0
+                                        )
+                                        .foregroundStyle(.orange.opacity(0.7))
+                                    }
+                                    .frame(width: 120, height: 120)
+                                    
+                                    Text("Loss Methods")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    
+                                    HStack(spacing: 8) {
+                                        Text("KO: \(fighter.lossesByKO ?? 0)")
+                                            .foregroundColor(.red.opacity(0.7))
+                                        Text("SUB: \(fighter.lossesBySubmission ?? 0)")
+                                            .foregroundColor(.purple.opacity(0.7))
+                                        Text("DEC: \(fighter.lossesByDecision ?? 0)")
+                                            .foregroundColor(.orange.opacity(0.7))
+                                    }
+                                    .font(.caption)
+                                }
+                                
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                    
+                    // Fight History Button
+                    Button(action: {
+                        loadFightHistory()
+                        showingFightHistory = true
+                    }) {
+                        Text("View Fight History")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 20)
+                }
+            }
+            .background(AppTheme.background)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        dismiss()
+                        onDismiss()
+                    }) {
+                        Image(systemName: "xmark")
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .sheet(isPresented: $showingFightHistory) {
+                if let history = fightHistory {
+                    FightHistoryView(fights: history, fighterName: fighter.name)
                 } else {
-                    Text("No recent fights found")
-                        .foregroundColor(.secondary)
-                        .padding(.vertical, 30)
+                    ProgressView("Loading fight history...")
                 }
             }
         }
     }
     
-    private func statRow(label: String, value: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(AppTheme.textSecondary)
-                .frame(width: 50, alignment: .leading)
-            
-            Text(value)
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(AppTheme.textPrimary)
-        }
+    private func loadFightHistory() {
+        fightHistory = FighterDataManager.shared.getFightRecords(fighter.name)
     }
 }
 
-struct FightHistoryRow: View {
-    let fight: FightResult
+struct StatBox: View {
+    let title: String
+    let value: String
     
     var body: some View {
         VStack(spacing: 4) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(fight.opponent)
-                        .fontWeight(.semibold)
-                    Text(fight.event)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.gray)
+            
+            Text(value)
+                .font(.headline)
+                .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(8)
+    }
+}
+
+// Helper extension for clamping values
+extension Double {
+    func clamped(to limits: ClosedRange<Double>) -> Double {
+        return min(max(self, limits.lowerBound), limits.upperBound)
+    }
+}
+
+struct FightHistoryView: View {
+    let fights: [FightRecord]
+    let fighterName: String
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            List(fights) { fight in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(fight.event)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        Text(fight.date)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    
+                    HStack {
+                        Text(fight.opponent)
+                            .font(.subheadline)
+                            .foregroundColor(fight.result == "W" ? .green : (fight.result == "L" ? .red : .gray))
+                        
+                        Spacer()
+                        
+                        Text(fight.method)
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    
+                    if let round = fight.round, let time = fight.time {
+                        Text("Round \(round) - \(time)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
                 }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing) {
-                    Text(fight.outcome)
-                        .fontWeight(.bold)
-                        .foregroundColor(fight.outcome == "Win" ? .green : .red)
-                    Text(fight.method)
-                        .font(.caption)
-                    Text(fight.date)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                .listRowBackground(Color.black.opacity(0.3))
+            }
+            .listStyle(.plain)
+            .background(AppTheme.background)
+            .navigationTitle("\(fighterName)'s Fight History")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
                 }
             }
-        }
-        .padding()
-        .background(Color(.systemGray5))
-        .cornerRadius(10)
-        .padding(.horizontal)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            // Future enhancement: navigate to opponent profile using opponentID
-            debugPrint("🔵 Tapped on opponent: \(fight.opponent) (ID: \(fight.opponentID))")
         }
     }
 }
 
-@MainActor
-class FighterProfileViewModel: ObservableObject {
-    @Published private(set) var fighter: FighterStats?
-    @Published private(set) var fightHistory: [FightResult] = []
-    @Published private(set) var isLoading = true
-    
-    func loadFighter(fighter: FighterStats) {
-        isLoading = true
-        
-        // Get the latest fighter data from the shared manager
-        let enhancedFighter = FighterDataManager.shared.getFighter(fighter.name)
-        
-        // Get fight history from the shared manager
-        let history = FighterDataManager.shared.getFightHistory(fighter.name) ?? []
-        
-        DispatchQueue.main.async {
-            self.fighter = enhancedFighter ?? fighter // Fall back to original fighter if not found
-            self.fightHistory = history
-            self.isLoading = false
-            
-            // Log the ID for debugging
-            debugPrint("✅ Loaded fighter profile with ID: \(enhancedFighter?.fighterID ?? 0)")
-        }
-    }
+#Preview {
+    FighterProfileView(
+        fighter: FighterStats(
+            name: "Jon Jones",
+            nickname: "Bones",
+            record: "27-1-0",
+            weightClass: "Heavyweight",
+            age: 36,
+            height: "6'4\"",
+            reach: "84.5\"",
+            stance: "Orthodox",
+            teamAffiliation: "Jackson-Wink MMA",
+            nationality: "American",
+            hometown: "Rochester, NY",
+            birthDate: "July 19, 1987",
+            fighterID: 123456,
+            winsByKO: 10,
+            winsBySubmission: 7,
+            winsByDecision: 10,
+            lossesByKO: 0,
+            lossesBySubmission: 0,
+            lossesByDecision: 1
+        ),
+        onDismiss: {}
+    )
+    .preferredColorScheme(.dark)
 }
