@@ -147,10 +147,9 @@ struct ContentView: View {
                 // Switch to the chat tab
                 selectedTab = 1
                 
-                // If we're in welcome view, start a new chat
-                if chatViewModel.isFirstLaunch {
-                    chatViewModel.isFirstLaunch = false
-                }
+                // Always create a new chat for each prediction
+                chatViewModel.startNewChat()
+                chatViewModel.isFirstLaunch = false
                 
                 // Instead of using standard sendMessage, we'll use a special version
                 // that doesn't show the user input in the chat UI
