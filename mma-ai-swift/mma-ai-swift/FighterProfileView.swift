@@ -6,7 +6,6 @@ struct FighterProfileView: View {
     let onDismiss: () -> Void
     
     @State private var selectedTab = 0
-    @State private var showingFightHistory = false
     @State private var fightHistory: [FightRecord]?
     @Environment(\.dismiss) private var dismiss
     
@@ -74,86 +73,30 @@ struct FighterProfileView: View {
                             HStack(spacing: 30) {
                                 Spacer(minLength: 0)
                                 
-                                // Win Method Distribution
+                                // Win Methods Chart
                                 VStack {
-                                    Chart {
-                                        SectorMark(
-                                            angle: .value("KO/TKO", fighter.winsByKO ?? 0),
-                                            innerRadius: .ratio(0.8),
-                                            angularInset: 2.0
-                                        )
-                                        .foregroundStyle(.red)
-                                        
-                                        SectorMark(
-                                            angle: .value("Submission", fighter.winsBySubmission ?? 0),
-                                            innerRadius: .ratio(0.8),
-                                            angularInset: 2.0
-                                        )
-                                        .foregroundStyle(.purple)
-                                        
-                                        SectorMark(
-                                            angle: .value("Decision", fighter.winsByDecision ?? 0),
-                                            innerRadius: .ratio(0.8),
-                                            angularInset: 2.0
-                                        )
-                                        .foregroundStyle(.orange)
-                                    }
-                                    .frame(width: 120, height: 120)
-                                    
-                                    Text("Win Methods")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                    
-                                    HStack(spacing: 8) {
-                                        Text("KO: \(fighter.winsByKO ?? 0)")
-                                            .foregroundColor(.red)
-                                        Text("SUB: \(fighter.winsBySubmission ?? 0)")
-                                            .foregroundColor(.purple)
-                                        Text("DEC: \(fighter.winsByDecision ?? 0)")
-                                            .foregroundColor(.orange)
-                                    }
-                                    .font(.caption)
+                                    AnimatedVictoryChart(
+                                        koValue: fighter.winsByKO ?? 0,
+                                        subValue: fighter.winsBySubmission ?? 0,
+                                        decValue: fighter.winsByDecision ?? 0,
+                                        title: "Win Methods",
+                                        koColor: .red,
+                                        subColor: .purple,
+                                        decColor: .orange
+                                    )
                                 }
                                 
-                                // Loss Method Distribution
+                                // Loss Methods Chart
                                 VStack {
-                                    Chart {
-                                        SectorMark(
-                                            angle: .value("KO/TKO", fighter.lossesByKO ?? 0),
-                                            innerRadius: .ratio(0.8),
-                                            angularInset: 2.0
-                                        )
-                                        .foregroundStyle(.red.opacity(0.7))
-                                        
-                                        SectorMark(
-                                            angle: .value("Submission", fighter.lossesBySubmission ?? 0),
-                                            innerRadius: .ratio(0.8),
-                                            angularInset: 2.0
-                                        )
-                                        .foregroundStyle(.purple.opacity(0.7))
-                                        
-                                        SectorMark(
-                                            angle: .value("Decision", fighter.lossesByDecision ?? 0),
-                                            innerRadius: .ratio(0.8),
-                                            angularInset: 2.0
-                                        )
-                                        .foregroundStyle(.orange.opacity(0.7))
-                                    }
-                                    .frame(width: 120, height: 120)
-                                    
-                                    Text("Loss Methods")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                    
-                                    HStack(spacing: 8) {
-                                        Text("KO: \(fighter.lossesByKO ?? 0)")
-                                            .foregroundColor(.red.opacity(0.7))
-                                        Text("SUB: \(fighter.lossesBySubmission ?? 0)")
-                                            .foregroundColor(.purple.opacity(0.7))
-                                        Text("DEC: \(fighter.lossesByDecision ?? 0)")
-                                            .foregroundColor(.orange.opacity(0.7))
-                                    }
-                                    .font(.caption)
+                                    AnimatedVictoryChart(
+                                        koValue: fighter.lossesByKO ?? 0,
+                                        subValue: fighter.lossesBySubmission ?? 0,
+                                        decValue: fighter.lossesByDecision ?? 0,
+                                        title: "Loss Methods",
+                                        koColor: .red.opacity(0.7),
+                                        subColor: .purple.opacity(0.7),
+                                        decColor: .orange.opacity(0.7)
+                                    )
                                 }
                                 
                                 Spacer(minLength: 0)
@@ -162,20 +105,60 @@ struct FighterProfileView: View {
                         }
                     }
                     
-                    // Fight History Button
-                    Button(action: {
-                        loadFightHistory()
-                        showingFightHistory = true
-                    }) {
-                        Text("View Fight History")
+                    // Fight History Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Fight History")
                             .font(.headline)
                             .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(10)
+                            .padding(.horizontal)
+                        
+                        if let fights = fightHistory, !fights.isEmpty {
+                            LazyVStack(spacing: 8) {
+                                ForEach(fights) { fight in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Text(fight.event)
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                            
+                                            Spacer()
+                                            
+                                            Text(fight.date)
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                        
+                                        HStack {
+                                            Text(fight.opponent)
+                                                .font(.subheadline)
+                                                .foregroundColor(fight.result == "W" ? .green : (fight.result == "L" ? .red : .gray))
+                                            
+                                            Spacer()
+                                            
+                                            Text(fight.method)
+                                                .font(.caption)
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        if let round = fight.round, let time = fight.time {
+                                            Text("Round \(round) - \(time)")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color.black.opacity(0.3))
+                                    .cornerRadius(8)
+                                    .padding(.horizontal)
+                                }
+                            }
+                        } else {
+                            Text("No fight history available")
+                                .foregroundColor(.gray)
+                                .italic()
+                                .padding()
+                        }
                     }
-                    .padding(.horizontal)
                     .padding(.top, 20)
                 }
             }
@@ -192,12 +175,8 @@ struct FighterProfileView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingFightHistory) {
-                if let history = fightHistory {
-                    FightHistoryView(fights: history, fighterName: fighter.name)
-                } else {
-                    ProgressView("Loading fight history...")
-                }
+            .onAppear {
+                loadFightHistory()
             }
         }
     }
@@ -232,62 +211,6 @@ struct StatBox: View {
 extension Double {
     func clamped(to limits: ClosedRange<Double>) -> Double {
         return min(max(self, limits.lowerBound), limits.upperBound)
-    }
-}
-
-struct FightHistoryView: View {
-    let fights: [FightRecord]
-    let fighterName: String
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationView {
-            List(fights) { fight in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(fight.event)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Text(fight.date)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    
-                    HStack {
-                        Text(fight.opponent)
-                            .font(.subheadline)
-                            .foregroundColor(fight.result == "W" ? .green : (fight.result == "L" ? .red : .gray))
-                        
-                        Spacer()
-                        
-                        Text(fight.method)
-                            .font(.caption)
-                            .foregroundColor(.white)
-                    }
-                    
-                    if let round = fight.round, let time = fight.time {
-                        Text("Round \(round) - \(time)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-                .listRowBackground(Color.black.opacity(0.3))
-            }
-            .listStyle(.plain)
-            .background(AppTheme.background)
-            .navigationTitle("\(fighterName)'s Fight History")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -471,6 +394,124 @@ private struct PieSliceView: View {
                 path.closeSubpath()
             }
             .fill(color)
+        }
+    }
+}
+
+// Custom animated circular chart for victory methods
+struct AnimatedVictoryChart: View {
+    let koValue: Int
+    let subValue: Int
+    let decValue: Int
+    let title: String
+    let koColor: Color
+    let subColor: Color
+    let decColor: Color
+    
+    @State private var animationProgress: Double = 0
+    
+    var totalValue: Int {
+        koValue + subValue + decValue
+    }
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            // Chart
+            ZStack(alignment: .center) {
+                // Background circle
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+                    .frame(width: 120, height: 120)
+                
+                // Segments
+                if totalValue > 0 {
+                    // Calculate fractions for segments
+                    let koFraction = CGFloat(koValue) / CGFloat(totalValue)
+                    let subFraction = CGFloat(subValue) / CGFloat(totalValue)
+                    let decFraction = CGFloat(decValue) / CGFloat(totalValue)
+                    
+                    // Always display all three segments to ensure proper spacing
+                    // KO segment
+                    Circle()
+                        .trim(from: 0, to: koFraction * animationProgress)
+                        .stroke(koValue > 0 ? koColor : Color.clear, style: StrokeStyle(lineWidth: 10, lineCap: .butt))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 120, height: 120)
+                    
+                    // Submission segment
+                    Circle()
+                        .trim(from: koFraction, to: koFraction + subFraction * animationProgress)
+                        .stroke(subValue > 0 ? subColor : Color.clear, style: StrokeStyle(lineWidth: 10, lineCap: .butt))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 120, height: 120)
+                    
+                    // Decision segment
+                    Circle()
+                        .trim(from: koFraction + subFraction, to: koFraction + subFraction + decFraction * animationProgress)
+                        .stroke(decValue > 0 ? decColor : Color.clear, style: StrokeStyle(lineWidth: 10, lineCap: .butt))
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 120, height: 120)
+                }
+                
+                // Center text
+                VStack(spacing: 2) {
+                    Text("\(totalValue)")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("Total")
+                        .font(.system(size: 10))
+                        .foregroundColor(.gray)
+                }
+            }
+            .frame(width: 130, height: 130)
+            .padding(.top, 5)
+            
+            // Title
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.gray)
+            
+            // Legend
+            VStack(spacing: 6) {
+                // Always show all methods in legend, even if zero
+                LegendItem(label: "KO", value: koValue, color: koColor, total: totalValue > 0 ? totalValue : 1)
+                LegendItem(label: "SUB", value: subValue, color: subColor, total: totalValue > 0 ? totalValue : 1)
+                LegendItem(label: "DEC", value: decValue, color: decColor, total: totalValue > 0 ? totalValue : 1)
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.0)) {
+                animationProgress = 1.0
+            }
+        }
+    }
+}
+
+struct LegendItem: View {
+    let label: String
+    let value: Int
+    let color: Color
+    let total: Int
+    
+    var percentage: String {
+        let percent = Double(value) / Double(total) * 100
+        return String(format: "%.1f%%", percent)
+    }
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            
+            Text("\(label): \(value)")
+                .font(.caption)
+                .foregroundColor(.white)
+            
+            Text(percentage)
+                .font(.caption)
+                .foregroundColor(.gray)
         }
     }
 }
