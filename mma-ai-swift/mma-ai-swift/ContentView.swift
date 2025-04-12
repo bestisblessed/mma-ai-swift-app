@@ -15,21 +15,17 @@ struct ContentView: View {
             NavigationView {
                 DashboardView()
                     .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .principal) {
-                            Text("Dashboard")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(AppTheme.textPrimary)
-                        }
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button(action: {
+                    .modifier(
+                        ToolbarModifier(
+                            title: "Dashboard",
+                            trailingButton: AnyView(Button(action: {
                                 showSettings = true
                             }) {
                                 Image(systemName: "gear")
                                     .font(.system(size: 17))
-                            }
-                        }
-                    }
+                            })
+                        )
+                    )
             }
             .tabItem {
                 Label("Dashboard", systemImage: "chart.bar")
@@ -51,23 +47,16 @@ struct ContentView: View {
                     }
                 }
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) {
-                        Text(chatViewModel.isFirstLaunch ? "" : "MMA AI")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(AppTheme.textPrimary)
-                    }
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {
+                .modifier(
+                    ToolbarModifier(
+                        title: chatViewModel.isFirstLaunch ? "" : "MMA AI",
+                        leadingButton: AnyView(Button(action: {
                             showHistory = true
                         }) {
                             Image(systemName: "clock.arrow.circlepath")
                                 .font(.system(size: 17))
-                        }
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        // Show different buttons based on whether we're in chat or welcome screen
-                        Group {
+                        }),
+                        trailingButton: AnyView(Group {
                             if chatViewModel.isFirstLaunch {
                                 // Settings button when on welcome screen
                                 Button(action: {
@@ -86,9 +75,9 @@ struct ContentView: View {
                                         .font(.system(size: 17))
                                 }
                             }
-                        }
-                    }
-                }
+                        })
+                    )
+                )
                 .sheet(isPresented: $showSettings) {
                     SettingsView(settingsManager: settingsManager)
                 }
@@ -105,13 +94,8 @@ struct ContentView: View {
                     )
                 }
                 .onAppear {
-                    // Update ChatViewModel with settings
-                    chatViewModel.updateApiEndpoint(settingsManager.apiEndpoint)
-                    // Set up the notification observer when the view appears
+                    // Just set up the notification observer when the view appears
                     setupPredictionObserver()
-                }
-                .onChange(of: settingsManager.apiEndpoint) { _, newValue in
-                    chatViewModel.updateApiEndpoint(newValue)
                 }
             }
             .tabItem {
@@ -129,21 +113,17 @@ struct ContentView: View {
             NavigationView {
                 FighterDashboardView()
                     .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .principal) {
-                            Text("Database")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(AppTheme.textPrimary)
-                        }
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button(action: {
+                    .modifier(
+                        ToolbarModifier(
+                            title: "Database",
+                            trailingButton: AnyView(Button(action: {
                                 showSettings = true
                             }) {
                                 Image(systemName: "gear")
                                     .font(.system(size: 17))
-                            }
-                        }
-                    }
+                            })
+                        )
+                    )
             }
             .tabItem {
                 Label("Database", systemImage: "figure.boxing")
@@ -180,6 +160,28 @@ struct ContentView: View {
                 )
             }
         }
+    }
+}
+
+// Custom view modifier to handle the toolbar to avoid ambiguity
+struct ToolbarModifier: ViewModifier {
+    let title: String
+    var leadingButton: AnyView? = nil
+    var trailingButton: AnyView? = nil
+    
+    init(title: String, leadingButton: AnyView? = nil, trailingButton: AnyView? = nil) {
+        self.title = title
+        self.leadingButton = leadingButton
+        self.trailingButton = trailingButton
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .navigationBarItems(
+                leading: leadingButton ?? AnyView(EmptyView()),
+                trailing: trailingButton ?? AnyView(EmptyView())
+            )
+            .navigationTitle(title)
     }
 }
 

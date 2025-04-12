@@ -422,24 +422,36 @@ class NetworkManager {
                             "Main Card"  // All other fights go to main card
                         }
                         
-                        events.append(APIEvent(
-                            eventID: 0,
-                            eventName: event.eventName,
-                            location: event.location,
-                            date: event.date,
-                            venue: nil,
-                            fighter1: formattedFighter1,
-                            fighter2: formattedFighter2,
-                            fighter1ID: 0,
-                            fighter2ID: 0,
-                            weightClass: fight.weightClass,
-                            winner: fight.winner,
-                            method: fight.method,
-                            round: fight.round != nil ? Int(fight.round!) : nil,
-                            time: fight.time,
-                            referee: nil,
-                            fightType: fightType
-                        ))
+                        // Create a new APIEvent using decoder initializer pattern
+//                        let encoder = JSONEncoder()
+                        _ = JSONEncoder()
+                        let decoder = JSONDecoder()
+                        
+                        // Create a dictionary with the event data
+                        let eventDict: [String: Any] = [
+                            "Event Name": event.eventName,
+                            "Event Location": event.location as Any,
+                            "Event Date": event.date as Any,
+                            "Fighter 1": formattedFighter1,
+                            "Fighter 2": formattedFighter2,
+                            "Weight Class": fight.weightClass as Any,
+                            "Winning Fighter": fight.winner as Any,
+                            "Winning Method": fight.method as Any,
+                            "Winning Round": fight.round as Any,
+                            "Winning Time": fight.time as Any,
+                            "Fight Type": fightType
+                        ]
+                        
+                        do {
+                            // Convert dictionary to JSON
+                            let eventData = try JSONSerialization.data(withJSONObject: eventDict)
+                            
+                            // Decode JSON to APIEvent
+                            let apiEvent = try decoder.decode(APIEvent.self, from: eventData)
+                            events.append(apiEvent)
+                        } catch {
+                            print("⚠️ Error creating upcoming event: \(error)")
+                        }
                     }
                     
                     return events

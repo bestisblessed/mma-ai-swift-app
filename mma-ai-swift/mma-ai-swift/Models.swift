@@ -188,7 +188,7 @@ struct APIFighter: Codable {
 }
 
 struct APIEvent: Codable {
-    let eventID: Int
+    let eventID: Int?
     let eventName: String
     let location: String?
     let date: String?
@@ -222,5 +222,29 @@ struct APIEvent: Codable {
         case time = "Winning Time"
         case referee = "Referee"
         case fightType = "Fight Type"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        eventID = try container.decodeIfPresent(Int.self, forKey: .eventID) ?? 0
+        
+        eventName = try container.decode(String.self, forKey: .eventName)
+        fighter1 = try container.decode(String.self, forKey: .fighter1)
+        fighter2 = try container.decode(String.self, forKey: .fighter2)
+        
+        fighter1ID = (try? container.decode(Int.self, forKey: .fighter1ID)) ?? 0
+        fighter2ID = (try? container.decode(Int.self, forKey: .fighter2ID)) ?? 0
+        
+        location = try container.decodeIfPresent(String.self, forKey: .location)
+        date = try container.decodeIfPresent(String.self, forKey: .date)
+        venue = try container.decodeIfPresent(String.self, forKey: .venue)
+        weightClass = try container.decodeIfPresent(String.self, forKey: .weightClass)
+        winner = try container.decodeIfPresent(String.self, forKey: .winner)
+        method = try container.decodeIfPresent(String.self, forKey: .method)
+        round = try container.decodeIfPresent(Int.self, forKey: .round)
+        time = try container.decodeIfPresent(String.self, forKey: .time)
+        referee = try container.decodeIfPresent(String.self, forKey: .referee)
+        fightType = try container.decodeIfPresent(String.self, forKey: .fightType)
     }
 } 

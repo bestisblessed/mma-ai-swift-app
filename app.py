@@ -65,7 +65,6 @@ def get_fighters():
         fighters_df = fighters_df.replace(["None", "NULL", "NaN"], None)
         
         # Fill nullable columns that should never be null with appropriate values
-        # All numeric columns should have default values
         fighters_df["Wins"] = fighters_df["Wins"].fillna(0)
         fighters_df["Losses"] = fighters_df["Losses"].fillna(0)
         fighters_df["Win_Decision"] = fighters_df["Win_Decision"].fillna(0)
@@ -76,11 +75,25 @@ def get_fighters():
         fighters_df["Loss_Sub"] = fighters_df["Loss_Sub"].fillna(0)
         fighters_df["Fighter_ID"] = fighters_df["Fighter_ID"].fillna(0)
         
+        # For Reach, replace '-' with empty string to keep it as a string
+        fighters_df["Reach"] = fighters_df["Reach"].replace('-', '')
+        # For Stance, replace '-' with empty string
+        fighters_df["Stance"] = fighters_df["Stance"].replace('-', '')
+        # Fill any remaining nulls with empty strings for string columns
+        fighters_df["Reach"] = fighters_df["Reach"].fillna('')
+        fighters_df["Stance"] = fighters_df["Stance"].fillna('')
+        
         # Ensure integer fields are properly formatted as integers
         int_columns = ["Wins", "Losses", "Win_Decision", "Win_KO", "Win_Sub", 
                        "Loss_Decision", "Loss_KO", "Loss_Sub", "Fighter_ID"]
         for col in int_columns:
             fighters_df[col] = fighters_df[col].astype(int)
+        
+        # Make sure Reach is treated as a string to match Swift's expectation
+        # Convert any numeric values to strings with one decimal place if needed
+        fighters_df["Reach"] = fighters_df["Reach"].apply(
+            lambda x: f"{float(x):.1f}" if isinstance(x, (int, float)) and x != '' else str(x)
+        )
         
         # Convert to dictionary format with appropriate handling of null values
         fighters_data = json.loads(fighters_df.to_json(orient='records', date_format='iso'))
