@@ -1,5 +1,7 @@
 # Environment variables
 .env
+theme_previews/
+
 
 # Python
 __pycache__/
