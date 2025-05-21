@@ -57,3 +57,4 @@ if [ -n "$event_url" ]; then
 else
   echo "Failed to retrieve event URL from OpenAI."
 fi
+rm sherdog_event_page.html
