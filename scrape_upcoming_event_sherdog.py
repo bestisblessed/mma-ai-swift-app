@@ -456,5 +456,11 @@ def scrape_single_event(event_url):
 
 # Example usage
 if __name__ == "__main__":
-    event_url = input("Enter the Sherdog event URL: ")
+    #event_url = input("Enter the Sherdog event URL: ")
+    import sys
+    # Use URL from command-line argument if provided, else prompt
+    if len(sys.argv) > 1:
+        event_url = sys.argv[1]
+    else:
+        event_url = input("Enter the Sherdog event URL: ")
     scrape_single_event(event_url)
