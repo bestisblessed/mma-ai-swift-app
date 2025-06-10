@@ -62,7 +62,8 @@ An iOS application that provides MMA analysis, fighter statistics, and event inf
    ```
    python app.py
    ```
-   The server will run on `https://mma-ai.duckdns.org`
+   The server will run locally at `http://127.0.0.1:5001` by default. Use your
+   production domain (e.g. `https://mma-ai.duckdns.org`) when deploying.
 
 ### Deployment to Raspberry Pi
 
@@ -95,7 +96,7 @@ For deploying the Flask API server to a Raspberry Pi:
 
 ### iOS App Setup
 
-1. Open the `MMAChat.xcodeproj` file in Xcode
+1. Open the `mma-ai-swift/mma-ai-swift.xcodeproj` file in Xcode
 2. Make sure the `ChatViewModel.swift` file has the correct IP address for your local machine
 3. Build and run the app in the iOS simulator or on a physical device
 
