@@ -62,8 +62,8 @@ An iOS application that provides MMA analysis, fighter statistics, and event inf
    ```
    python app.py
    ```
-   The server will run locally at `http://127.0.0.1:5001` by default. Use your
-   production domain (e.g. `https://mma-ai.duckdns.org`) when deploying.
+   By default the server runs locally at `http://127.0.0.1:5001`.
+   You can configure a public domain (e.g., `https://mma-ai.duckdns.org`) separately.
 
 ### Deployment to Raspberry Pi
 
