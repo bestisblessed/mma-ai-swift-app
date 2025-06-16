@@ -10,17 +10,8 @@ struct DashboardView: View {
                 TabButton(title: "Upcoming", isSelected: selectedTab == 0) {
                     selectedTab = 0
                 }
-                
                 TabButton(title: "Past", isSelected: selectedTab == 1) {
                     selectedTab = 1
-                }
-                
-                TabButton(title: "Rankings", isSelected: selectedTab == 2) {
-                    selectedTab = 2
-                }
-                
-                TabButton(title: "News", isSelected: selectedTab == 3) {
-                    selectedTab = 3
                 }
             }
             .background(AppTheme.cardBackground)
@@ -33,10 +24,6 @@ struct DashboardView: View {
                         UpcomingEventsView()
                     case 1:
                         PastEventsView()
-                    case 2:
-                        RankingsView()
-                    case 3:
-                        NewsView()
                     default:
                         EmptyView()
                     }
@@ -319,84 +306,6 @@ struct PastEventsView: View {
                 isRefreshing = false
             }
         }
-    }
-}
-
-struct RankingsView: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("BETA")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.blue)
-                .padding(.top, 20)
-            
-            Text("UFC Rankings")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            VStack(spacing: 8) {
-                Text("Heavyweight Division")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(AppTheme.accent)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                RankingRow(position: "C", name: "Jon Jones", record: "27-1-0")
-                RankingRow(position: "1", name: "Ciryl Gane", record: "11-2-0")
-                RankingRow(position: "2", name: "Stipe Miocic", record: "20-4-0")
-                RankingRow(position: "3", name: "Tom Aspinall", record: "13-3-0")
-                RankingRow(position: "4", name: "Curtis Blaydes", record: "17-4-0")
-                RankingRow(position: "5", name: "Sergei Pavlovich", record: "18-2-0")
-            }
-            .padding()
-            .background(AppTheme.cardBackground)
-            .cornerRadius(12)
-            
-            VStack(spacing: 8) {
-                Text("Lightweight Division")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(AppTheme.accent)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                RankingRow(position: "C", name: "Islam Makhachev", record: "24-1-0")
-                RankingRow(position: "1", name: "Charles Oliveira", record: "33-9-0")
-                RankingRow(position: "2", name: "Dustin Poirier", record: "29-8-0")
-                RankingRow(position: "3", name: "Justin Gaethje", record: "24-4-0")
-                RankingRow(position: "4", name: "Arman Tsarukyan", record: "20-3-0")
-                RankingRow(position: "5", name: "Michael Chandler", record: "23-8-0")
-            }
-            .padding()
-            .background(AppTheme.cardBackground)
-            .cornerRadius(12)
-        }
-    }
-}
-
-struct RankingRow: View {
-    let position: String
-    let name: String
-    let record: String
-    
-    var body: some View {
-        HStack {
-            Text(position)
-                .font(.headline)
-                .foregroundColor(position == "C" ? AppTheme.accent : AppTheme.textSecondary)
-                .frame(width: 30)
-            
-            Text(name)
-                .font(.body)
-                .foregroundColor(AppTheme.textPrimary)
-            
-            Spacer()
-            
-            Text(record)
-                .font(.subheadline)
-                .foregroundColor(AppTheme.textSecondary)
-        }
-        .padding(.vertical, 4)
     }
 }
 

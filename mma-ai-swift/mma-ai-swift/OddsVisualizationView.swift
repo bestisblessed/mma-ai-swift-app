@@ -1,6 +1,11 @@
 import SwiftUI
 import Charts
 
+// Allowed sportsbooks for filtering everywhere in the odds dashboard
+let allowedSportsbooks: Set<String> = [
+    "betmgm", "betonline", "bookmaker", "bovada", "caesars-sportsbook", "circa-sports", "draftkings", "espn-bet", "fanduel", "mybookie", "pinnacle-sports"
+]
+
 struct OddsVisualizationView: View {
     let fighter: FighterStats
     @State private var oddsData: [OddsChartPoint] = []
@@ -172,13 +177,12 @@ struct OddsVisualizationView: View {
             do {
                 let points = try await NetworkManager.shared.fetchOddsChart(for: fighter.name)
                 DispatchQueue.main.async {
-                    oddsData = points
-                    
+                    // Filter out unwanted sportsbooks from oddsData
+                    oddsData = points.filter { allowedSportsbooks.contains($0.sportsbook) }
                     // Build selector list
-                    let books = Set(points.map { $0.sportsbook }).sorted()
+                    let books = Set(oddsData.map { $0.sportsbook }).sorted()
                     sportsbooks = ["All"] + books
                     selectedSportsbook = "All"
-                    
                     isLoading = false
                 }
             } catch {
@@ -375,9 +379,9 @@ struct OddsLineChart: View {
 struct BookmakerBreakdownView: View {
     let data: [OddsChartPoint]
     
-    // Group data by sportsbook
+    // Group data by sportsbook, but only allowed ones
     private var bookmakerData: [String: [OddsChartPoint]] {
-        Dictionary(grouping: data, by: { $0.sportsbook })
+        Dictionary(grouping: data.filter { allowedSportsbooks.contains($0.sportsbook) }, by: { $0.sportsbook })
     }
     
     var body: some View {
