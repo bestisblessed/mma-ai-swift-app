@@ -191,70 +191,178 @@ struct OddsVisualizationView: View {
     }
 }
 
+// Helper extension for conditional modifier
+extension View {
+    @ViewBuilder
+    func ifLet<T, Content: View>(_ value: T?, transform: (Self, T) -> Content) -> some View {
+        if let value = value {
+            transform(self, value)
+        } else {
+            self
+        }
+    }
+}
+
 struct OddsLineChart: View {
     let chartTitle: String
     let data: [OddsChartPoint]
     let isOddsChart: Bool
     
+    // Calculate expanded x-axis domain
+    private var xDomain: ClosedRange<Date>? {
+        let dates = data.compactMap { $0.date }
+        guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }
+        // Add 1 hour to maxDate for padding
+        let paddedMax = Calendar.current.date(byAdding: .hour, value: 1, to: maxDate) ?? maxDate
+        return minDate...paddedMax
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Move title above the chart and change color
             Text(chartTitle)
-                .font(.headline)
-                .foregroundColor(.yellow)
-            
-            Chart {
-                ForEach(data) { point in
-                    if isOddsChart {
-                        LineMark(
-                            x: .value("Time", point.id),
-                            y: .value("Odds", point.odds)
-                        )
-                        .foregroundStyle(.green)
-                        .lineStyle(StrokeStyle(lineWidth: 2))
-                        
-                        PointMark(
-                            x: .value("Time", point.id),
-                            y: .value("Odds", point.odds)
-                        )
-                        .foregroundStyle(.green)
-                        .symbolSize(30)
-                    } else {
-                        LineMark(
-                            x: .value("Time", point.id),
-                            y: .value("Probability", point.impliedProbability)
-                        )
-                        .foregroundStyle(.blue)
-                        .lineStyle(StrokeStyle(lineWidth: 2))
-                        
-                        PointMark(
-                            x: .value("Time", point.id),
-                            y: .value("Probability", point.impliedProbability)
-                        )
-                        .foregroundStyle(.blue)
-                        .symbolSize(30)
+                .font(.custom("Times New Roman", size: 20).weight(.bold))
+                //.foregroundColor(.blue)
+                .foregroundColor(AppTheme.accent)
+
+                .padding(.bottom, 2)
+            if let xDomain = xDomain {
+                Chart {
+                    ForEach(data) { point in
+                        if let date = point.date {
+                            if isOddsChart {
+                                LineMark(
+                                    x: .value("Time", date),
+                                    y: .value("Odds", point.odds)
+                                )
+                                .foregroundStyle(.green)
+                                .lineStyle(StrokeStyle(lineWidth: 1))
+                                
+                                PointMark(
+                                    x: .value("Time", date),
+                                    y: .value("Odds", point.odds)
+                                )
+                                .foregroundStyle(.green)
+                                .symbolSize(30)
+                            } else {
+                                LineMark(
+                                    x: .value("Time", date),
+                                    y: .value("Probability", point.impliedProbability)
+                                )
+                                .foregroundStyle(.green)
+                                .lineStyle(StrokeStyle(lineWidth: 1))
+                                
+                                PointMark(
+                                    x: .value("Time", date),
+                                    y: .value("Probability", point.impliedProbability)
+                                )
+                                .foregroundStyle(.green)
+                                .symbolSize(30)
+                            }
+                        }
                     }
                 }
-            }
-            .chartXAxis {
-                AxisMarks(values: .automatic) { _ in
-                    AxisValueLabel()
+                .padding(.horizontal)
+                .chartXScale(domain: xDomain)
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(
+                            value.as(Date.self).map {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "MM/dd"
+                                return formatter.string(from: $0)
+                            } ?? ""
+                        )
                         .font(.caption)
+                    }
                 }
-            }
-            .chartYAxis {
-                AxisMarks(values: .automatic) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel {
-                        if isOddsChart {
-                            if let intVal = value.as(Int.self) {
-                                Text("\(intVal)")
-                                    .font(.caption)
+                .chartYAxis {
+                    AxisMarks(values: .automatic) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel {
+                            if isOddsChart {
+                                if let intVal = value.as(Int.self) {
+                                    Text(intVal > 0 ? "+\(intVal)" : "\(intVal)")
+                                        .font(.caption)
+                                }
+                            } else {
+                                if let doubleVal = value.as(Double.self) {
+                                    Text("\(Int(doubleVal * 100))%")
+                                        .font(.caption)
+                                }
                             }
-                        } else {
-                            if let doubleVal = value.as(Double.self) {
-                                Text("\(Int(doubleVal * 100))%")
-                                    .font(.caption)
+                        }
+                    }
+                }
+            } else {
+                Chart {
+                    ForEach(data) { point in
+                        if let date = point.date {
+                            if isOddsChart {
+                                LineMark(
+                                    x: .value("Time", date),
+                                    y: .value("Odds", point.odds)
+                                )
+                                .foregroundStyle(.green)
+                                .lineStyle(StrokeStyle(lineWidth: 1))
+                                
+                                PointMark(
+                                    x: .value("Time", date),
+                                    y: .value("Odds", point.odds)
+                                )
+                                .foregroundStyle(.green)
+                                .symbolSize(30)
+                            } else {
+                                LineMark(
+                                    x: .value("Time", date),
+                                    y: .value("Probability", point.impliedProbability)
+                                )
+                                .foregroundStyle(.green)
+                                .lineStyle(StrokeStyle(lineWidth: 1))
+                                
+                                PointMark(
+                                    x: .value("Time", date),
+                                    y: .value("Probability", point.impliedProbability)
+                                )
+                                .foregroundStyle(.green)
+                                .symbolSize(30)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal)
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(
+                            value.as(Date.self).map {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "MM/dd"
+                                return formatter.string(from: $0)
+                            } ?? ""
+                        )
+                        .font(.caption)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(values: .automatic) { value in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel {
+                            if isOddsChart {
+                                if let intVal = value.as(Int.self) {
+                                    Text(intVal > 0 ? "+\(intVal)" : "\(intVal)")
+                                        .font(.caption)
+                                }
+                            } else {
+                                if let doubleVal = value.as(Double.self) {
+                                    Text("\(Int(doubleVal * 100))%")
+                                        .font(.caption)
+                                }
                             }
                         }
                     }

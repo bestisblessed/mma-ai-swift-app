@@ -216,6 +216,19 @@ struct OddsChartPoint: Identifiable, Codable {
     let odds: Int
     let sportsbook: String
     
+    // New: parsed date from timestamp
+    let date: Date?
+    
+    // New: formatted date string for axis labels
+    var formattedDate: String {
+        guard let date = date else { return timestamp }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM d, h:mma"
+        formatter.amSymbol = "am"
+        formatter.pmSymbol = "pm"
+        return formatter.string(from: date)
+    }
+    
     var id: String { "\(timestamp)-\(sportsbook)" }
     
     // Convert American odds to probability
@@ -226,6 +239,46 @@ struct OddsChartPoint: Identifiable, Codable {
             return Double(abs(odds)) / Double(abs(odds) + 100)
         }
         return 0.5 // Even odds
+    }
+    
+    // Custom decoding to parse date from timestamp
+    enum CodingKeys: String, CodingKey {
+        case timestamp, odds, sportsbook
+    }
+    
+    init(timestamp: String, odds: Int, sportsbook: String) {
+        self.timestamp = timestamp
+        self.odds = odds
+        self.sportsbook = sportsbook
+        self.date = OddsChartPoint.parseDate(from: timestamp)
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.timestamp = try container.decode(String.self, forKey: .timestamp)
+        self.odds = try container.decode(Int.self, forKey: .odds)
+        self.sportsbook = try container.decode(String.self, forKey: .sportsbook)
+        self.date = OddsChartPoint.parseDate(from: self.timestamp)
+    }
+    
+    // Helper to parse date from timestamp string (e.g., ufc_odds_fightoddsio_20250616_0452.csv)
+    static func parseDate(from timestamp: String) -> Date? {
+        // Try to extract YYYYMMDD_HHMM from the string
+        let regex = try? NSRegularExpression(pattern: "(\\d{8})_(\\d{4})")
+        let range = NSRange(location: 0, length: timestamp.utf16.count)
+        guard let match = regex?.firstMatch(in: timestamp, options: [], range: range),
+              match.numberOfRanges == 3,
+              let dateRange = Range(match.range(at: 1), in: timestamp),
+              let timeRange = Range(match.range(at: 2), in: timestamp) else {
+            return nil
+        }
+        let dateStr = String(timestamp[dateRange]) // e.g., 20250616
+        let timeStr = String(timestamp[timeRange]) // e.g., 0452
+        let fullStr = dateStr + timeStr // 202506160452
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMddHHmm"
+        formatter.timeZone = TimeZone.current
+        return formatter.date(from: fullStr)
     }
 }
 
