@@ -44,6 +44,11 @@ struct Fight: Codable {
     let time: String
 }
 
+// Provide identity and hashing for Fight so it can be used in pickers and lists
+extension Fight: Identifiable, Hashable {
+    var id: String { "\(redCorner)_vs_\(blueCorner)_\(weightClass)" }
+}
+
 struct FightResult: Codable {
     let opponent: String
     let opponentID: Int

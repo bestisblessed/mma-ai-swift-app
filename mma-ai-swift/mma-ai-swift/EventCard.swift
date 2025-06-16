@@ -32,6 +32,7 @@ struct EventCard: View {
     @State private var showMainCard = true
     @State private var showPrelims = false
     @State private var selectedFighter: FighterStats? = nil
+    @State private var selectedFightForOdds: Fight? = nil
     let isPastEvent: Bool
     
     init(event: EventInfo, isPastEvent: Bool = false) {
@@ -164,6 +165,9 @@ struct EventCard: View {
                 }
             )
         }
+        .sheet(item: $selectedFightForOdds) { fight in
+            FightOddsView(fight: fight)
+        }
     }
     
     private func loadFighterData(name: String, id: Int) {
@@ -274,6 +278,23 @@ struct EventCard: View {
                     .buttonStyle(BorderlessButtonStyle())
                     .hoverEffect(.highlight)
                     .help("Generate AI fight prediction")
+
+                    // Odds chart button
+                    Button(action: {
+                        selectedFightForOdds = fight
+                    }) {
+                        Image(systemName: "chart.xyaxis.line")
+                            .font(.caption)
+                            .padding(4)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                            )
+                    }
+                    .padding(.leading, 4)
+                    .buttonStyle(BorderlessButtonStyle())
+                    .hoverEffect(.highlight)
+                    .help("Show odds movement")
                 }
             }
         }

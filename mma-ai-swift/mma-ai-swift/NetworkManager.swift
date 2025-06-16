@@ -558,7 +558,42 @@ class NetworkManager {
             }
         }
     }
-    
+
+    // Fetch odds movement history from the backend
+    func fetchOddsMovements() async throws -> [OddsMovement] {
+        if !isServerAvailable {
+            isServerAvailable = await checkServerAvailability()
+            if !isServerAvailable {
+                print("⚠️ Server not available for fetching odds movements")
+                throw NetworkError.serverUnavailable
+            }
+        }
+
+        let endpoint = "\(baseURL)/data/odds-movements"
+        print("🔄 Fetching odds movements from: \(endpoint)")
+
+        guard let url = URL(string: endpoint) else {
+            throw NetworkError.invalidURL
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                throw NetworkError.invalidResponse
+            }
+
+            let decoder = JSONDecoder()
+            let oddsResponse = try decoder.decode(OddsResponse.self, from: data)
+            print("✅ Fetched \(oddsResponse.odds.count) odds movement records")
+            return oddsResponse.odds
+        } catch {
+            print("⚠️ Odds movement fetch error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
     // Helper function to add spaces to fighter names
     private func formatFighterName(_ name: String) -> String {
         // Use regular expression to insert spaces before uppercase letters
