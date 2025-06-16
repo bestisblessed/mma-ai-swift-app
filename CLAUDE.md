@@ -1,19 +1,36 @@
-# CLAUDE.md
+# Testing Pie Chart Centering
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Test Scenarios
+1. iPhone SE (smallest screen)
+2. iPhone 14 Pro 
+3. iPhone 14 Pro Max
+4. iPhone 15 Pro
+5. Landscape orientation for each device
 
-## Commands
-- Run Flask server: `python app.py`
-- Update data: `./update_data.sh` 
-- Deploy server: `./run.sh`
+### Verification Checklist
+- [ ] Charts are perfectly centered
+- [ ] No horizontal scrolling
+- [ ] Even spacing between charts
+- [ ] Charts do not touch screen edges
+- [ ] Consistent layout across different screen sizes
 
-## Code Style Guidelines
-- Swift: Follow SwiftUI conventions with structured view hierarchy
-- Python: PEP 8 style with proper error handling using try/except
-- Imports: Group by standard library, third-party, then local modules
-- Naming: camelCase for Swift variables/functions, snake_case for Python
-- Error handling: Use optional chaining in Swift, explicit try/except in Python
-- Type safety: Use strong typing with explicit optionals in Swift
-- Documentation: Add comments for complex logic, data processing functions
-- Logging: Use Python's logging module for backend, print statements for Swift debugging
-- File organization: Keep related functionality in same file, following MVVM pattern
+### Testing Steps
+1. Open FighterProfileView
+2. Check various fighters with different win/loss methods
+3. Verify charts display correctly for:
+   - Fighters with all methods (KO, SUB, DEC)
+   - Fighters with partial methods
+   - Fighters with minimal fight records
+
+### Known Issues to Watch
+- Potential layout breaks with extreme data variations
+- Performance of animations on older devices
+
+## Date of Change
+June 16, 2025 - Centered pie charts in FighterProfileView
+
+## Development Workflow
+- After making changes, always test build with: `xcodebuild clean build`
+  - This ensures no compilation errors are introduced
+  - Catches Swift syntax issues early
+  - Verifies project-wide compatibility
