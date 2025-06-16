@@ -129,25 +129,6 @@ struct OddsVisualizationView: View {
                                 .background(Color.black.opacity(0.3))
                                 .cornerRadius(10)
                                 .padding(.horizontal)
-                            
-                            // Data sources and explanation
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("About Betting Odds")
-                                    .font(.headline)
-                                    .foregroundColor(.yellow)
-                                
-                                Text("American odds show the amount you would win on a $100 bet (if positive) or how much you need to bet to win $100 (if negative). Implied probability is the conversion of odds to a percentage chance of winning.")
-                                    .font(.footnote)
-                                    .foregroundColor(.gray)
-                                
-                                Text("Data source: ufc_odds_movements.csv")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding()
-                            .background(Color.black.opacity(0.3))
-                            .cornerRadius(10)
-                            .padding(.horizontal)
                         }
                         .padding(.vertical)
                     }
