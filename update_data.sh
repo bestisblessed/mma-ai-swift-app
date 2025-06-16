@@ -21,8 +21,9 @@ scp /Users/td/Code/mma-ai/Scrapers/data/event_data_sherdog.csv Trinity:~/mma-ai-
 scp /tmp/fighter_info_no_ufcstats.csv Trinity:~/mma-ai-swift-app/data/fighter_info.csv
 
 # Upcoming Event
-python scrape_upcoming_event_sherdog.py
+python scripts/scrape_upcoming_event_sherdog.py
 scp data/upcoming_event_data_sherdog.csv Trinity:~/mma-ai-swift-app/data/ 
+rm sherdog_event_page.html
 
 # Odds Movement
 cp /Users/td/Code/odds-monitoring/UFC/Analysis/data/ufc_odds_movements.csv data/odds/
