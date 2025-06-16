@@ -458,6 +458,66 @@ def get_upcoming_events():
         logger.error(f"Error fetching upcoming event data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/data/odds', methods=['GET'])
+def get_odds_chart():
+    """Return betting odds movement data for the requested fighter as a list of chart points."""
+    fighter_name = request.args.get('fighter', default='', type=str).strip().lower()
+    csv_path = 'data/ufc_odds_movements_fightoddsio.csv'
+
+    if not os.path.exists(csv_path):
+        return jsonify({'error': f'CSV file not found at {csv_path}'}), 500
+
+    try:
+        # Read only needed columns for efficiency
+        cols = ['file1', 'file2', 'fighter', 'sportsbook', 'odds_before', 'odds_after']
+        df = pd.read_csv(csv_path, usecols=cols)
+
+        # Optionally filter by fighter (case-insensitive exact match)
+        if fighter_name:
+            df = df[df['fighter'].str.lower() == fighter_name]
+
+        # If nothing to return, send empty list so client can show graceful message
+        if df.empty:
+            return jsonify({'fighter': fighter_name, 'data': []})
+
+        chart_points = []
+        for _, row in df.iterrows():
+            # Derive a timestamp from the two filenames: 20250511_1646 etc.
+            time_stamp = f"{row['file1']}_{row['file2']}"
+
+            def to_int(odds_str):
+                try:
+                    return int(str(odds_str).replace('+', '').strip())
+                except ValueError:
+                    return 0
+
+            before = to_int(row['odds_before'])
+            after = to_int(row['odds_after'])
+
+            sportsbook = row['sportsbook']
+
+            # Create two points per row to match the iOS chart logic (before and after)
+            if before != 0:
+                chart_points.append({
+                    'timestamp': time_stamp,
+                    'odds': before,
+                    'sportsbook': sportsbook
+                })
+            if after != 0:
+                chart_points.append({
+                    'timestamp': f"{time_stamp}+",  # trailing + indicates post-movement
+                    'odds': after,
+                    'sportsbook': sportsbook
+                })
+
+        # Sort by timestamp for consistency
+        chart_points.sort(key=lambda p: p['timestamp'])
+
+        return jsonify({'fighter': fighter_name, 'data': chart_points})
+    except Exception as e:
+        logger.error(f"Error processing odds data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)
 # if __name__ == "__main__":

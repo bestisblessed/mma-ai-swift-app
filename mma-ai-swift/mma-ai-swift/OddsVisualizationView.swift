@@ -116,64 +116,17 @@ struct OddsVisualizationView: View {
     }
     
     private func loadOddsData() {
-        // Load odds data from CSV file
-        DispatchQueue.global(qos: .userInitiated).async {
-            let csvPath = "/Users/td/Code/mma-ai-swift-app/data/ufc_odds_movements_fightoddsio.csv"
-            guard FileManager.default.fileExists(atPath: csvPath) else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Could not find odds data file"
-                    self.isLoading = false
-                }
-                return
-            }
-            
+        Task {
             do {
-                let csvString = try String(contentsOfFile: csvPath, encoding: .utf8)
-                let rows = csvString.components(separatedBy: .newlines)
-                
-                // Skip header row
-                let dataRows = rows.dropFirst()
-                
-                // Filter rows for this specific fighter
-                let fighterOddsData = dataRows.filter { row in
-                    let columns = row.components(separatedBy: ",")
-                    return columns.count > 2 && columns[2] == "\(fighter.name)"
-                }
-                
-                // Parse and transform data
-                let parsedOddsData = fighterOddsData.compactMap { row -> OddsChartPoint? in
-                    let columns = row.components(separatedBy: ",")
-                    guard columns.count >= 6 else { return nil }
-                    
-                    // Extract timestamp from filename (first column)
-                    let filename = columns[0]
-                    let timestampComponents = filename.components(separatedBy: "_")
-                    let timestamp = timestampComponents.count >= 3 ? 
-                        timestampComponents[2] + "_" + timestampComponents[3].replacingOccurrences(of: ".csv", with: "") : 
-                        filename
-                    
-                    // Convert odds string
-                    let sportsbook = columns[3]
-                    let beforeOdds = Int(columns[4].replacingOccurrences(of: "+", with: "")) ?? 0
-                    let afterOdds = Int(columns[5].replacingOccurrences(of: "+", with: "")) ?? 0
-                    
-                    return OddsChartPoint(
-                        timestamp: timestamp,
-                        odds: beforeOdds,
-                        sportsbook: sportsbook
-                    )
-                }
-                
-                // Sort data by timestamp
-                let sortedOddsData = parsedOddsData.sorted { $0.timestamp < $1.timestamp }
-                
+                // Fetch processed chart data from the server
+                let chartPoints = try await NetworkManager.shared.fetchOddsChart(for: fighter.name)
                 DispatchQueue.main.async {
-                    self.oddsData = sortedOddsData
+                    self.oddsData = chartPoints
                     self.isLoading = false
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.errorMessage = "Error reading odds data: \(error.localizedDescription)"
+                    self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
             }
@@ -186,16 +139,6 @@ struct OddsLineChart: View {
     let data: [OddsChartPoint]
     let isOddsChart: Bool
     
-    // Helper function to format timestamp
-    private func formatTimestamp(_ timestamp: String) -> String {
-        guard timestamp.count == 9,
-              let month = Int(timestamp.prefix(2)),
-              let day = Int(timestamp.dropFirst(2).prefix(2)) else {
-            return timestamp
-        }
-        return String(format: "%02d/%02d", month, day)
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(chartTitle)
@@ -206,28 +149,28 @@ struct OddsLineChart: View {
                 ForEach(data) { point in
                     if isOddsChart {
                         LineMark(
-                            x: .value("Time", formatTimestamp(point.timestamp)),
+                            x: .value("Time", point.id),
                             y: .value("Odds", point.odds)
                         )
                         .foregroundStyle(.green)
                         .lineStyle(StrokeStyle(lineWidth: 2))
                         
                         PointMark(
-                            x: .value("Time", formatTimestamp(point.timestamp)),
+                            x: .value("Time", point.id),
                             y: .value("Odds", point.odds)
                         )
                         .foregroundStyle(.green)
                         .symbolSize(30)
                     } else {
                         LineMark(
-                            x: .value("Time", formatTimestamp(point.timestamp)),
+                            x: .value("Time", point.id),
                             y: .value("Probability", point.impliedProbability)
                         )
                         .foregroundStyle(.blue)
                         .lineStyle(StrokeStyle(lineWidth: 2))
                         
                         PointMark(
-                            x: .value("Time", formatTimestamp(point.timestamp)),
+                            x: .value("Time", point.id),
                             y: .value("Probability", point.impliedProbability)
                         )
                         .foregroundStyle(.blue)
@@ -302,7 +245,7 @@ struct BookmakerBreakdownView: View {
                         
                         // Trend indicator
                         if points.count > 1 {
-                            let sortedPoints = points.sorted(by: { $0.timestamp < $1.timestamp })
+                            let sortedPoints = points.sorted(by: { $0.id < $1.id })
                             let firstOdds = sortedPoints.first?.odds ?? 0
                             let lastOdds = sortedPoints.last?.odds ?? 0
                             

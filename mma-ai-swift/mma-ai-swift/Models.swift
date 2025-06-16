@@ -211,7 +211,7 @@ class OddsProcessor {
     }
 }
 
-struct OddsChartPoint: Identifiable {
+struct OddsChartPoint: Identifiable, Codable {
     let timestamp: String
     let odds: Int
     let sportsbook: String

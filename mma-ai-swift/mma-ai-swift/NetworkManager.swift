@@ -612,6 +612,41 @@ class NetworkManager {
             return updatedEvent
         }
     }
+    
+    // MARK: - Fetch Odds Chart Data
+    
+    func fetchOddsChart(for fighter: String) async throws -> [OddsChartPoint] {
+        // Ensure server is available
+        if !isServerAvailable {
+            isServerAvailable = await checkServerAvailability()
+            if !isServerAvailable {
+                throw NetworkError.serverUnavailable
+            }
+        }
+        guard let encodedName = fighter.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            throw NetworkError.invalidURL
+        }
+        let endpoint = "\(baseURL)/data/odds?fighter=\(encodedName)"
+        guard let url = URL(string: endpoint) else { throw NetworkError.invalidURL }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                throw NetworkError.invalidResponse
+            }
+            // Response schema: { fighter: "name", data: [ {timestamp, odds, sportsbook} ] }
+            struct OddsChartResponse: Codable {
+                let fighter: String?
+                let data: [OddsChartPoint]
+            }
+            let decoder = JSONDecoder()
+            let chartResponse = try decoder.decode(OddsChartResponse.self, from: data)
+            return chartResponse.data
+        } catch {
+            print("⚠️ Odds chart fetch error: \(error)")
+            throw error
+        }
+    }
 }
 
 // MARK: - Data Models should be in Models.swift
