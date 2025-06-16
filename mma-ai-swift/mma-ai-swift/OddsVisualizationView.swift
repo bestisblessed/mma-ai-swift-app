@@ -6,6 +6,18 @@ struct OddsVisualizationView: View {
     @State private var oddsData: [OddsChartPoint] = []
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
+    
+    // NEW – sportsbook selector state
+    @State private var sportsbooks: [String] = ["All"]
+    @State private var selectedSportsbook: String = "All"
+    
+    // Filter helper
+    private var filteredOddsData: [OddsChartPoint] {
+        selectedSportsbook == "All"
+        ? oddsData
+        : oddsData.filter { $0.sportsbook == selectedSportsbook }
+    }
+    
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -50,24 +62,64 @@ struct OddsVisualizationView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal)
                             
-                            // American odds chart
-                            OddsLineChart(chartTitle: "American Odds", data: oddsData, isOddsChart: true)
-                                .frame(height: 250)
-                                .padding()
-                                .background(Color.black.opacity(0.3))
-                                .cornerRadius(10)
-                                .padding(.horizontal)
+                            // 🔽 NEW – sportsbook chips
+                            if sportsbooks.count > 1 {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(sportsbooks, id: \.self) { book in
+                                            Button(book) {
+                                                selectedSportsbook = book
+                                            }
+                                            .font(.caption)
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 12)
+                                            .background(
+                                                selectedSportsbook == book
+                                                ? AppTheme.accent
+                                                : Color.clear
+                                            )
+                                            .foregroundColor(
+                                                selectedSportsbook == book
+                                                ? .black
+                                                : .white
+                                            )
+                                            .cornerRadius(14)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 14)
+                                                    .stroke(AppTheme.accent.opacity(0.6), lineWidth: 1)
+                                            )
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
                             
-                            // Implied probability chart
-                            OddsLineChart(chartTitle: "Implied Win Probability", data: oddsData, isOddsChart: false)
-                                .frame(height: 250)
-                                .padding()
-                                .background(Color.black.opacity(0.3))
-                                .cornerRadius(10)
-                                .padding(.horizontal)
+                            // American odds chart (filtered)
+                            OddsLineChart(
+                                chartTitle: "American Odds",
+                                data: filteredOddsData,
+                                isOddsChart: true
+                            )
+                            .frame(height: 250)
+                            .padding()
+                            .background(Color.black.opacity(0.3))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
                             
-                            // Bookmaker breakdown
-                            BookmakerBreakdownView(data: oddsData)
+                            // Implied probability chart (filtered)
+                            OddsLineChart(
+                                chartTitle: "Implied Win Probability",
+                                data: filteredOddsData,
+                                isOddsChart: false
+                            )
+                            .frame(height: 250)
+                            .padding()
+                            .background(Color.black.opacity(0.3))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+                            
+                            // Bookmaker breakdown (filtered)
+                            BookmakerBreakdownView(data: filteredOddsData)
                                 .padding()
                                 .background(Color.black.opacity(0.3))
                                 .cornerRadius(10)
@@ -118,16 +170,21 @@ struct OddsVisualizationView: View {
     private func loadOddsData() {
         Task {
             do {
-                // Fetch processed chart data from the server
-                let chartPoints = try await NetworkManager.shared.fetchOddsChart(for: fighter.name)
+                let points = try await NetworkManager.shared.fetchOddsChart(for: fighter.name)
                 DispatchQueue.main.async {
-                    self.oddsData = chartPoints
-                    self.isLoading = false
+                    oddsData = points
+                    
+                    // Build selector list
+                    let books = Set(points.map { $0.sportsbook }).sorted()
+                    sportsbooks = ["All"] + books
+                    selectedSportsbook = "All"
+                    
+                    isLoading = false
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
+                    errorMessage = error.localizedDescription
+                    isLoading = false
                 }
             }
         }
