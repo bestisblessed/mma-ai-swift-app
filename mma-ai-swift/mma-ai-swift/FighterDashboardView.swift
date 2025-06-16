@@ -8,6 +8,10 @@ struct FighterDashboardView: View {
     @StateObject private var viewModel = FighterDashboardViewModel()
     @State private var selectedTab = 0 // 0 for Fighters, 1 for Fights
     
+    @State private var showFilterSheet = false
+    @State private var selectedNationality: String?
+    @State private var selectedTeam: String?
+    
     private let divisions = ["All", "Heavyweight", "Light Heavyweight", "Middleweight", "Welterweight", "Lightweight", "Featherweight", "Bantamweight", "Flyweight"]
     
     var body: some View {
@@ -23,7 +27,7 @@ struct FighterDashboardView: View {
             
             if selectedTab == 0 {
                 // FIGHTERS TAB
-                // Division selector
+                // Division and Filter Section
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(divisions, id: \.self) { division in
@@ -38,6 +42,26 @@ struct FighterDashboardView: View {
                                     .foregroundColor(selectedDivision == division ? .white : AppTheme.textPrimary)
                                     .cornerRadius(20)
                             }
+                        }
+                        
+                        // Filter button
+                        Button(action: {
+                            showFilterSheet = true
+                        }) {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .foregroundColor(AppTheme.accent)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(Color.clear)
+                                .cornerRadius(20)
+                                .overlay(
+                                    (selectedNationality != nil || selectedTeam != nil) ?
+                                    Circle()
+                                        .fill(AppTheme.accent)
+                                        .frame(width: 10, height: 10)
+                                        .offset(x: 10, y: -10)
+                                    : nil
+                                )
                         }
                     }
                     .padding(.horizontal)
@@ -161,10 +185,118 @@ struct FighterDashboardView: View {
                 }
             )
         }
+        .fullScreenCover(item: $selectedFighter) { fighter in
+            FighterProfileView(
+                fighter: fighter,
+                onDismiss: {
+                    debugPrint("🔵 Fighter profile dismissed for: \(fighter.name)")
+                    selectedFighter = nil
+                }
+            )
+        }
+        .sheet(isPresented: $showFilterSheet) {
+            VStack {
+                Text("Filters")
+                    .font(.headline)
+                    .padding()
+                
+                // Nationality Filter
+                VStack(alignment: .leading) {
+                    Text("Nationality")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            // Clear filter option
+                            Button(action: {
+                                selectedNationality = nil
+                            }) {
+                                Text("All")
+                                    .padding(8)
+                                    .background(selectedNationality == nil ? AppTheme.accent : Color.clear)
+                                    .foregroundColor(selectedNationality == nil ? .white : AppTheme.textPrimary)
+                                    .cornerRadius(10)
+                            }
+                            
+                            // Dynamic nationality filters
+                            ForEach(viewModel.getUniqueNationalities(), id: \.self) { nationality in
+                                Button(action: {
+                                    selectedNationality = nationality
+                                }) {
+                                    Text(nationality)
+                                        .padding(8)
+                                        .background(selectedNationality == nationality ? AppTheme.accent : Color.clear)
+                                        .foregroundColor(selectedNationality == nationality ? .white : AppTheme.textPrimary)
+                                        .cornerRadius(10)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding()
+                
+                // Team Filter
+                VStack(alignment: .leading) {
+                    Text("Team")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            // Clear filter option
+                            Button(action: {
+                                selectedTeam = nil
+                            }) {
+                                Text("All")
+                                    .padding(8)
+                                    .background(selectedTeam == nil ? AppTheme.accent : Color.clear)
+                                    .foregroundColor(selectedTeam == nil ? .white : AppTheme.textPrimary)
+                                    .cornerRadius(10)
+                            }
+                            
+                            // Dynamic team filters
+                            ForEach(viewModel.getUniqueTeams(), id: \.self) { team in
+                                Button(action: {
+                                    selectedTeam = team
+                                }) {
+                                    Text(team)
+                                        .padding(8)
+                                        .background(selectedTeam == team ? AppTheme.accent : Color.clear)
+                                        .foregroundColor(selectedTeam == team ? .white : AppTheme.textPrimary)
+                                        .cornerRadius(10)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding()
+                
+                Spacer()
+                
+                Button(action: {
+                    showFilterSheet = false
+                }) {
+                    Text("Apply")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(AppTheme.accent)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .padding()
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
     
     private var filteredFighters: [FighterStats] {
-        viewModel.getFilteredFighters(division: selectedDivision, searchText: searchText)
+        viewModel.getFilteredFighters(
+            division: selectedDivision, 
+            searchText: searchText,
+            nationality: selectedNationality,
+            team: selectedTeam
+        )
     }
 }
 
@@ -359,7 +491,7 @@ class FighterDashboardViewModel: ObservableObject {
         )
     }
     
-    func getFilteredFighters(division: String, searchText: String) -> [FighterStats] {
+    func getFilteredFighters(division: String, searchText: String, nationality: String? = nil, team: String? = nil) -> [FighterStats] {
         var result = self.fightersByName.values.map { $0 }
         
         // Filter by division
@@ -368,6 +500,20 @@ class FighterDashboardViewModel: ObservableObject {
                 result = result.filter { $0.weightClass.contains("Women") }
             } else {
                 result = result.filter { $0.weightClass == division }
+            }
+        }
+        
+        // Filter by nationality
+        if let nationality = nationality {
+            result = result.filter { 
+                $0.nationality?.lowercased() == nationality.lowercased() 
+            }
+        }
+        
+        // Filter by team
+        if let team = team {
+            result = result.filter { 
+                $0.teamAffiliation.lowercased() == team.lowercased() 
             }
         }
         
@@ -381,6 +527,15 @@ class FighterDashboardViewModel: ObservableObject {
         
         // Sort alphabetically
         return result.sorted { $0.name < $1.name }
+    }
+    
+    // Helper methods to get unique filter options
+    func getUniqueNationalities() -> [String] {
+        return Array(Set(fightersByName.values.compactMap { $0.nationality })).sorted()
+    }
+    
+    func getUniqueTeams() -> [String] {
+        return Array(Set(fightersByName.values.map { $0.teamAffiliation })).sorted()
     }
     
     func getFilteredFights(searchText: String) -> [FightWithId] {

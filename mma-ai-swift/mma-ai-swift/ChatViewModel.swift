@@ -36,8 +36,8 @@ class ChatViewModel: ObservableObject {
     init() {
         // Initialize with default example questions
         exampleQuestions = [
-            "Tell me about Max Holloway's most recent 5 fights chronologically",
-            "Generate me a visualization of Max Holloway's method of victories"
+            "Run a Monte Carlo simulation to predict the outcome of Ilia Topuria vs Charles Oliveira",
+            "Analyze the fighting styles and potential strategies for Max Holloway vs Leonardo Santos"
         ]
         
         // Register for app state changes

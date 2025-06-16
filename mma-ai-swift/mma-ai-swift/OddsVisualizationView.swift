@@ -116,27 +116,67 @@ struct OddsVisualizationView: View {
     }
     
     private func loadOddsData() {
-        // Simulate loading from odds data source
-        // In a real app, this would fetch from a local database or API
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            // Create some sample data for demonstration
-            // In a real implementation, you would parse the CSV data
-            let sampleData: [OddsChartPoint] = [
-                OddsChartPoint(timestamp: "0313_1821", odds: -150, sportsbook: "Circa"),
-                OddsChartPoint(timestamp: "0313_2057", odds: -145, sportsbook: "Wynn"),
-                OddsChartPoint(timestamp: "0314_0951", odds: -155, sportsbook: "Westgate"),
-                OddsChartPoint(timestamp: "0314_0957", odds: -160, sportsbook: "Circa"),
-                OddsChartPoint(timestamp: "0317_1731", odds: -170, sportsbook: "BetMGM"),
-                OddsChartPoint(timestamp: "0317_1807", odds: -165, sportsbook: "Circa"),
-                OddsChartPoint(timestamp: "0317_2019", odds: -180, sportsbook: "Westgate"),
-                OddsChartPoint(timestamp: "0317_2143", odds: -185, sportsbook: "Circa"),
-                OddsChartPoint(timestamp: "0318_0043", odds: -170, sportsbook: "Circa"),
-                OddsChartPoint(timestamp: "0318_0331", odds: -175, sportsbook: "Circa")
-            ]
+        // Load odds data from CSV file
+        DispatchQueue.global(qos: .userInitiated).async {
+            let csvPath = "/Users/td/Code/mma-ai-swift-app/data/ufc_odds_movements_fightoddsio.csv"
+            guard FileManager.default.fileExists(atPath: csvPath) else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Could not find odds data file"
+                    self.isLoading = false
+                }
+                return
+            }
             
-            self.oddsData = sampleData
-            self.isLoading = false
+            do {
+                let csvString = try String(contentsOfFile: csvPath, encoding: .utf8)
+                let rows = csvString.components(separatedBy: .newlines)
+                
+                // Skip header row
+                let dataRows = rows.dropFirst()
+                
+                // Filter rows for this specific fighter
+                let fighterOddsData = dataRows.filter { row in
+                    let columns = row.components(separatedBy: ",")
+                    return columns.count > 2 && columns[2] == "\(fighter.name)"
+                }
+                
+                // Parse and transform data
+                let parsedOddsData = fighterOddsData.compactMap { row -> OddsChartPoint? in
+                    let columns = row.components(separatedBy: ",")
+                    guard columns.count >= 6 else { return nil }
+                    
+                    // Extract timestamp from filename (first column)
+                    let filename = columns[0]
+                    let timestampComponents = filename.components(separatedBy: "_")
+                    let timestamp = timestampComponents.count >= 3 ? 
+                        timestampComponents[2] + "_" + timestampComponents[3].replacingOccurrences(of: ".csv", with: "") : 
+                        filename
+                    
+                    // Convert odds string
+                    let sportsbook = columns[3]
+                    let beforeOdds = Int(columns[4].replacingOccurrences(of: "+", with: "")) ?? 0
+                    let afterOdds = Int(columns[5].replacingOccurrences(of: "+", with: "")) ?? 0
+                    
+                    return OddsChartPoint(
+                        timestamp: timestamp,
+                        odds: beforeOdds,
+                        sportsbook: sportsbook
+                    )
+                }
+                
+                // Sort data by timestamp
+                let sortedOddsData = parsedOddsData.sorted { $0.timestamp < $1.timestamp }
+                
+                DispatchQueue.main.async {
+                    self.oddsData = sortedOddsData
+                    self.isLoading = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Error reading odds data: \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+            }
         }
     }
 }
