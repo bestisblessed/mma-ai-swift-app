@@ -142,6 +142,33 @@ def get_events():
         logger.error(f"Error fetching event data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# New endpoint to serve odds movement data for betting trends
+@app.route('/api/data/odds-movements', methods=['GET'])
+def get_odds_movements():
+    """Return odds movement history from CSV"""
+    try:
+        odds_df = pd.read_csv('data/ufc_odds_movements_fightoddsio.csv')
+
+        # Extract timestamps from filenames
+        odds_df['time_before'] = odds_df['file1'].str.extract(r'(\d{8}_\d{4})')[0]
+        odds_df['time_after'] = odds_df['file2'].str.extract(r'(\d{8}_\d{4})')[0]
+
+        # Convert to ISO date strings for easier parsing on iOS
+        odds_df['time_before'] = pd.to_datetime(odds_df['time_before'], format='%Y%m%d_%H%M').astype(str)
+        odds_df['time_after'] = pd.to_datetime(odds_df['time_after'], format='%Y%m%d_%H%M').astype(str)
+
+        odds_data = json.loads(odds_df.to_json(orient='records'))
+
+        response = {
+            'timestamp': datetime.now().isoformat(),
+            'odds': odds_data
+        }
+
+        return jsonify(response)
+    except Exception as e:
+        logger.error(f"Error fetching odds movements: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/data/version', methods=['GET'])
 def get_data_version():
     try:

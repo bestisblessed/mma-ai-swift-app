@@ -22,6 +22,10 @@ struct DashboardView: View {
                 TabButton(title: "News", isSelected: selectedTab == 3) {
                     selectedTab = 3
                 }
+
+                TabButton(title: "Odds", isSelected: selectedTab == 4) {
+                    selectedTab = 4
+                }
             }
             .background(AppTheme.cardBackground)
             
@@ -37,6 +41,8 @@ struct DashboardView: View {
                         RankingsView()
                     case 3:
                         NewsView()
+                    case 4:
+                        OddsMonitoringView()
                     default:
                         EmptyView()
                     }

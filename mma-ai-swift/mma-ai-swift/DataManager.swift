@@ -10,6 +10,7 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     @Published private(set) var eventDetails: [String: EventInfo] = [:]
     @Published private(set) var upcomingEvents: [EventInfo] = []
     @Published private(set) var pastEvents: [EventInfo] = []
+    @Published private(set) var oddsMovements: [OddsMovement] = []
     @Published private(set) var loadingState: LoadingState = .idle
     
     private let networkManager = NetworkManager.shared
@@ -36,6 +37,7 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     private init() {
         Task {
             await loadInitialData()
+            await loadOddsData()
         }
     }
     
@@ -151,8 +153,9 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
             async let fightersTask = networkManager.fetchFighters()
             async let eventsTask = networkManager.fetchEvents()
             async let upcomingEventsTask = networkManager.fetchUpcomingEvents()
-            
-            let (apiFighters, apiEvents, upcomingApiEvents) = try await (fightersTask, eventsTask, upcomingEventsTask)
+            async let oddsTask = networkManager.fetchOddsMovements()
+
+            let (apiFighters, apiEvents, upcomingApiEvents, oddsMovements) = try await (fightersTask, eventsTask, upcomingEventsTask, oddsTask)
             
             print("✅ Successfully fetched data - \(apiFighters.count) fighters, \(apiEvents.count) events, and upcoming events")
             
@@ -164,7 +167,11 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
             
             // Process past events
             processPastEvents(events: apiEvents)
-            
+
+            DispatchQueue.main.async {
+                self.oddsMovements = oddsMovements
+            }
+
             // Save to cache
             saveToCache()
             
@@ -454,12 +461,14 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
             let eventDetailsData = try JSONEncoder().encode(eventDetails)
             let upcomingEventsData = try JSONEncoder().encode(upcomingEvents)
             let pastEventsData = try JSONEncoder().encode(pastEvents)
+            let oddsData = try JSONEncoder().encode(oddsMovements)
             
             cache.set(fightersData, forKey: "cachedFighters")
             cache.set(fightHistoryData, forKey: "cachedFightHistory")
             cache.set(eventDetailsData, forKey: "cachedEventDetails")
             cache.set(upcomingEventsData, forKey: "cachedUpcomingEvents")
             cache.set(pastEventsData, forKey: "cachedPastEvents")
+            cache.set(oddsData, forKey: "cachedOddsMovements")
             cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
             
             print("Data saved to cache")
@@ -475,7 +484,7 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
            let eventDetailsData = cache.data(forKey: "cachedEventDetails"),
            let upcomingEventsData = cache.data(forKey: "cachedUpcomingEvents") {
             
-            do {
+           do {
                 fighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
                 fightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
                 eventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
@@ -484,6 +493,9 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
                 // Load past events if available, otherwise use empty array
                 if let pastEventsData = cache.data(forKey: "cachedPastEvents") {
                     pastEvents = try JSONDecoder().decode([EventInfo].self, from: pastEventsData)
+                }
+                if let oddsData = cache.data(forKey: "cachedOddsMovements") {
+                    oddsMovements = try JSONDecoder().decode([OddsMovement].self, from: oddsData)
                 }
                 
                 return true
@@ -537,4 +549,16 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
         
         return d1 > d2 // Return true if date1 is newer than date2
     }
-} 
+
+    // Load odds movement history from the server
+    private func loadOddsData() async {
+        do {
+            let odds = try await networkManager.fetchOddsMovements()
+            DispatchQueue.main.async {
+                self.oddsMovements = odds
+            }
+        } catch {
+            print("Failed to load odds movements: \(error)")
+        }
+    }
+}
