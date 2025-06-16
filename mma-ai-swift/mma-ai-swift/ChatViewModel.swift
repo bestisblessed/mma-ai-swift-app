@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Combine
 
 // Custom URLSession delegate to handle SSL certificate validation
@@ -28,14 +29,43 @@ class ChatViewModel: ObservableObject {
     
     private var apiUrl = "https://mma-ai.duckdns.org/api"
     
+    // Track current network tasks to allow cancellation
+    private var currentChatTask: URLSessionDataTask?
+    private var currentPredictionTask: URLSessionDataTask?
+    
     init() {
         // Initialize with default example questions
         exampleQuestions = [
             "Tell me about Max Holloway's most recent 5 fights chronologically",
             "Generate me a visualization of Max Holloway's method of victories"
         ]
+        
+        // Register for app state changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppStateChange),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+        
         // Load from API if available
         loadExampleQuestions()
+    }
+    
+    @objc private func handleAppStateChange() {
+        // Cancel ongoing tasks when app goes to background
+        currentChatTask?.cancel()
+        currentPredictionTask?.cancel()
+        
+        // Reset loading state
+        DispatchQueue.main.async {
+            self.isLoading = false
+        }
+    }
+    
+    deinit {
+        // Remove observer to prevent memory leaks
+        NotificationCenter.default.removeObserver(self)
     }
     
     func updateApiEndpoint(_ endpoint: String) {
@@ -179,6 +209,9 @@ class ChatViewModel: ObservableObject {
     }
     
     func sendMessage(_ content: String, assistantId: String? = nil) {
+        // Cancel any existing task
+        currentChatTask?.cancel()
+        
         // Create and add the user message
         let userMessage = Message(content: content, isUser: true, timestamp: Date())
         messages.append(userMessage)
@@ -219,11 +252,12 @@ class ChatViewModel: ObservableObject {
             
             // Create a URLSession configuration that allows self-signed certificates
             let sessionConfig = URLSessionConfiguration.default
-            sessionConfig.timeoutIntervalForRequest = 180
+            sessionConfig.timeoutIntervalForRequest = 150 // 2.5 minute timeout
+            sessionConfig.waitsForConnectivity = true
             let sslHandler = SSLCertificateHandler()
             let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
             
-            session.dataTask(with: request) { [weak self] data, response, error in
+            let task = session.dataTask(with: request) { [weak self] data, response, error in
                 DispatchQueue.main.async {
                     self?.isLoading = false
                     
@@ -232,10 +266,16 @@ class ChatViewModel: ObservableObject {
                         self.messages.remove(at: loadingIndex)
                     }
                     
-                    if let error = error {
+                    if let error = error as NSError? {
+                        // Check if error is due to cancellation
+                        if error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
+                            print("Chat request was cancelled")
+                            return
+                        }
+                        
                         print("Network error: \(error.localizedDescription)")
                         let errorMessage = Message(
-                            content: "Network error: \(error.localizedDescription)",
+                            content: "Network error: Connection interrupted",
                             isUser: false,
                             timestamp: Date()
                         )
@@ -304,7 +344,11 @@ class ChatViewModel: ObservableObject {
                         self?.messages.append(errorMessage)
                     }
                 }
-            }.resume()
+            }
+            
+            // Store the current task for potential cancellation
+            currentChatTask = task
+            task.resume()
         } catch {
             DispatchQueue.main.async {
                 self.isLoading = false
@@ -326,6 +370,9 @@ class ChatViewModel: ObservableObject {
     
     // Function for fight predictions that doesn't show the fighter ID input in the chat
     func sendPredictionRequest(prompt: String, assistantId: String) {
+        // Cancel any existing prediction task
+        currentPredictionTask?.cancel()
+        
         // Skip adding user message to UI, directly go to loading state
         isLoading = true
         
@@ -378,11 +425,12 @@ class ChatViewModel: ObservableObject {
             
             // Create a URLSession configuration that allows self-signed certificates
             let sessionConfig = URLSessionConfiguration.default
-            sessionConfig.timeoutIntervalForRequest = 180
+            sessionConfig.timeoutIntervalForRequest = 150 // 2.5 minute timeout
+            sessionConfig.waitsForConnectivity = true
             let sslHandler = SSLCertificateHandler()
             let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
             
-            session.dataTask(with: request) { [weak self] data, response, error in
+            let task = session.dataTask(with: request) { [weak self] data, response, error in
                 DispatchQueue.main.async {
                     self?.isLoading = false
                     
@@ -391,10 +439,16 @@ class ChatViewModel: ObservableObject {
                         self.messages.remove(at: loadingIndex)
                     }
                     
-                    if let error = error {
+                    if let error = error as NSError? {
+                        // Check if error is due to cancellation
+                        if error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
+                            print("Prediction request was cancelled")
+                            return
+                        }
+                        
                         print("Network error: \(error.localizedDescription)")
                         let errorMessage = Message(
-                            content: "Network error: \(error.localizedDescription)",
+                            content: "Network error: Connection interrupted",
                             isUser: false,
                             timestamp: Date()
                         )
@@ -460,7 +514,11 @@ class ChatViewModel: ObservableObject {
                         self?.messages.append(errorMessage)
                     }
                 }
-            }.resume()
+            }
+            
+            // Store the current task for potential cancellation
+            currentPredictionTask = task
+            task.resume()
         } catch {
             DispatchQueue.main.async {
                 self.isLoading = false

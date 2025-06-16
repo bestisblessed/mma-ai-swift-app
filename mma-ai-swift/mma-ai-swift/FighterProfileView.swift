@@ -44,7 +44,7 @@ struct FighterProfileView: View {
             Text(fighter.nickname ?? "")
                 .font(.headline)
                 .foregroundColor(.yellow)
-                .opacity(fighter.nickname == nil ? 0 : 1)
+                .opacity((fighter.nickname == nil || fighter.nickname == "-") ? 0 : 1)
             
             Text(fighter.weightClass)
                 .font(.subheadline)
@@ -92,16 +92,14 @@ struct FighterProfileView: View {
     }
     
     private var chartsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 30) {
-                    Spacer(minLength: 0)
-                    winMethodsChart
-                    lossMethodsChart
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal)
+        VStack(alignment: .center, spacing: 16) {
+            HStack(spacing: 30) {
+                Spacer(minLength: 0)
+                winMethodsChart
+                lossMethodsChart
+                Spacer(minLength: 0)
             }
+            .padding(.horizontal)
         }
     }
     

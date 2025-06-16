@@ -514,7 +514,7 @@ struct FighterTileView: View {
                     .foregroundColor(AppTheme.textPrimary)
                     .lineLimit(1)
                 
-                if let nickname = fighter.nickname {
+                if let nickname = fighter.nickname, nickname != "-" {
                     Text("'\(nickname)'")
                         .font(.caption2)
                         .foregroundColor(AppTheme.accent)

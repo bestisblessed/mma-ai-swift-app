@@ -43,7 +43,16 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     
     func refreshData() async throws {
         if loadingState == .loading { return }
-        await loadLatestData(force: true)
+        
+        let currentTime = Date().timeIntervalSince1970
+        let lastUpdateTime = cache.double(forKey: "lastUpdateTime")
+        let timeSinceLastUpdate = currentTime - lastUpdateTime
+        let fourHoursInSeconds: TimeInterval = 4 * 60 * 60 // 4 hours
+        
+        // Only refresh if it's been more than 4 hours or no data exists
+        if timeSinceLastUpdate >= fourHoursInSeconds || upcomingEvents.isEmpty {
+            await loadLatestData(force: true)
+        }
     }
     
     func getFighter(_ name: String) -> FighterStats? {
@@ -133,16 +142,20 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
         }
         
         do {
+            // Check if data needs update based on time
+            let currentTime = Date().timeIntervalSince1970
+            let lastUpdateTime = cache.double(forKey: "lastUpdateTime")
+            let timeSinceLastUpdate = currentTime - lastUpdateTime
+            let fourHoursInSeconds: TimeInterval = 4 * 60 * 60 // 4 hours
+            
             // Skip network requests if not forced and within update time window
-            if !force {
-                if let needsUpdate = try? await networkManager.checkForUpdates(), !needsUpdate {
-                    print("No update needed, data is current")
-                    
-                    DispatchQueue.main.async {
-                        self.loadingState = .success
-                    }
-                    return
+            if !force && !upcomingEvents.isEmpty && timeSinceLastUpdate < fourHoursInSeconds {
+                print("Data is recent. Skipping refresh.")
+                
+                DispatchQueue.main.async {
+                    self.loadingState = .success
                 }
+                return
             }
             
             print("Fetching latest data from server...")
