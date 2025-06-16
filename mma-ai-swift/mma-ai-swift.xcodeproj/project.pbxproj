@@ -28,6 +28,7 @@
                 E3245622F28F745A3F2F9AF5 /* OddsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580BE9B2147E4E5030A8B100 /* OddsModels.swift */; };
                 A4DEAA534AE1C66168DC703F /* OddsMonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F7352C5FE1560EDE82D274 /* OddsMonitoringView.swift */; };
                 9B24F604B79CFDC8D36DEB2C /* OddsHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C8B05FE9CF1944671B66CD /* OddsHistoryView.swift */; };
+                5DC28B05D2354E72BA16A2F4 /* FightOddsChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFBDB8F7497D4000BD06507F /* FightOddsChart.swift */; };
                 8A1234561234567800000024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000023 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -53,9 +54,10 @@
                 580BE9B2147E4E5030A8B100 /* OddsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OddsModels.swift; sourceTree = "<group>"; };
                 E9F7352C5FE1560EDE82D274 /* OddsMonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OddsMonitoringView.swift; sourceTree = "<group>"; };
                 14C8B05FE9CF1944671B66CD /* OddsHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OddsHistoryView.swift; sourceTree = "<group>"; };
+                AFBDB8F7497D4000BD06507F /* FightOddsChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FightOddsChart.swift; sourceTree = "<group>"; };
                 8A1234561234567800000007 /* mma-ai-swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "mma-ai-swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8A1234561234567800000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		8A1234561234567800000023 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+                8A1234561234567800000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+                8A1234561234567800000023 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +104,7 @@
                                 580BE9B2147E4E5030A8B100 /* OddsModels.swift */,
                                 E9F7352C5FE1560EDE82D274 /* OddsMonitoringView.swift */,
                                 14C8B05FE9CF1944671B66CD /* OddsHistoryView.swift */,
+                                AFBDB8F7497D4000BD06507F /* FightOddsChart.swift */,
                                 8A1234561234567800000023 /* Assets.xcassets */,
                         );
 			path = "mma-ai-swift";
@@ -205,6 +208,7 @@
                                 E3245622F28F745A3F2F9AF5 /* OddsModels.swift in Sources */,
                                 A4DEAA534AE1C66168DC703F /* OddsMonitoringView.swift in Sources */,
                                 9B24F604B79CFDC8D36DEB2C /* OddsHistoryView.swift in Sources */,
+                                5DC28B05D2354E72BA16A2F4 /* FightOddsChart.swift in Sources */,
                         );
 			runOnlyForDeploymentPostprocessing = 0;
 		};

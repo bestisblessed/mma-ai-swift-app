@@ -3,10 +3,10 @@ import Charts
 
 struct OddsMonitoringView: View {
     @ObservedObject private var dataManager = FighterDataManager.shared
-    @State private var selectedFighter: String = ""
+    @State private var selectedFight: Fight?
 
-    private var fighters: [String] {
-        Array(Set(dataManager.oddsMovements.map { $0.fighter })).sorted()
+    private var fights: [Fight] {
+        dataManager.upcomingEvents.flatMap { $0.fights }
     }
 
     var body: some View {
@@ -14,19 +14,19 @@ struct OddsMonitoringView: View {
             if dataManager.oddsMovements.isEmpty {
                 ProgressView("Loading odds...")
             } else {
-                Picker("Fighter", selection: $selectedFighter) {
-                    ForEach(fighters, id: \.self) { fighter in
-                        Text(fighter).tag(fighter)
+                Picker("Matchup", selection: $selectedFight) {
+                    ForEach(fights) { fight in
+                        Text("\(fight.redCorner) vs \(fight.blueCorner)").tag(Optional(fight))
                     }
                 }
                 .pickerStyle(.menu)
                 .padding()
                 .onAppear {
-                    if selectedFighter.isEmpty { selectedFighter = fighters.first ?? "" }
+                    if selectedFight == nil { selectedFight = fights.first }
                 }
 
-                if !selectedFighter.isEmpty {
-                    OddsLineChart(fighter: selectedFighter, movements: dataManager.oddsMovements)
+                if let fight = selectedFight {
+                    OddsFightChart(fight: fight, movements: dataManager.oddsMovements)
                         .frame(height: 250)
                         .padding()
                 }
