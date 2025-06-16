@@ -26,6 +26,8 @@
 		8A1234561234567800000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000004 /* ContentView.swift */; };
 		8A1234561234567800000005 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000006 /* ChatViewModel.swift */; };
 		8A1234561234567800000024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000023 /* Assets.xcassets */; };
+		8A1234561234567800000025 /* OddsVisualizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000026 /* OddsVisualizationView.swift */; };
+		8A1234561234567800000027 /* FighterComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000028 /* FighterComparisonView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +52,8 @@
 		8A1234561234567800000007 /* mma-ai-swift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "mma-ai-swift.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A1234561234567800000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8A1234561234567800000023 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8A1234561234567800000026 /* OddsVisualizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OddsVisualizationView.swift; sourceTree = "<group>"; };
+		8A1234561234567800000028 /* FighterComparisonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterComparisonView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +88,7 @@
 				738B03132D82DE4B0065813D /* EventCard.swift */,
 				73130C472D8AC8B6004A6AD5 /* ExportView.swift */,
 				738B03142D82DE4B0065813D /* FighterCard.swift */,
+				8A1234561234567800000028 /* FighterComparisonView.swift */,
 				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
 				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
 				738B030F2D82DD5B0065813D /* LaunchScreen.swift */,
@@ -91,6 +96,7 @@
 				8A1234561234567800000002 /* MMAApp.swift */,
 				732A66B22DA8CB7A003842BA /* Models.swift */,
 				737E315D2D908A53009EBF34 /* NetworkManager.swift */,
+				8A1234561234567800000026 /* OddsVisualizationView.swift */,
 				73A960412D82E0ED009B6A7E /* SettingsView.swift */,
 				731C84C82DA9698000361A5E /* SharedComponents.swift */,
 				8A1234561234567800000023 /* Assets.xcassets */,
@@ -190,6 +196,8 @@
 				73A960442D82E0ED009B6A7E /* ConversationHistoryView.swift in Sources */,
 				731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */,
 				733DFFE72D8AECA1004EC7B8 /* FighterProfileView.swift in Sources */,
+				8A1234561234567800000025 /* OddsVisualizationView.swift in Sources */,
+				8A1234561234567800000027 /* FighterComparisonView.swift in Sources */,
 				8A1234561234567800000001 /* MMAApp.swift in Sources */,
 				736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */,
 				8A1234561234567800000005 /* ChatViewModel.swift in Sources */,

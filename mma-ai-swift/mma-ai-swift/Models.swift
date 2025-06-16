@@ -1,4 +1,6 @@
 import Foundation
+import SwiftUI
+import Charts
 
 // MARK: - Core Models
 
@@ -81,6 +83,150 @@ struct FightRecord: Codable, Identifiable {
     
     // Identifiable conformance
     var id: String { opponent + date }
+}
+
+// MARK: - Odds Models
+
+struct OddsMovement: Codable, Identifiable {
+    let matchup: String
+    let gameDate: String
+    let sportsbook: String
+    let oddsBeforeRaw: String
+    let oddsAfterRaw: String
+    let timeStamp: String
+    
+    var id: String { "\(matchup)-\(timeStamp)" }
+    
+    var fighter1: String {
+        matchup.components(separatedBy: " vs ").first?.trimmingCharacters(in: .whitespaces) ?? ""
+    }
+    
+    var fighter2: String {
+        matchup.components(separatedBy: " vs ").last?.trimmingCharacters(in: .whitespaces) ?? ""
+    }
+    
+    var oddsBeforeFighter1: Int {
+        parseOdds(oddsBeforeRaw, fighter: 1)
+    }
+    
+    var oddsBeforeFighter2: Int {
+        parseOdds(oddsBeforeRaw, fighter: 2)
+    }
+    
+    var oddsAfterFighter1: Int {
+        parseOdds(oddsAfterRaw, fighter: 1)
+    }
+    
+    var oddsAfterFighter2: Int {
+        parseOdds(oddsAfterRaw, fighter: 2)
+    }
+    
+    var displayTimeStamp: String {
+        let components = timeStamp.components(separatedBy: "_")
+        guard components.count >= 2 else { return timeStamp }
+        return components[1]
+    }
+    
+    private func parseOdds(_ oddsString: String, fighter: Int) -> Int {
+        let components = oddsString.components(separatedBy: "|")
+        guard components.count >= 2 else { return 0 }
+        
+        let targetComponent = fighter == 1 ? components[0] : components[1]
+        let trimmed = targetComponent.trimmingCharacters(in: .whitespaces)
+        
+        if trimmed == "-" { return 0 }
+        
+        // Remove any + sign before converting to integer
+        let cleanedValue = trimmed.replacingOccurrences(of: "+", with: "")
+        return Int(cleanedValue) ?? 0
+    }
+}
+
+// Helper class to manage and process odds data
+class OddsProcessor {
+    static func processOddsData(from csvData: [[String: String]]) -> [OddsMovement] {
+        var oddsMovements: [OddsMovement] = []
+        
+        for row in csvData {
+            guard let matchup = row["matchup"],
+                  let gameDate = row["game_date"],
+                  let sportsbook = row["sportsbook"],
+                  let oddsBeforeRaw = row["odds_before"],
+                  let oddsAfterRaw = row["odds_after"],
+                  let file1 = row["file1"],
+                  let file2 = row["file2"] else {
+                continue
+            }
+            
+            // Create a timestamp from the filename (format: ufc_odds_vsin_YYYYMMDD_HHMM.json)
+            let timeStamp = "\(file1)_\(file2)"
+            
+            let movement = OddsMovement(
+                matchup: matchup,
+                gameDate: gameDate,
+                sportsbook: sportsbook,
+                oddsBeforeRaw: oddsBeforeRaw,
+                oddsAfterRaw: oddsAfterRaw,
+                timeStamp: timeStamp
+            )
+            
+            oddsMovements.append(movement)
+        }
+        
+        return oddsMovements
+    }
+    
+    static func getOddsChartData(for fighter: String, from movements: [OddsMovement]) -> [OddsChartPoint] {
+        var chartData: [OddsChartPoint] = []
+        let relevantMovements = movements.filter { 
+            $0.fighter1.lowercased() == fighter.lowercased() || 
+            $0.fighter2.lowercased() == fighter.lowercased() 
+        }
+        
+        for movement in relevantMovements {
+            let isFighter1 = movement.fighter1.lowercased() == fighter.lowercased()
+            let beforeOdds = isFighter1 ? movement.oddsBeforeFighter1 : movement.oddsBeforeFighter2
+            let afterOdds = isFighter1 ? movement.oddsAfterFighter1 : movement.oddsAfterFighter2
+            
+            // Only add points where odds changed
+            if beforeOdds != 0 {
+                chartData.append(OddsChartPoint(
+                    timestamp: movement.displayTimeStamp,
+                    odds: beforeOdds,
+                    sportsbook: movement.sportsbook
+                ))
+            }
+            
+            if afterOdds != 0 {
+                chartData.append(OddsChartPoint(
+                    timestamp: movement.displayTimeStamp + "+",
+                    odds: afterOdds,
+                    sportsbook: movement.sportsbook
+                ))
+            }
+        }
+        
+        // Sort by timestamp
+        return chartData.sorted { $0.timestamp < $1.timestamp }
+    }
+}
+
+struct OddsChartPoint: Identifiable {
+    let timestamp: String
+    let odds: Int
+    let sportsbook: String
+    
+    var id: String { "\(timestamp)-\(sportsbook)" }
+    
+    // Convert American odds to probability
+    var impliedProbability: Double {
+        if odds > 0 {
+            return 100.0 / Double(odds + 100)
+        } else if odds < 0 {
+            return Double(abs(odds)) / Double(abs(odds) + 100)
+        }
+        return 0.5 // Even odds
+    }
 }
 
 // MARK: - API Models
