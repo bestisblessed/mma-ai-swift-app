@@ -34,12 +34,6 @@ class ChatViewModel: ObservableObject {
     private var currentPredictionTask: URLSessionDataTask?
     
     init() {
-        // Initialize with default example questions
-        exampleQuestions = [
-            "Run a Monte Carlo simulation to predict the outcome of Ilia Topuria vs Charles Oliveira",
-            "Analyze the fighting styles and potential strategies for Max Holloway vs Leonardo Santos"
-        ]
-        
         // Register for app state changes
         NotificationCenter.default.addObserver(
             self,
@@ -48,7 +42,7 @@ class ChatViewModel: ObservableObject {
             object: nil
         )
         
-        // Load from API if available
+        // Load example questions from API
         loadExampleQuestions()
     }
     
@@ -162,52 +156,23 @@ class ChatViewModel: ObservableObject {
     }
     
     func loadExampleQuestions() {
-        // Don't reload if we're already loading
-        if isLoading { return }
-        
-        print("Loading example questions from API at \(apiUrl)/examples...")
+        guard !isLoading, let url = URL(string: "\(apiUrl)/examples") else { return }
         isLoading = true
-        
-        let url = URL(string: "\(apiUrl)/examples")!
-        print("URL: \(url.absoluteString)")
-        
         let sessionConfig = URLSessionConfiguration.default
-        sessionConfig.timeoutIntervalForRequest = 300  // 5 minutes
-        sessionConfig.timeoutIntervalForResource = 600 // 10 minutes
         let sslHandler = SSLCertificateHandler()
         let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
-        
-        session.dataTask(with: url) { [weak self] data, response, error in
+        session.dataTask(with: url) { [weak self] data, _, error in
             DispatchQueue.main.async {
                 self?.isLoading = false
-                
-                if let httpResponse = response as? HTTPURLResponse {
-                    print("HTTP Status Code: \(httpResponse.statusCode)")
-                }
-                
-                guard let data = data, error == nil else {
-                    print("Error loading example questions: \(error?.localizedDescription ?? "Unknown error")")
-                    print("Using default example questions (count: \(self?.exampleQuestions.count ?? 0))")
+                guard let data = data, error == nil,
+                      let decoded = try? JSONDecoder().decode(ExamplesResponse.self, from: data) else {
                     return
                 }
-                
-                // Print the raw response for debugging
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("Examples API Response: \(responseString)")
-                }
-                
-                if let decodedResponse = try? JSONDecoder().decode(ExamplesResponse.self, from: data),
-                   !decodedResponse.examples.isEmpty {
-                    print("Successfully loaded \(decodedResponse.examples.count) example questions from API")
-                    self?.exampleQuestions = decodedResponse.examples
-                } else {
-                    print("Failed to decode API response or empty examples array")
-                    print("Keeping default example questions (count: \(self?.exampleQuestions.count ?? 0))")
-                }
+                self?.exampleQuestions = decoded.examples
             }
         }.resume()
     }
-    
+
     func sendMessage(_ content: String, assistantId: String? = nil) {
         // Cancel any existing task
         currentChatTask?.cancel()

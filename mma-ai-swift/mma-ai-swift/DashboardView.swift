@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 struct DashboardView: View {
     @State private var selectedTab = 0
     
@@ -68,21 +69,7 @@ struct UpcomingEventsView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            HStack {
-                Spacer()
-                
-                Button(action: {
-                    refreshData()
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.headline)
-                        .foregroundColor(.yellow)
-                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                        .animation(isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isRefreshing)
-                }
-                .disabled(isRefreshing)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            // Removed refresh button (moved to main tab bar)
             
             if dataManager.loadingState == .loading {
                 VStack(spacing: 20) {
@@ -158,11 +145,11 @@ struct UpcomingEventsView: View {
 //                    .padding(.top, 8)
             }
         }
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
-                refreshData()
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    refreshData()
+                }
             }
-        }
         // .onAppear {
         //     refreshData()
         // }
@@ -170,14 +157,14 @@ struct UpcomingEventsView: View {
     
     private func refreshData() {
         isRefreshing = true
-        
+
         Task {
             do {
                 try await dataManager.refreshData()
             } catch {
                 print("Error refreshing data: \(error)")
             }
-            
+
             DispatchQueue.main.async {
                 isRefreshing = false
             }
@@ -187,26 +174,10 @@ struct UpcomingEventsView: View {
 
 struct PastEventsView: View {
     @ObservedObject private var dataManager = FighterDataManager.shared
-    @State private var isRefreshing = false
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
         VStack(spacing: 16) {
-            HStack {
-                Spacer()
-                
-                Button(action: {
-                    refreshData()
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.headline)
-                        .foregroundColor(.yellow)
-                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                        .animation(isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isRefreshing)
-                }
-                .disabled(isRefreshing)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
             
             if dataManager.loadingState == .loading {
                 VStack(spacing: 20) {
@@ -293,17 +264,11 @@ struct PastEventsView: View {
     }
     
     private func refreshData() {
-        isRefreshing = true
-        
         Task {
             do {
                 try await dataManager.refreshData()
             } catch {
                 print("Error refreshing data: \(error)")
-            }
-            
-            DispatchQueue.main.async {
-                isRefreshing = false
             }
         }
     }

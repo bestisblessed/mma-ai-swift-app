@@ -283,7 +283,8 @@ def get_examples():
         "Tell me about Jon Jones most recent 5 fights in detail",
         "Make me a pie chart visualization of Max Holloway's method of victories",
         "Analyze and research Paddy Pimblett and Michael Chandler in depth, then predict who would win in a potential fight. Include the method and time of victory.",
-        "List me all the columns and summarize the data in all of your datasets",
+        #"Simulate an upcoming fight between Dricus Du Plessis and Khamzat Chimaev using a Monte Carlo simulation with at least 10,000 iterations, incorporating their strike accuracy, takedown defense, and cardio endurance metrics to produce win probabilities, expected finish methods, and round/time distributions",
+        "Simulate an upcoming fight between Dricus Du Plessis and Khamzat Chimaev using a Monte Carlo simulation with at least 10,000 iterations and using advanced features you determine."
         # "Tell me the most recent 3 events and the main event outcome of each one",
         # "Where is the upcoming UFC card/event this weekend and what are all of the fights on it with a short overview of each fight?",
     ]
