@@ -39,15 +39,26 @@ struct OddsVisualizationView: View {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
                             .foregroundColor(.yellow)
-                        
+
                         Text("Error loading odds data")
                             .font(.headline)
-                        
+
                         Text(error)
                             .font(.body)
                             .multilineTextAlignment(.center)
+
+                        ProgressView("Retrying...")
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .padding(.top, 4)
                     }
                     .padding()
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            errorMessage = nil
+                            isLoading = true
+                            loadOddsData()
+                        }
+                    }
                 } else if filteredOddsData.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "chart.line.downtrend.xyaxis")
