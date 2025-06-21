@@ -149,6 +149,7 @@ For deploying the Flask API server to a Raspberry Pi:
 - If the app can't connect to the backend, make sure the Flask server is running and the IP address in `ChatViewModel.swift` is correct
 - If you see "Thinking..." for too long, check the Flask server logs for any errors
 - Make sure your OpenAI API key is valid and has sufficient credits
+- If odds data fails to load, the odds visualization screen will automatically retry after a few seconds
 
 ## License
 
