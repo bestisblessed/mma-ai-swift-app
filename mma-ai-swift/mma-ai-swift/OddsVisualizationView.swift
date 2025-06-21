@@ -164,17 +164,6 @@ struct OddsVisualizationView: View {
     }
     
     private func loadOddsData() {
-        if let cached1 = FighterDataManager.shared.getOddsChart(fight.redCorner),
-           let cached2 = FighterDataManager.shared.getOddsChart(fight.blueCorner) {
-            oddsData1 = cached1
-            oddsData2 = cached2
-            let books = Set((cached1 + cached2).map { $0.sportsbook }).sorted()
-            sportsbooks = ["All"] + books
-            selectedSportsbook = "All"
-            isLoading = false
-            return
-        }
-
         Task {
             do {
                 let points1 = try await NetworkManager.shared.fetchOddsChart(for: fight.redCorner)
