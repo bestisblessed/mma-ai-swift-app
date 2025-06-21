@@ -164,16 +164,29 @@ struct OddsVisualizationView: View {
     }
     
     private func loadOddsData() {
+        if let cached1 = FighterDataManager.shared.getOddsChart(fight.redCorner),
+           let cached2 = FighterDataManager.shared.getOddsChart(fight.blueCorner) {
+            oddsData1 = cached1
+            oddsData2 = cached2
+            let books = Set((cached1 + cached2).map { $0.sportsbook }).sorted()
+            sportsbooks = ["All"] + books
+            selectedSportsbook = "All"
+            isLoading = false
+            return
+        }
+
         Task {
             do {
                 let points1 = try await NetworkManager.shared.fetchOddsChart(for: fight.redCorner)
                 let points2 = try await NetworkManager.shared.fetchOddsChart(for: fight.blueCorner)
                 DispatchQueue.main.async {
-                    // Filter out unwanted sportsbooks
-                    oddsData1 = points1.filter { allowedSportsbooks.contains($0.sportsbook) }
-                    oddsData2 = points2.filter { allowedSportsbooks.contains($0.sportsbook) }
-                    // Build unified selector list
-                    let books = Set((oddsData1 + oddsData2).map { $0.sportsbook }).sorted()
+                    let filtered1 = points1.filter { allowedSportsbooks.contains($0.sportsbook) }
+                    let filtered2 = points2.filter { allowedSportsbooks.contains($0.sportsbook) }
+                    oddsData1 = filtered1
+                    oddsData2 = filtered2
+                    FighterDataManager.shared.storeOddsChart(fight.redCorner, data: filtered1)
+                    FighterDataManager.shared.storeOddsChart(fight.blueCorner, data: filtered2)
+                    let books = Set((filtered1 + filtered2).map { $0.sportsbook }).sorted()
                     sportsbooks = ["All"] + books
                     selectedSportsbook = "All"
                     isLoading = false

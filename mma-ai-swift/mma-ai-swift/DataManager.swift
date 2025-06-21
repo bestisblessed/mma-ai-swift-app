@@ -11,6 +11,15 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     @Published private(set) var upcomingEvents: [EventInfo] = []
     @Published private(set) var pastEvents: [EventInfo] = []
     @Published private(set) var loadingState: LoadingState = .idle
+    @Published private(set) var oddsChartCache: [String: [OddsChartPoint]] = [:]
+
+    private let allowedSportsbooks: Set<String> = [
+        "betmgm", "betonline", "bookmaker", "bovada", "caesars-sportsbook",
+        "circa-sports", "draftkings", "espn-bet", "fanduel", "mybookie",
+        "pinnacle-sports"
+    ]
+
+    private var oddsPrefetched = false
     
     private let networkManager = NetworkManager.shared
     private let cache = UserDefaults.standard
@@ -66,6 +75,16 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     func getFightHistory(_ name: String) -> [FightResult]? {
         fightHistory[name]
     }
+
+    func getOddsChart(_ fighter: String) -> [OddsChartPoint]? {
+        oddsChartCache[fighter]
+    }
+
+    func storeOddsChart(_ fighter: String, data: [OddsChartPoint]) {
+        DispatchQueue.main.async {
+            self.oddsChartCache[fighter] = data
+        }
+    }
     
     // Convert FightResult to FightRecord for the profile view
     func getFightRecords(_ name: String) -> [FightRecord]? {
@@ -120,10 +139,13 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
         // First try to load from cache
         if loadFromCache() {
             print("Data loaded from cache")
-            
+
             // Check for updates in background
             Task {
                 await loadLatestData(force: false)
+            }
+            Task {
+                await prefetchOddsData()
             }
         } else {
             // No cache, load from network
@@ -177,10 +199,14 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
             
             // Process past events
             processPastEvents(events: apiEvents)
-            
+
             // Save to cache
             saveToCache()
-            
+
+            Task {
+                await prefetchOddsData()
+            }
+
             DispatchQueue.main.async {
                 self.loadingState = .success
             }
@@ -456,6 +482,31 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
         
         print("✅ Finished processing \(newPastEvents.count) past events")
     }
+
+    private func prefetchOddsData() async {
+        if oddsPrefetched { return }
+        if upcomingEvents.isEmpty { return }
+        oddsPrefetched = true
+
+        print("🔄 Prefetching odds data for upcoming events...")
+        for event in upcomingEvents {
+            for fight in event.fights {
+                do {
+                    let points1 = try await networkManager.fetchOddsChart(for: fight.redCorner)
+                    let filtered1 = points1.filter { allowedSportsbooks.contains($0.sportsbook) }
+                    storeOddsChart(fight.redCorner, data: filtered1)
+                    let points2 = try await networkManager.fetchOddsChart(for: fight.blueCorner)
+                    let filtered2 = points2.filter { allowedSportsbooks.contains($0.sportsbook) }
+                    storeOddsChart(fight.blueCorner, data: filtered2)
+                } catch {
+                    print("⚠️ Failed to prefetch odds for \(fight.redCorner) or \(fight.blueCorner): \(error)")
+                }
+            }
+        }
+
+        saveToCache()
+        print("✅ Finished prefetching odds data")
+    }
     
     // MARK: - Cache Management
     
@@ -467,12 +518,14 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
             let eventDetailsData = try JSONEncoder().encode(eventDetails)
             let upcomingEventsData = try JSONEncoder().encode(upcomingEvents)
             let pastEventsData = try JSONEncoder().encode(pastEvents)
+            let oddsData = try JSONEncoder().encode(oddsChartCache)
             
             cache.set(fightersData, forKey: "cachedFighters")
             cache.set(fightHistoryData, forKey: "cachedFightHistory")
             cache.set(eventDetailsData, forKey: "cachedEventDetails")
             cache.set(upcomingEventsData, forKey: "cachedUpcomingEvents")
             cache.set(pastEventsData, forKey: "cachedPastEvents")
+            cache.set(oddsData, forKey: "cachedOddsCharts")
             cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
             
             print("Data saved to cache")
@@ -497,6 +550,12 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
                 // Load past events if available, otherwise use empty array
                 if let pastEventsData = cache.data(forKey: "cachedPastEvents") {
                     pastEvents = try JSONDecoder().decode([EventInfo].self, from: pastEventsData)
+                }
+
+                // Load cached odds charts if available
+                if let oddsData = cache.data(forKey: "cachedOddsCharts") {
+                    oddsChartCache = try JSONDecoder().decode([String: [OddsChartPoint]].self, from: oddsData)
+                    oddsPrefetched = true
                 }
                 
                 return true
