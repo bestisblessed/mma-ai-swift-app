@@ -11,6 +11,7 @@ import base64
 import pandas as pd
 from datetime import datetime
 import re
+import openai
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -529,6 +530,15 @@ def get_odds_last_updated():
         'epoch': mod_time,
         'iso': datetime.fromtimestamp(mod_time).isoformat()
     })
+
+@app.route('/api/news', methods=['GET'])
+def get_news():
+    try:
+        with open('data/news_daily.json', 'r') as f:
+            news_list = json.load(f)
+        return jsonify(news_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)

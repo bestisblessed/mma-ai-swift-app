@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct DashboardView: View {
     @State private var selectedTab = 0
     
@@ -11,12 +10,15 @@ struct DashboardView: View {
                 TabButton(title: "Upcoming", isSelected: selectedTab == 0) {
                     selectedTab = 0
                 }
-                TabButton(title: "Past", isSelected: selectedTab == 1) {
+                TabButton(title: "News", isSelected: selectedTab == 1) {
                     selectedTab = 1
+                }
+                TabButton(title: "Past", isSelected: selectedTab == 2) {
+                    selectedTab = 2
                 }
             }
             .background(AppTheme.cardBackground)
-            
+
             // Content
             ScrollView {
                 VStack(spacing: 16) {
@@ -24,6 +26,8 @@ struct DashboardView: View {
                     case 0:
                         UpcomingEventsView()
                     case 1:
+                        NewsView()
+                    case 2:
                         PastEventsView()
                     default:
                         EmptyView()
@@ -274,40 +278,84 @@ struct PastEventsView: View {
     }
 }
 
+struct NewsStory: Identifiable, Decodable {
+    let id = UUID()
+    let title: String
+    let summary: String
+    let url: String
+}
+
+//struct NewsResponse: Decodable {
+//    let news: [NewsStory]
+//}
+
 struct NewsView: View {
+    @State private var news: [NewsStory] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
     var body: some View {
         VStack(spacing: 16) {
-            Text("BETA")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.blue)
-                .padding(.top, 20)
-            
-            Text("Latest MMA News")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            NewsCard(
-                title: "Jon Jones vs. Stipe Miocic Targeted for UFC 306",
-                date: "February 28, 2025",
-                summary: "The UFC is targeting a heavyweight title fight between champion Jon Jones and former champion Stipe Miocic for UFC 306 at the Sphere in Las Vegas.",
-                source: "MMA Fighting"
-            )
-            
-            NewsCard(
-                title: "Islam Makhachev Defends Title Against Arman Tsarukyan",
-                date: "February 25, 2025",
-                summary: "Lightweight champion Islam Makhachev successfully defended his title against Arman Tsarukyan via unanimous decision in a closely contested rematch.",
-                source: "ESPN MMA"
-            )
-            
-            NewsCard(
-                title: "UFC Announces Return to Australia for UFC 305",
-                date: "February 20, 2025",
-                summary: "The UFC has officially announced its return to Perth, Australia for UFC 305, featuring a middleweight title fight between Israel Adesanya and Dricus Du Plessis.",
-                source: "UFC.com"
-            )
+            if isLoading {
+                ProgressView("Loading news...")
+                    .progressViewStyle(CircularProgressViewStyle(tint: .yellow))
+                    .scaleEffect(1.2)
+            } else if let error = errorMessage {
+                Text("Error: \(error)")
+                    .foregroundColor(.red)
+                    .padding()
+            } else if news.isEmpty {
+                Text("No news stories found.")
+                    .foregroundColor(AppTheme.textSecondary)
+            } else {
+                ForEach(news) { story in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(story.title)
+                            .font(.headline)
+                            .foregroundColor(AppTheme.textPrimary)
+                        Text(story.summary)
+                            .font(.subheadline)
+                            .foregroundColor(AppTheme.textSecondary)
+                        if !story.url.isEmpty {
+                            Link("Read more", destination: URL(string: story.url)!)
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    .padding()
+                    .background(AppTheme.cardBackground)
+                    .cornerRadius(10)
+                }
+            }
         }
+        .onAppear(perform: fetchNews)
+    }
+
+    func fetchNews() {
+        guard let url = URL(string: "https://mma-ai.duckdns.org/api/news") else {
+            self.errorMessage = "Invalid news API URL."
+            self.isLoading = false
+            return
+        }
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+                if let error = error {
+                    self.errorMessage = error.localizedDescription
+                    return
+                }
+                guard let data = data else {
+                    self.errorMessage = "No data received."
+                    return
+                }
+                do {
+                    self.news = try JSONDecoder().decode([NewsStory].self, from: data)
+                } catch {
+                    self.errorMessage = "Failed to parse news: \(error.localizedDescription)"
+                }
+            }
+        }
+        task.resume()
     }
 }
 
