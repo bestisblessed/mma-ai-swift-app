@@ -647,6 +647,26 @@ class NetworkManager {
             throw error
         }
     }
+    
+    // MARK: - Odds Last Updated Endpoint
+    /// Fetches the last updated epoch time for the odds CSV from the backend
+    func fetchOddsLastUpdated() async -> Double? {
+        let endpoint = "\(baseURL)/data/odds_last_updated"
+        guard let url = URL(string: endpoint) else { return nil }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return nil
+            }
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let epoch = json["epoch"] as? Double {
+                return epoch
+            }
+        } catch {
+            print("⚠️ Error fetching odds last updated: \(error)")
+        }
+        return nil
+    }
 }
 
 // MARK: - Data Models should be in Models.swift

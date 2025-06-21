@@ -519,6 +519,17 @@ def get_odds_chart():
         logger.error(f"Error processing odds data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/data/odds_last_updated', methods=['GET'])
+def get_odds_last_updated():
+    csv_path = 'data/ufc_odds_movements_fightoddsio.csv'
+    if not os.path.exists(csv_path):
+        return jsonify({'error': 'CSV file not found'}), 404
+    mod_time = os.path.getmtime(csv_path)
+    return jsonify({
+        'epoch': mod_time,
+        'iso': datetime.fromtimestamp(mod_time).isoformat()
+    })
+
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)
 # if __name__ == "__main__":

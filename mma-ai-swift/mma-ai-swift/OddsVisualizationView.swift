@@ -11,6 +11,7 @@ struct OddsVisualizationView: View {
     @State private var oddsData: [OddsChartPoint] = []
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
+    @State private var lastUpdated: String = ""
     
     // Sportsbook selector state
     @State private var sportsbooks: [String] = ["All"]
@@ -28,6 +29,12 @@ struct OddsVisualizationView: View {
     var body: some View {
         NavigationView {
             VStack {
+                if !lastUpdated.isEmpty {
+                    Text("Last updated: \(lastUpdated)")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.top, 4)
+                }
                 if isLoading {
                     ProgressView("Loading odds data...")
                         .progressViewStyle(CircularProgressViewStyle())
@@ -146,9 +153,10 @@ struct OddsVisualizationView: View {
                     }
                 }
             }
-        .onAppear {
-            loadOddsData()
-        }
+            .onAppear {
+                loadOddsData()
+                fetchLastUpdatedFromBackend()
+            }
         }
     }
     
@@ -169,6 +177,41 @@ struct OddsVisualizationView: View {
                 DispatchQueue.main.async {
                     errorMessage = error.localizedDescription
                     isLoading = false
+                }
+            }
+        }
+    }
+    
+    private func fetchLastUpdatedFromBackend() {
+        Task {
+            if let epoch = await NetworkManager.shared.fetchOddsLastUpdated() {
+                let date = Date(timeIntervalSince1970: epoch)
+                let formatter = DateFormatter()
+                formatter.timeZone = TimeZone(identifier: "America/New_York")
+                //formatter.dateFormat = "MM/dd HH:mm a"
+                formatter.dateFormat = "MMMM d HH:mm a"
+                let formatted = formatter.string(from: date)
+                // Calculate how long ago
+                let now = Date()
+                let interval = now.timeIntervalSince(date)
+                let totalHours = Int(interval / 3600)
+                let days = totalHours / 24
+                let hours = totalHours % 24
+                var agoString = ""
+                if days > 0 {
+                    agoString = "(\(days)d \(hours)h)"
+                } else if totalHours > 0 {
+                    agoString = "(\(totalHours)h)"
+                } else {
+                    let minutes = max(1, Int(interval / 60))
+                    agoString = "(\(minutes)m)"
+                }
+                DispatchQueue.main.async {
+                    lastUpdated = "\(formatted) \(agoString)"
+                }
+            } else {
+                DispatchQueue.main.async {
+                    lastUpdated = "Unknown"
                 }
             }
         }
