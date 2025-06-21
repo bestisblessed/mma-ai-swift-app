@@ -139,7 +139,7 @@ struct UpcomingEventsView: View {
                 .cornerRadius(12)
             } else {
                 ForEach(dataManager.getUpcomingEvents(), id: \.name) { event in
-                    EventCard(event: event)
+                    EventCard(event: event, defaultPrelimsExpanded: true)
                 }
                 
 //                Text("Data source: upcoming_event_data_sherdog.csv")
@@ -247,7 +247,7 @@ struct PastEventsView: View {
                 .cornerRadius(12)
             } else {
                 ForEach(dataManager.getPastEvents(), id: \.name) { event in
-                    EventCard(event: event, isPastEvent: true)
+                    EventCard(event: event, isPastEvent: true, defaultPrelimsExpanded: false)
                 }
                 
                 Text("Data source: event_data_sherdog.csv")
@@ -283,6 +283,7 @@ struct NewsStory: Identifiable, Decodable {
     let title: String
     let summary: String
     let url: String
+    let image_url: String?
 }
 
 //struct NewsResponse: Decodable {
@@ -310,6 +311,29 @@ struct NewsView: View {
             } else {
                 ForEach(news) { story in
                     VStack(alignment: .leading, spacing: 6) {
+                        if let imageUrl = story.image_url, !imageUrl.isEmpty, let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    ProgressView()
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(height: 160)
+                                        .clipped()
+                                        .cornerRadius(8)
+                                case .failure:
+                                    Image(systemName: "photo")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(height: 80)
+                                        .foregroundColor(.gray)
+                                @unknown default:
+                                    EmptyView()
+                                }
+                            }
+                        }
                         Text(story.title)
                             .font(.headline)
                             .foregroundColor(AppTheme.textPrimary)

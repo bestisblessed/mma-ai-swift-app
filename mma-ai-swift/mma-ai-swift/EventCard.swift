@@ -28,9 +28,11 @@ enum LoadingState: Equatable {
 
 struct EventCard: View {
     let event: EventInfo
+    let isPastEvent: Bool
+    let defaultPrelimsExpanded: Bool
     @State private var showAllFights = false
     @State private var showMainCard = true
-    @State private var showPrelims = false
+    @State private var showPrelims: Bool
     @State private var selectedFighter: FighterStats? = nil
     
     // Prediction & analysis sheet state
@@ -38,11 +40,12 @@ struct EventCard: View {
     @State private var comparisonFighters: (FighterStats, FighterStats)? = nil
     @State private var showOdds = false
     @State private var oddsFight: Fight? = nil
-    let isPastEvent: Bool
     
-    init(event: EventInfo, isPastEvent: Bool = false) {
+    init(event: EventInfo, isPastEvent: Bool = false, defaultPrelimsExpanded: Bool = false) {
         self.event = event
         self.isPastEvent = isPastEvent
+        self.defaultPrelimsExpanded = defaultPrelimsExpanded
+        _showPrelims = State(initialValue: defaultPrelimsExpanded)
     }
     
     var body: some View {
@@ -336,7 +339,7 @@ struct EventCard: View {
 #Preview {
     VStack {
         if let upcomingEvent = FighterDataManager.shared.getUpcomingEvents().first {
-            EventCard(event: upcomingEvent)
+            EventCard(event: upcomingEvent, defaultPrelimsExpanded: true)
                 .padding()
         } else {
             // Fallback to sample data if no dynamic data is available
@@ -353,7 +356,7 @@ struct EventCard: View {
                     Fight(redCorner: "Jordan Vucenic", blueCorner: "Chris Duncan", redCornerID: 12, blueCornerID: 13, weightClass: "Lightweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A"),
                     Fight(redCorner: "Nathaniel Wood", blueCorner: "Morgan Charriere", redCornerID: 14, blueCornerID: 15, weightClass: "Featherweight", isMainEvent: false, isTitleFight: false, round: "N/A", time: "N/A")
                 ]
-            ))
+            ), defaultPrelimsExpanded: true)
                 .padding()
         }
     }
