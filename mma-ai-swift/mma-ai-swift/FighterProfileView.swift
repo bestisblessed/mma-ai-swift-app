@@ -36,6 +36,9 @@ struct FighterProfileView: View {
                         .foregroundColor(.white)
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                navigationButtons
+            }
         }
         .onAppear {
             loadFightHistory()
@@ -204,20 +207,22 @@ struct FighterProfileView: View {
         .padding(.horizontal)
     }
     
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button(action: {
-                dismiss()
-                onDismiss()
-            }) {
-                Image(systemName: "xmark")
+    private var navigationButtons: some View {
+        HStack(spacing: 16) {
+            NavigationLink(destination: OddsVisualizationView(fighter: fighter)) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .foregroundColor(.white)
+            }
+            
+            NavigationLink(destination: FighterComparisonView(
+                fighter1: fighter,
+                fighter2: getComparisonFighter()
+            )) {
+                Image(systemName: "arrow.left.arrow.right")
                     .foregroundColor(.white)
             }
         }
-        
     }
-    
     
     private func loadFightHistory() {
         fightHistory = FighterDataManager.shared.getFightRecords(fighter.name)

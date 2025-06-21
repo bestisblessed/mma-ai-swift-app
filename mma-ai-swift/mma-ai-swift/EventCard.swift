@@ -30,7 +30,7 @@ struct EventCard: View {
     let event: EventInfo
     @State private var showAllFights = false
     @State private var showMainCard = true
-    @State private var showPrelims = true
+    @State private var showPrelims = false
     @State private var selectedFighter: FighterStats? = nil
     
     // Prediction & analysis sheet state
@@ -170,16 +170,6 @@ struct EventCard: View {
                 }
             )
         }
-        .sheet(isPresented: $showComparison) {
-            if let (f1, f2) = comparisonFighters {
-                FighterComparisonView(fighter1: f1, fighter2: f2)
-            }
-        }
-        .sheet(isPresented: $showOdds) {
-            if let ft = oddsFight {
-                OddsVisualizationView(fight: ft)
-            }
-        }
     }
     
     private func loadFighterData(name: String, id: Int) {
@@ -272,9 +262,9 @@ struct EventCard: View {
                     .foregroundColor(Color(hex: "#9E9E9E")) // Gray for weight class
                     .lineLimit(1)
                 
-                // Prediction, matchup, and odds buttons for upcoming fights
+                // Only show prediction button if not a past event
                 if !isPastEvent {
-                    // AI prediction
+                    // Prediction button
                     Button(action: {
                         requestFightPrediction(fight: fight)
                     }) {
@@ -290,45 +280,6 @@ struct EventCard: View {
                     .buttonStyle(BorderlessButtonStyle())
                     .hoverEffect(.highlight)
                     .help("Generate AI fight prediction")
-
-                    // Stylistic matchup analysis
-                    Button(action: {
-                        if let f1 = FighterDataManager.shared.getFighter(fight.redCorner),
-                           let f2 = FighterDataManager.shared.getFighter(fight.blueCorner) {
-                            comparisonFighters = (f1, f2)
-                            showComparison = true
-                        }
-                    }) {
-                        Text("📝")
-                            .font(.caption)
-                            .padding(4)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                            )
-                    }
-                    .padding(.leading, 4)
-                    .buttonStyle(BorderlessButtonStyle())
-                    .hoverEffect(.highlight)
-                    .help("Show stylistic matchup analysis")
-
-                    // Odds movement chart
-                    Button(action: {
-                        oddsFight = fight
-                        showOdds = true
-                    }) {
-                        Text("📈")
-                            .font(.caption)
-                            .padding(4)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                            )
-                    }
-                    .padding(.leading, 4)
-                    .buttonStyle(BorderlessButtonStyle())
-                    .hoverEffect(.highlight)
-                    .help("View odds movement chart")
                 }
             }
         }

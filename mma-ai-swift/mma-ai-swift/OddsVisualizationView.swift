@@ -7,23 +7,20 @@ let allowedSportsbooks: Set<String> = [
 ]
 
 struct OddsVisualizationView: View {
-    let fight: Fight
-    @State private var oddsData1: [OddsChartPoint] = []
-    @State private var oddsData2: [OddsChartPoint] = []
+    let fighter: FighterStats
+    @State private var oddsData: [OddsChartPoint] = []
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
     
     // Sportsbook selector state
     @State private var sportsbooks: [String] = ["All"]
     @State private var selectedSportsbook: String = "All"
-    @State private var selectedTab: Int = 0
     
-    // Filter helper for current fighter tab
+    // Filter helper
     private var filteredOddsData: [OddsChartPoint] {
-        let base = (selectedTab == 0 ? oddsData1 : oddsData2)
-        return selectedSportsbook == "All"
-            ? base
-            : base.filter { $0.sportsbook == selectedSportsbook }
+        selectedSportsbook == "All"
+        ? oddsData
+        : oddsData.filter { $0.sportsbook == selectedSportsbook }
     }
     
     @Environment(\.dismiss) private var dismiss
@@ -57,7 +54,7 @@ struct OddsVisualizationView: View {
                         Text("No odds data available")
                             .font(.headline)
                         
-                        Text("No odds movement data available for \(selectedTab == 0 ? fight.redCorner : fight.blueCorner) at this time.")
+                        Text("No odds movement data available for \(fighter.name) at this time.")
                             .font(.body)
                             .multilineTextAlignment(.center)
                     }
@@ -65,19 +62,11 @@ struct OddsVisualizationView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
-                            Text("\(selectedTab == 0 ? fight.redCorner : fight.blueCorner) Betting Odds Movement")
+                            Text("\(fighter.name) Betting Odds Movement")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .padding(.horizontal)
                             
-                        // 🔽 NEW – sportsbook selector + fighter tabs
-                            Picker(selection: $selectedTab, label: EmptyView()) {
-                                Text(fight.redCorner).tag(0)
-                                Text(fight.blueCorner).tag(1)
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            .padding(.horizontal)
-
                             if sportsbooks.count > 1 {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 8) {
@@ -166,14 +155,12 @@ struct OddsVisualizationView: View {
     private func loadOddsData() {
         Task {
             do {
-                let points1 = try await NetworkManager.shared.fetchOddsChart(for: fight.redCorner)
-                let points2 = try await NetworkManager.shared.fetchOddsChart(for: fight.blueCorner)
+                let points = try await NetworkManager.shared.fetchOddsChart(for: fighter.name)
                 DispatchQueue.main.async {
-                    // Filter out unwanted sportsbooks
-                    oddsData1 = points1.filter { allowedSportsbooks.contains($0.sportsbook) }
-                    oddsData2 = points2.filter { allowedSportsbooks.contains($0.sportsbook) }
-                    // Build unified selector list
-                    let books = Set((oddsData1 + oddsData2).map { $0.sportsbook }).sorted()
+                    // Filter out unwanted sportsbooks from oddsData
+                    oddsData = points.filter { allowedSportsbooks.contains($0.sportsbook) }
+                    // Build selector list
+                    let books = Set(oddsData.map { $0.sportsbook }).sorted()
                     sportsbooks = ["All"] + books
                     selectedSportsbook = "All"
                     isLoading = false
@@ -446,16 +433,26 @@ struct BookmakerBreakdownView: View {
 
 #Preview {
     OddsVisualizationView(
-        fight: Fight(
-            redCorner: "Jon Jones",
-            blueCorner: "Stipe Miocic",
-            redCornerID: 123456,
-            blueCornerID: 654321,
+        fighter: FighterStats(
+            name: "Jon Jones",
+            nickname: "Bones",
+            record: "27-1-0",
             weightClass: "Heavyweight",
-            isMainEvent: false,
-            isTitleFight: false,
-            round: "",
-            time: ""
+            age: 36,
+            height: "6'4\"",
+            reach: "84.5\"",
+            stance: "Orthodox",
+            teamAffiliation: "Jackson-Wink MMA",
+            nationality: "American",
+            hometown: "Rochester, NY",
+            birthDate: "July 19, 1987",
+            fighterID: 123456,
+            winsByKO: 10,
+            winsBySubmission: 7,
+            winsByDecision: 10,
+            lossesByKO: 0,
+            lossesBySubmission: 0,
+            lossesByDecision: 1
         )
     )
     .preferredColorScheme(.dark)
