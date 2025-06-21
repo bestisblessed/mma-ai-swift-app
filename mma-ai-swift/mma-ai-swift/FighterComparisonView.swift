@@ -3,7 +3,7 @@ import Charts
 
 struct FighterComparisonView: View {
     let fighter1: FighterStats
-    let fighter2: FighterStats
+    let fighter2: FighterStats?
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -18,17 +18,29 @@ struct FighterComparisonView: View {
                             .font(.headline)
                             .foregroundColor(.yellow)
                         Spacer()
-                        FighterHeaderView(fighter: fighter2)
+                        if let fighter2 = fighter2 {
+                            FighterHeaderView(fighter: fighter2)
+                        } else {
+                            VStack(spacing: 4) {
+                                Text("No opponent")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                Text("")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
                     }
                     .padding(.horizontal)
                     
                     // Basic stats comparison
                     ComparisonSection(title: "Basic Stats") {
-                        ComparisonRow(title: "Record", value1: fighter1.record, value2: fighter2.record)
-                        ComparisonRow(title: "Age", value1: "\(fighter1.age)", value2: "\(fighter2.age)")
-                        ComparisonRow(title: "Height", value1: fighter1.height, value2: fighter2.height)
-                        ComparisonRow(title: "Reach", value1: fighter1.reach ?? "N/A", value2: fighter2.reach ?? "N/A")
-                        ComparisonRow(title: "Stance", value1: fighter1.stance ?? "N/A", value2: fighter2.stance ?? "N/A")
+                        ComparisonRow(title: "Record", value1: fighter1.record, value2: fighter2?.record ?? "-")
+                        ComparisonRow(title: "Age", value1: "\(fighter1.age)", value2: fighter2 != nil ? "\(fighter2!.age)" : "-")
+                        ComparisonRow(title: "Height", value1: fighter1.height, value2: fighter2?.height ?? "-")
+                        ComparisonRow(title: "Reach", value1: fighter1.reach ?? "N/A", value2: fighter2?.reach ?? "-")
+                        ComparisonRow(title: "Stance", value1: fighter1.stance ?? "N/A", value2: fighter2?.stance ?? "-")
                     }
                     
                     // Win method comparison charts
@@ -38,34 +50,38 @@ struct FighterComparisonView: View {
                                 fighter: fighter1,
                                 totalWins: (fighter1.winsByKO ?? 0) + (fighter1.winsBySubmission ?? 0) + (fighter1.winsByDecision ?? 0)
                             )
-                            
-                            VictoryMethodChart(
-                                fighter: fighter2,
-                                totalWins: (fighter2.winsByKO ?? 0) + (fighter2.winsBySubmission ?? 0) + (fighter2.winsByDecision ?? 0)
-                            )
+                            if let fighter2 = fighter2 {
+                                VictoryMethodChart(
+                                    fighter: fighter2,
+                                    totalWins: (fighter2.winsByKO ?? 0) + (fighter2.winsBySubmission ?? 0) + (fighter2.winsByDecision ?? 0)
+                                )
+                            } else {
+                                Spacer()
+                            }
                         }
                     }
                     
                     // Win percentages comparison
-                    ComparisonSection(title: "Win Percentages") {
-                        WinPercentagesChart(fighter1: fighter1, fighter2: fighter2)
-                    }
-                    
-                    // Advanced matchup analysis
-                    ComparisonSection(title: "Matchup Analysis") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Stylistic Matchup")
-                                .font(.headline)
-                                .foregroundColor(.yellow)
-                            
-                            let analysis = generateMatchupAnalysis(fighter1: fighter1, fighter2: fighter2)
-                            Text(analysis)
-                                .font(.body)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(Color.black.opacity(0.3))
-                                .cornerRadius(8)
+                    if let fighter2 = fighter2 {
+                        ComparisonSection(title: "Win Percentages") {
+                            WinPercentagesChart(fighter1: fighter1, fighter2: fighter2)
+                        }
+                        // Advanced matchup analysis
+                        ComparisonSection(title: "Matchup Analysis") {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Stylistic Matchup")
+                                    .font(.headline)
+                                    .foregroundColor(.yellow)
+                                
+                                let analysis = generateMatchupAnalysis(fighter1: fighter1, fighter2: fighter2)
+                                Text(analysis)
+                                    .font(.body)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding()
+                                    .background(Color.black.opacity(0.3))
+                                    .cornerRadius(8)
+                            }
                         }
                     }
                 }

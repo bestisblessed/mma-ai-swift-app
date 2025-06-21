@@ -209,17 +209,20 @@ struct FighterProfileView: View {
     
     private var navigationButtons: some View {
         HStack(spacing: 16) {
-            NavigationLink(destination: OddsVisualizationView(fighter: fighter)) {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundColor(.white)
+            if isUpcomingFighter() {
+                NavigationLink(destination: OddsVisualizationView(fighter: fighter)) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundColor(.white)
+                }
             }
-            
-            NavigationLink(destination: FighterComparisonView(
-                fighter1: fighter,
-                fighter2: getComparisonFighter()
-            )) {
-                Image(systemName: "arrow.left.arrow.right")
-                    .foregroundColor(.white)
+            if let opponent = getComparisonFighter() {
+                NavigationLink(destination: FighterComparisonView(
+                    fighter1: fighter,
+                    fighter2: opponent
+                )) {
+                    Image(systemName: "arrow.left.arrow.right")
+                        .foregroundColor(.white)
+                }
             }
         }
     }
@@ -228,34 +231,36 @@ struct FighterProfileView: View {
         fightHistory = FighterDataManager.shared.getFightRecords(fighter.name)
     }
     
-    private func getComparisonFighter() -> FighterStats {
+    private func getComparisonFighter() -> FighterStats? {
         // First, try to find the actual opponent from upcoming events
         let upcomingEvents = FighterDataManager.shared.getUpcomingEvents()
-        
         for event in upcomingEvents {
             for fight in event.fights {
-                // Check if current fighter is in this fight
                 if fight.redCorner == fighter.name {
-                    // Return the blue corner opponent
                     if let opponent = FighterDataManager.shared.getFighter(fight.blueCorner) {
                         return opponent
                     }
                 } else if fight.blueCorner == fighter.name {
-                    // Return the red corner opponent
                     if let opponent = FighterDataManager.shared.getFighter(fight.redCorner) {
                         return opponent
                     }
                 }
             }
         }
-        
-        // If no upcoming fight opponent found, try to find a fighter in the same weight class
-        let sameDivisionFighter = FighterDataManager.shared.fighters.values.first { 
-            $0.weightClass == fighter.weightClass && $0.name != fighter.name 
+        // If no upcoming fight opponent found, return nil
+        return nil
+    }
+    
+    private func isUpcomingFighter() -> Bool {
+        let upcomingEvents = FighterDataManager.shared.getUpcomingEvents()
+        for event in upcomingEvents {
+            for fight in event.fights {
+                if fight.redCorner == fighter.name || fight.blueCorner == fighter.name {
+                    return true
+                }
+            }
         }
-        
-        // If no fighter found in same division, return the first available fighter or a default
-        return sameDivisionFighter ?? FighterDataManager.shared.fighters.values.first ?? fighter
+        return false
     }
 }
 
