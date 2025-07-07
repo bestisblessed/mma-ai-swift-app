@@ -7,7 +7,11 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from datetime import datetime
 
-client = OpenAI()
+print("\n\n" + "="*40)
+print(f"NEWS SCRAPE RUN: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+print("="*40 + "\n\n")
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 current_date = datetime.now().strftime("%Y-%m-%d")
 
