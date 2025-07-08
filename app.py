@@ -540,6 +540,17 @@ def get_news():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/data/news_last_updated', methods=['GET'])
+def get_news_last_updated():
+    json_path = 'data/news_daily.json'
+    if not os.path.exists(json_path):
+        return jsonify({'error': 'JSON file not found'}), 404
+    mod_time = os.path.getmtime(json_path)
+    return jsonify({
+        'epoch': mod_time,
+        'iso': datetime.fromtimestamp(mod_time).isoformat()
+    })
+
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5001)
 # if __name__ == "__main__":

@@ -616,10 +616,31 @@ class NetworkManager {
     // MARK: - Fetch Odds Chart Data
     
     func fetchOddsChart(for fighter: String) async throws -> [OddsChartPoint] {
+        // Prepare a file name for caching (lowercased, underscores instead of spaces)
+        let safeName = fighter.replacingOccurrences(of: " ", with: "_").lowercased()
+        let cacheFile = "odds_chart_\(safeName).json"
+        let cacheKey = "oddsLastUpdateTime"
+
+        // Attempt to load cache first
+        if let cachedData = FileCache.load([OddsChartPoint].self, from: cacheFile) {
+            // If we can’t reach the server or remote data isn’t newer, return cache
+            if let remoteEpoch = await fetchOddsLastUpdated() {
+                let localEpoch = UserDefaults.standard.double(forKey: cacheKey)
+                if remoteEpoch <= localEpoch {
+                    return cachedData
+                }
+            } else {
+                // Server unavailable – fall back to cache
+                return cachedData
+            }
+        }
+
+        // If we get here we need to fetch fresh data from the server
         // Ensure server is available
         if !isServerAvailable {
             isServerAvailable = await checkServerAvailability()
             if !isServerAvailable {
+                // If server unavailable but we have no cache, throw
                 throw NetworkError.serverUnavailable
             }
         }
@@ -634,16 +655,32 @@ class NetworkManager {
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 throw NetworkError.invalidResponse
             }
-            // Response schema: { fighter: "name", data: [ {timestamp, odds, sportsbook} ] }
             struct OddsChartResponse: Codable {
                 let fighter: String?
                 let data: [OddsChartPoint]
             }
             let decoder = JSONDecoder()
             let chartResponse = try decoder.decode(OddsChartResponse.self, from: data)
+
+            // Cache the fresh data
+            FileCache.save(chartResponse.data, as: cacheFile)
+            let epochToStore: Double
+            if let remoteEpoch = await fetchOddsLastUpdated() {
+                epochToStore = remoteEpoch
+            } else {
+                epochToStore = Date().timeIntervalSince1970
+            }
+            UserDefaults.standard.set(epochToStore, forKey: cacheKey)
+            // Also update the global cache timestamp for SettingsView
+            UserDefaults.standard.set(epochToStore, forKey: "lastUpdateTime")
+
             return chartResponse.data
         } catch {
             print("⚠️ Odds chart fetch error: \(error)")
+            // If fetch fails but we still have cached data, return it to avoid crashing UI
+            if let cachedData = FileCache.load([OddsChartPoint].self, from: cacheFile) {
+                return cachedData
+            }
             throw error
         }
     }
@@ -666,6 +703,74 @@ class NetworkManager {
             print("⚠️ Error fetching odds last updated: \(error)")
         }
         return nil
+    }
+
+    // MARK: - News Last Updated Endpoint
+    func fetchNewsLastUpdated() async -> Double? {
+        let endpoint = "\(baseURL)/data/news_last_updated"
+        guard let url = URL(string: endpoint) else { return nil }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return nil
+            }
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let epoch = json["epoch"] as? Double {
+                return epoch
+            }
+        } catch {
+            print("⚠️ Error fetching news last updated: \(error)")
+        }
+        return nil
+    }
+
+    // MARK: - Fetch News Articles
+    func fetchNews() async throws -> [NewsStory] {
+        let cacheFile = "news_daily.json"
+        let cacheKey = "newsLastUpdateTime"
+
+        // Attempt to load cached news first
+        if let cachedNews = FileCache.load([NewsStory].self, from: cacheFile) {
+            // Check remote epoch
+            if let remoteEpoch = await fetchNewsLastUpdated() {
+                let localEpoch = UserDefaults.standard.double(forKey: cacheKey)
+                if remoteEpoch <= localEpoch {
+                    return cachedNews
+                }
+            } else {
+                return cachedNews // server unreachable, use cache
+            }
+        }
+
+        // Fetch from server
+        guard let url = URL(string: "\(baseURL)/news") else { throw NetworkError.invalidURL }
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                throw NetworkError.invalidResponse
+            }
+            let decoder = JSONDecoder()
+            let articles = try decoder.decode([NewsStory].self, from: data)
+
+            // Cache locally
+            FileCache.save(articles, as: cacheFile)
+            let epochToStore: Double
+            if let remoteEpoch = await fetchNewsLastUpdated() {
+                epochToStore = remoteEpoch
+            } else {
+                epochToStore = Date().timeIntervalSince1970
+            }
+            UserDefaults.standard.set(epochToStore, forKey: cacheKey)
+            UserDefaults.standard.set(epochToStore, forKey: "lastUpdateTime")
+
+            return articles
+        } catch {
+            print("⚠️ News fetch error: \(error)")
+            if let cachedNews = FileCache.load([NewsStory].self, from: cacheFile) {
+                return cachedNews
+            }
+            throw error
+        }
     }
 }
 

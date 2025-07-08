@@ -161,6 +161,18 @@ struct OddsVisualizationView: View {
     }
     
     private func loadOddsData() {
+        // Try cached odds first for immediate display
+        let safeName = fighter.name.replacingOccurrences(of: " ", with: "_").lowercased()
+        if let cached = FileCache.load([OddsChartPoint].self, from: "odds_chart_\(safeName).json"), !cached.isEmpty {
+            // Filter out unwanted sportsbooks and update UI synchronously
+            let initial = cached.filter { allowedSportsbooks.contains($0.sportsbook) }
+            oddsData = initial
+            let books = Set(initial.map { $0.sportsbook }).sorted()
+            sportsbooks = ["All"] + books
+            selectedSportsbook = "All"
+            isLoading = false
+        }
+
         Task {
             do {
                 let points = try await NetworkManager.shared.fetchOddsChart(for: fighter.name)

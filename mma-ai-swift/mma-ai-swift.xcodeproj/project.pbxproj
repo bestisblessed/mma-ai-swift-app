@@ -22,6 +22,7 @@
 		73A960422D82E0ED009B6A7E /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9603F2D82E0ED009B6A7E /* AppTheme.swift */; };
 		73A960432D82E0ED009B6A7E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A960412D82E0ED009B6A7E /* SettingsView.swift */; };
 		73A960442D82E0ED009B6A7E /* ConversationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */; };
+		73C4EFB52E1CC6AC00A0F671 /* FileCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C4EFB42E1CC6AC00A0F671 /* FileCache.swift */; };
 		8A1234561234567800000001 /* MMAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000002 /* MMAApp.swift */; };
 		8A1234561234567800000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000004 /* ContentView.swift */; };
 		8A1234561234567800000005 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1234561234567800000006 /* ChatViewModel.swift */; };
@@ -46,6 +47,7 @@
 		73A9603F2D82E0ED009B6A7E /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		73A960402D82E0ED009B6A7E /* ConversationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationHistoryView.swift; sourceTree = "<group>"; };
 		73A960412D82E0ED009B6A7E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		73C4EFB42E1CC6AC00A0F671 /* FileCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCache.swift; sourceTree = "<group>"; };
 		8A1234561234567800000002 /* MMAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMAApp.swift; sourceTree = "<group>"; };
 		8A1234561234567800000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8A1234561234567800000006 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 				8A1234561234567800000028 /* FighterComparisonView.swift */,
 				7378521A2D8AFB6400023875 /* FighterDashboardView.swift */,
 				733DFFE62D8AECA1004EC7B8 /* FighterProfileView.swift */,
+				73C4EFB42E1CC6AC00A0F671 /* FileCache.swift */,
 				738B030F2D82DD5B0065813D /* LaunchScreen.swift */,
 				731D8CC52D8AC1B4004F58E6 /* Message.swift */,
 				8A1234561234567800000002 /* MMAApp.swift */,
@@ -197,6 +200,7 @@
 				731D8CC62D8AC1B7004F58E6 /* Message.swift in Sources */,
 				733DFFE72D8AECA1004EC7B8 /* FighterProfileView.swift in Sources */,
 				8A1234561234567800000025 /* OddsVisualizationView.swift in Sources */,
+				73C4EFB52E1CC6AC00A0F671 /* FileCache.swift in Sources */,
 				8A1234561234567800000027 /* FighterComparisonView.swift in Sources */,
 				8A1234561234567800000001 /* MMAApp.swift in Sources */,
 				736B5A782D82E22A008D7A55 /* DashboardView.swift in Sources */,

@@ -278,12 +278,16 @@ struct PastEventsView: View {
     }
 }
 
-struct NewsStory: Identifiable, Decodable {
+struct NewsStory: Identifiable, Codable {
     let id = UUID()
     let title: String
     let summary: String
     let url: String
     let image_url: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case title, summary, url, image_url
+    }
 }
 
 //struct NewsResponse: Decodable {
@@ -356,30 +360,30 @@ struct NewsView: View {
     }
 
     func fetchNews() {
-        guard let url = URL(string: "https://mma-ai.duckdns.org/api/news") else {
-            self.errorMessage = "Invalid news API URL."
+        // Try cached news first for immediate UI
+        if let cached = FileCache.load([NewsStory].self, from: "news_daily.json"), !cached.isEmpty {
+            self.news = cached
             self.isLoading = false
-            return
         }
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
-                if let error = error {
-                    self.errorMessage = error.localizedDescription
-                    return
+
+        // Fetch latest in the background
+        Task {
+            do {
+                let fetched = try await NetworkManager.shared.fetchNews()
+                await MainActor.run {
+                    self.news = fetched
+                    self.isLoading = false
                 }
-                guard let data = data else {
-                    self.errorMessage = "No data received."
-                    return
-                }
-                do {
-                    self.news = try JSONDecoder().decode([NewsStory].self, from: data)
-                } catch {
-                    self.errorMessage = "Failed to parse news: \(error.localizedDescription)"
+            } catch {
+                // If we already showed cache, keep it; otherwise surface error
+                await MainActor.run {
+                    if self.news.isEmpty {
+                        self.errorMessage = error.localizedDescription
+                        self.isLoading = false
+                    }
                 }
             }
         }
-        task.resume()
     }
 }
 
