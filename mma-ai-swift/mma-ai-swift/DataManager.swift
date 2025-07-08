@@ -131,6 +131,9 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
             // No cache, load from network
             await loadLatestData(force: true)
         }
+        // Ensure news cache is up to date at startup
+        networkManager.prefetchNewsIfNeeded()
+        networkManager.prefetchOddsTimestampIfNeeded()
     }
     
     private func loadLatestData(force: Bool) async {

@@ -772,6 +772,33 @@ class NetworkManager {
             throw error
         }
     }
+    
+    // MARK: - Prefetch helpers
+    /// Called at app launch to ensure news cache is fresh without requiring the user to open the dashboard first.
+    func prefetchNewsIfNeeded() {
+        Task {
+            // Load remote epoch
+            guard let remoteEpoch = await fetchNewsLastUpdated() else { return }
+            let localEpoch = UserDefaults.standard.double(forKey: "newsLastUpdateTime")
+            guard remoteEpoch > localEpoch else { return } // cache up-to-date
+            do {
+                _ = try await fetchNews() // this will update caches + lastUpdateTime
+            } catch {
+                print("⚠️ Prefetch news failed: \(error)")
+            }
+        }
+    }
+
+    /// Prefetch odds timestamp so Settings reflects recency without downloading every fighter's odds.
+    func prefetchOddsTimestampIfNeeded() {
+        Task {
+            guard let remoteEpoch = await fetchOddsLastUpdated() else { return }
+            let localEpoch = UserDefaults.standard.double(forKey: "oddsLastUpdateTime")
+            guard remoteEpoch > localEpoch else { return }
+            UserDefaults.standard.set(remoteEpoch, forKey: "oddsLastUpdateTime")
+            UserDefaults.standard.set(remoteEpoch, forKey: "lastUpdateTime")
+        }
+    }
 }
 
 // MARK: - Data Models should be in Models.swift
