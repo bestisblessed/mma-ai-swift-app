@@ -43,15 +43,17 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     
     func refreshData() async throws {
         if loadingState == .loading { return }
-        
-        let currentTime = Date().timeIntervalSince1970
-        let lastUpdateTime = cache.double(forKey: "lastUpdateTime")
-        let timeSinceLastUpdate = currentTime - lastUpdateTime
-        let fourHoursInSeconds: TimeInterval = 4 * 60 * 60 // 4 hours
-        
-        // Only refresh if it's been more than 4 hours or no data exists
-        if timeSinceLastUpdate >= fourHoursInSeconds || upcomingEvents.isEmpty {
-            await loadLatestData(force: true)
+
+        do {
+            let needsUpdate = try await networkManager.checkForUpdates()
+            if needsUpdate || upcomingEvents.isEmpty {
+                await loadLatestData(force: true)
+            }
+        } catch {
+            print("Update check failed: \(error)")
+            if upcomingEvents.isEmpty {
+                await loadLatestData(force: true)
+            }
         }
     }
     
@@ -142,22 +144,27 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
         }
         
         do {
-            // Check if data needs update based on time
-            let currentTime = Date().timeIntervalSince1970
-            let lastUpdateTime = cache.double(forKey: "lastUpdateTime")
-            let timeSinceLastUpdate = currentTime - lastUpdateTime
-            let fourHoursInSeconds: TimeInterval = 4 * 60 * 60 // 4 hours
-            
-            // Skip network requests if not forced and within update time window
-            if !force && !upcomingEvents.isEmpty && timeSinceLastUpdate < fourHoursInSeconds {
-                print("Data is recent. Skipping refresh.")
-                
+            let needsUpdate: Bool
+            if force {
+                needsUpdate = true
+            } else {
+                do {
+                    needsUpdate = try await networkManager.checkForUpdates()
+                } catch {
+                    print("Update check failed: \(error)")
+                    needsUpdate = false
+                }
+            }
+
+            if !needsUpdate && !upcomingEvents.isEmpty {
+                print("Data is up to date. Skipping refresh.")
+
                 DispatchQueue.main.async {
                     self.loadingState = .success
                 }
                 return
             }
-            
+
             print("Fetching latest data from server...")
             
             // Fetch updated fighter and event data
@@ -460,52 +467,34 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     // MARK: - Cache Management
     
     private func saveToCache() {
-        // Convert data to JSON and save to UserDefaults
-        do {
-            let fightersData = try JSONEncoder().encode(fighters)
-            let fightHistoryData = try JSONEncoder().encode(fightHistory)
-            let eventDetailsData = try JSONEncoder().encode(eventDetails)
-            let upcomingEventsData = try JSONEncoder().encode(upcomingEvents)
-            let pastEventsData = try JSONEncoder().encode(pastEvents)
-            
-            cache.set(fightersData, forKey: "cachedFighters")
-            cache.set(fightHistoryData, forKey: "cachedFightHistory")
-            cache.set(eventDetailsData, forKey: "cachedEventDetails")
-            cache.set(upcomingEventsData, forKey: "cachedUpcomingEvents")
-            cache.set(pastEventsData, forKey: "cachedPastEvents")
-            cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
-            
-            print("Data saved to cache")
-        } catch {
-            print("Failed to save data to cache: \(error)")
-        }
+        // Persist data to JSON files for offline use
+        FileCache.save(fighters, as: "fighters.json")
+        FileCache.save(fightHistory, as: "fight_history.json")
+        FileCache.save(eventDetails, as: "event_details.json")
+        FileCache.save(upcomingEvents, as: "upcoming_events.json")
+        FileCache.save(pastEvents, as: "past_events.json")
+
+        cache.set(Date().timeIntervalSince1970, forKey: "lastUpdateTime")
+
+        print("Data saved to cache")
     }
-    
+
     private func loadFromCache() -> Bool {
-        // Try to load data from UserDefaults
-        if let fightersData = cache.data(forKey: "cachedFighters"),
-           let fightHistoryData = cache.data(forKey: "cachedFightHistory"),
-           let eventDetailsData = cache.data(forKey: "cachedEventDetails"),
-           let upcomingEventsData = cache.data(forKey: "cachedUpcomingEvents") {
-            
-            do {
-                fighters = try JSONDecoder().decode([String: FighterStats].self, from: fightersData)
-                fightHistory = try JSONDecoder().decode([String: [FightResult]].self, from: fightHistoryData)
-                eventDetails = try JSONDecoder().decode([String: EventInfo].self, from: eventDetailsData)
-                upcomingEvents = try JSONDecoder().decode([EventInfo].self, from: upcomingEventsData)
-                
-                // Load past events if available, otherwise use empty array
-                if let pastEventsData = cache.data(forKey: "cachedPastEvents") {
-                    pastEvents = try JSONDecoder().decode([EventInfo].self, from: pastEventsData)
-                }
-                
-                return true
-            } catch {
-                print("Failed to decode cached data: \(error)")
-                return false
-            }
+        // Load data from JSON files
+        if let cachedFighters = FileCache.load([String: FighterStats].self, from: "fighters.json"),
+           let cachedHistory = FileCache.load([String: [FightResult]].self, from: "fight_history.json"),
+           let cachedEvents = FileCache.load([String: EventInfo].self, from: "event_details.json"),
+           let cachedUpcoming = FileCache.load([EventInfo].self, from: "upcoming_events.json") {
+
+            fighters = cachedFighters
+            fightHistory = cachedHistory
+            eventDetails = cachedEvents
+            upcomingEvents = cachedUpcoming
+            pastEvents = FileCache.load([EventInfo].self, from: "past_events.json") ?? []
+
+            return true
         }
-        
+
         return false
     }
     

@@ -1228,3 +1228,9 @@ This setup gives you:
 - Clean architecture
 
 Would you like me to help you test this setup or explain any part in more detail?
+
+## File Cache
+The app now saves fighter and event data to JSON files in the Application Support directory using `FileCache.swift`. This reduces launch time when the network is slow.
+
+The previous four hour refresh window has been removed. The app now checks the
+server's data version and only downloads new files when the version changes.

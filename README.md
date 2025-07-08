@@ -99,6 +99,13 @@ For deploying the Flask API server to a Raspberry Pi:
 2. Make sure the `ChatViewModel.swift` file has the correct IP address for your local machine
 3. Build and run the app in the iOS simulator or on a physical device
 
+### Local Data Caching
+
+Fighter and event data is persisted to JSON files in the app's support directory.
+On launch the app checks the server's data version and only fetches new files
+when the server data has changed. This keeps screens quick even on slow
+connections while ensuring you always see the latest updates.
+
 ## Usage
 
 1. Launch the app
