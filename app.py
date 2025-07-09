@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from openai import OpenAI
 import json
@@ -54,6 +54,12 @@ def clean_markdown_simple(text):
 @app.route('/')
 def home():
     return "Flask App is Running! API is available at /api/chat and /api/examples"
+
+# Static file serving route for data directory
+@app.route('/data/<path:filename>')
+def serve_data_file(filename):
+    """Serve static files from the data directory"""
+    return send_from_directory('data', filename)
 
 # New endpoints for fighter and event data
 @app.route('/api/data/fighters', methods=['GET'])

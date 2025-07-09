@@ -110,18 +110,12 @@ def get_best_image(url, source=None):
         if img and img.get('src'):
             print(f"First <img> found for {url}")
             return img['src']
-        print(f"No image found for {url}, using default logo.")
+        print(f"No image found for {url}, using UFC logo fallback.")
     except Exception as e:
         print(f"Failed to get image for {url}: {e}")
-    # Fallback to default logo by source
-    if source and source in DEFAULT_LOGOS:
-        return DEFAULT_LOGOS[source]
-    # Fallback to domain favicon
-    try:
-        domain = urlparse(url).netloc
-        return f"https://{domain}/favicon.ico"
-    except:
-        return ""
+    
+    # Final fallback to UFC logo served by Flask
+    return "https://mma-ai.duckdns.org/data/ufc_logo.avif"
 
 for item in news_list:
     if (not item.get('image_url')) and item.get('url'):
