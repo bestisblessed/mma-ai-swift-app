@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import Combine
+import OpenAI
 
 // Custom URLSession delegate to handle SSL certificate validation
 class SSLCertificateHandler: NSObject, URLSessionDelegate {
@@ -28,12 +29,16 @@ class ChatViewModel: ObservableObject {
     private var savedThreadId: String?
     
     private var apiUrl = "https://mma-ai.duckdns.org/api"
+
+    private let openAI: OpenAI
     
     // Track current network tasks to allow cancellation
     private var currentChatTask: URLSessionDataTask?
     private var currentPredictionTask: URLSessionDataTask?
-    
+
     init() {
+        let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+        self.openAI = OpenAI(apiToken: apiKey)
         // Register for app state changes
         NotificationCenter.default.addObserver(
             self,
@@ -174,331 +179,100 @@ class ChatViewModel: ObservableObject {
     }
 
     func sendMessage(_ content: String, assistantId: String? = nil) {
-        // Cancel any existing task
         currentChatTask?.cancel()
-        
-        // Create and add the user message
+
         let userMessage = Message(content: content, isUser: true, timestamp: Date())
         messages.append(userMessage)
-        
+
         isLoading = true
-        
-        // Create a placeholder for the assistant's response that shows it's loading
+
         let loadingMessage = Message(content: "", isUser: false, timestamp: Date(), isLoading: true)
         messages.append(loadingMessage)
         let loadingIndex = messages.count - 1
-        
-        // Prepare the request
-        let url = URL(string: "\(apiUrl)/chat")!
-        print("Sending request to: \(url.absoluteString)")
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        var requestBody: [String: Any] = [
-            "message": content,
-            "conversation_id": threadId as Any
-        ]
-        
-        // Add custom assistant ID if provided (for fight predictions)
-        if let assistantId = assistantId {
-            requestBody["assistant_id"] = assistantId
-            print("Using custom assistant ID: \(assistantId)")
-        } else {
-            // Use default chat assistant ID
-            requestBody["assistant_id"] = "asst_QIEMCdBCqsX4al7O4Jg2Jjpx"
-            print("Using default chat assistant ID: asst_QIEMCdBCqsX4al7O4Jg2Jjpx")
+
+        var chatMessages: [ChatQuery.ChatCompletionMessageParam] = messages.compactMap {
+            guard !$0.isLoading else { return nil }
+            let role: ChatQuery.ChatCompletionMessageParam.Role = $0.isUser ? .user : .assistant
+            return .init(role: role, content: .string($0.content))
         }
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-            print("Request body: \(requestBody)")
-            
-            // Create a URLSession configuration that allows self-signed certificates
-            let sessionConfig = URLSessionConfiguration.default
-            sessionConfig.timeoutIntervalForRequest = 150 // 2.5 minute timeout
-            sessionConfig.waitsForConnectivity = true
-            let sslHandler = SSLCertificateHandler()
-            let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
-            
-            let task = session.dataTask(with: request) { [weak self] data, response, error in
-                DispatchQueue.main.async {
+        chatMessages.append(.user(.init(content: .string(content))))
+
+        let query = ChatQuery(messages: chatMessages, model: .gpt4_o)
+
+        Task { [weak self] in
+            var accumulated = ""
+            do {
+                for try await result in openAI.chatsStream(query: query) {
+                    if let delta = result.choices.first?.delta.content?.string {
+                        accumulated += delta
+                        await MainActor.run {
+                            if let self = self, self.messages.indices.contains(loadingIndex) {
+                                self.messages[loadingIndex].content = accumulated
+                            }
+                        }
+                    }
+                }
+                await MainActor.run {
+                    if let self = self, self.messages.indices.contains(loadingIndex) {
+                        self.messages[loadingIndex].isLoading = false
+                    }
                     self?.isLoading = false
-                    
-                    // Remove only the loading message
-                    if let self = self, self.messages.count > loadingIndex {
+                }
+            } catch {
+                await MainActor.run {
+                    self?.isLoading = false
+                    if let self = self, self.messages.indices.contains(loadingIndex) {
                         self.messages.remove(at: loadingIndex)
                     }
-                    
-                    if let error = error as NSError? {
-                        // Check if error is due to cancellation
-                        if error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
-                            print("Chat request was cancelled")
-                            return
-                        }
-                        
-                        print("Network error: \(error.localizedDescription)")
-                        let errorMessage = Message(
-                            content: "Network error: Connection interrupted",
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        self?.messages.append(errorMessage)
-                        return
-                    }
-                    
-                    if let httpResponse = response as? HTTPURLResponse {
-                        print("HTTP Status Code: \(httpResponse.statusCode)")
-                        print("HTTP Headers: \(httpResponse.allHeaderFields)")
-                    }
-                    
-                    guard let data = data else {
-                        let errorMessage = Message(
-                            content: "No data received from server",
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        self?.messages.append(errorMessage)
-                        return
-                    }
-                    
-                    // Print the raw response for debugging
-                    if let responseString = String(data: data, encoding: .utf8) {
-                        print("API Response: \(responseString)")
-                    }
-                    
-                    do {
-                        let decodedResponse = try JSONDecoder().decode(ChatResponse.self, from: data)
-                        
-                        if let errorMsg = decodedResponse.error {
-                            print("Server error: \(errorMsg)")
-                            let errorMessage = Message(
-                                content: "Server error: \(errorMsg)",
-                                isUser: false,
-                                timestamp: Date()
-                            )
-                            self?.messages.append(errorMessage)
-                            return
-                        }
-                        
-                        let responseItems = decodedResponse.response
-                        for item in responseItems {
-                            var messageContent = item.content
-                            if let annotations = item.annotations, !annotations.isEmpty {
-                                messageContent += "\n\nReferences:\n" + annotations.map { $0.text }.joined(separator: "\n")
-                            }
-                            
-                            let newMessage = Message(
-                                content: messageContent,
-                                isUser: false,
-                                timestamp: Date(),
-                                imageData: item.type == "image" ? self?.extractImageData(from: item.content) : nil
-                            )
-                            self?.messages.append(newMessage)
-                        }
-                        
-                        self?.threadId = decodedResponse.conversation_id
-                    } catch {
-                        print("Decoding error: \(error.localizedDescription)")
-                        let errorMessage = Message(
-                            content: "Error parsing response: \(error.localizedDescription)",
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        self?.messages.append(errorMessage)
-                    }
+                    let errorMessage = Message(content: "Error: \(error.localizedDescription)", isUser: false, timestamp: Date())
+                    self?.messages.append(errorMessage)
                 }
-            }
-            
-            // Store the current task for potential cancellation
-            currentChatTask = task
-            task.resume()
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoading = false
-                
-                // Remove only the loading message
-                if self.messages.count > loadingIndex {
-                    self.messages.remove(at: loadingIndex)
-                }
-                
-                let errorMessage = Message(
-                    content: "Error preparing request: \(error.localizedDescription)",
-                    isUser: false,
-                    timestamp: Date()
-                )
-                self.messages.append(errorMessage)
             }
         }
     }
     
     // Function for fight predictions that doesn't show the fighter ID input in the chat
     func sendPredictionRequest(prompt: String, assistantId: String) {
-        // Cancel any existing prediction task
         currentPredictionTask?.cancel()
-        
-        // Skip adding user message to UI, directly go to loading state
+
         isLoading = true
-        
-        // Create a placeholder for the assistant's response that shows it's generating a prediction
+
         let loadingMessage = Message(content: "Generating prediction...", isUser: false, timestamp: Date(), isLoading: true)
         messages.append(loadingMessage)
         let loadingIndex = messages.count - 1
-        
-        // Extract fighter IDs from the prompt (format: "ID1 vs ID2" or "ID1 vs ID2 (5 rounder)")
-        var fighterNames = ("Unknown Fighter", "Unknown Fighter")
-        if let idMatch = prompt.range(of: #"(\d+)\s+vs\s+(\d+)"#, options: .regularExpression) {
-            let idText = prompt[idMatch]
-            let components = idText.components(separatedBy: " vs ")
-            if components.count == 2, 
-               let fighter1ID = Int(components[0].trimmingCharacters(in: .whitespaces)),
-               let fighter2ID = Int(components[1].trimmingCharacters(in: .whitespaces)) {
-                
-                // Look up fighter names by ID
-                if let fighter1 = FighterDataManager.shared.getFighterByID(fighter1ID) {
-                    fighterNames.0 = fighter1.name
+
+        let systemMsg = ChatQuery.ChatCompletionMessageParam(role: .system, content: .string("You are an MMA fight prediction assistant."))
+        let userMsg = ChatQuery.ChatCompletionMessageParam(role: .user, content: .string(prompt))
+        let query = ChatQuery(messages: [systemMsg, userMsg], model: .gpt4_o)
+
+        Task { [weak self] in
+            var accumulated = ""
+            do {
+                for try await result in openAI.chatsStream(query: query) {
+                    if let delta = result.choices.first?.delta.content?.string {
+                        accumulated += delta
+                        await MainActor.run {
+                            if let self = self, self.messages.indices.contains(loadingIndex) {
+                                self.messages[loadingIndex].content = accumulated
+                            }
+                        }
+                    }
                 }
-                
-                if let fighter2 = FighterDataManager.shared.getFighterByID(fighter2ID) {
-                    fighterNames.1 = fighter2.name
-                }
-                
-                print("🔵 Fighter prediction: \(fighterNames.0) (ID: \(fighter1ID)) vs \(fighterNames.1) (ID: \(fighter2ID))")
-            }
-        }
-        
-        // Prepare the request
-        let url = URL(string: "\(apiUrl)/chat")!
-        print("Sending fight prediction request to: \(url.absoluteString)")
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let requestBody: [String: Any] = [
-            "message": prompt,
-            "conversation_id": threadId as Any,
-            "assistant_id": assistantId
-        ]
-        
-        print("Using prediction assistant ID: \(assistantId)")
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-            print("Request body (IDs only): \(requestBody)")
-            
-            // Create a URLSession configuration that allows self-signed certificates
-            let sessionConfig = URLSessionConfiguration.default
-            sessionConfig.timeoutIntervalForRequest = 150 // 2.5 minute timeout
-            sessionConfig.waitsForConnectivity = true
-            let sslHandler = SSLCertificateHandler()
-            let session = URLSession(configuration: sessionConfig, delegate: sslHandler, delegateQueue: nil)
-            
-            let task = session.dataTask(with: request) { [weak self] data, response, error in
-                DispatchQueue.main.async {
+                await MainActor.run {
+                    if let self = self, self.messages.indices.contains(loadingIndex) {
+                        self.messages[loadingIndex].isLoading = false
+                    }
                     self?.isLoading = false
-                    
-                    // Remove only the loading message
-                    if let self = self, self.messages.count > loadingIndex {
+                }
+            } catch {
+                await MainActor.run {
+                    self?.isLoading = false
+                    if let self = self, self.messages.indices.contains(loadingIndex) {
                         self.messages.remove(at: loadingIndex)
                     }
-                    
-                    if let error = error as NSError? {
-                        // Check if error is due to cancellation
-                        if error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled {
-                            print("Prediction request was cancelled")
-                            return
-                        }
-                        
-                        print("Network error: \(error.localizedDescription)")
-                        let errorMessage = Message(
-                            content: "Network error: Connection interrupted",
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        self?.messages.append(errorMessage)
-                        return
-                    }
-                    
-                    guard let data = data else {
-                        let errorMessage = Message(
-                            content: "No data received from server",
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        self?.messages.append(errorMessage)
-                        return
-                    }
-                    
-                    // Print the raw response for debugging
-                    if let responseString = String(data: data, encoding: .utf8) {
-                        print("API Response: \(responseString)")
-                    }
-                    
-                    do {
-                        let decodedResponse = try JSONDecoder().decode(ChatResponse.self, from: data)
-                        
-                        if let errorMsg = decodedResponse.error {
-                            print("Server error: \(errorMsg)")
-                            let errorMessage = Message(
-                                content: "Server error: \(errorMsg)",
-                                isUser: false,
-                                timestamp: Date()
-                            )
-                            self?.messages.append(errorMessage)
-                            return
-                        }
-                        
-                        let responseItems = decodedResponse.response
-                        for item in responseItems {
-                            var messageContent = "\(fighterNames.0) vs \(fighterNames.1):\n\n"
-                            messageContent += item.content
-                            
-                            if let annotations = item.annotations, !annotations.isEmpty {
-                                messageContent += "\n\nReferences:\n" + annotations.map { $0.text }.joined(separator: "\n")
-                            }
-                            
-                            let newMessage = Message(
-                                content: messageContent,
-                                isUser: false,
-                                timestamp: Date(),
-                                imageData: item.type == "image" ? self?.extractImageData(from: item.content) : nil
-                            )
-                            self?.messages.append(newMessage)
-                        }
-                        
-                        self?.threadId = decodedResponse.conversation_id
-                    } catch {
-                        print("Decoding error: \(error.localizedDescription)")
-                        let errorMessage = Message(
-                            content: "Error parsing response: \(error.localizedDescription)",
-                            isUser: false,
-                            timestamp: Date()
-                        )
-                        self?.messages.append(errorMessage)
-                    }
+                    let errorMessage = Message(content: "Error: \(error.localizedDescription)", isUser: false, timestamp: Date())
+                    self?.messages.append(errorMessage)
                 }
-            }
-            
-            // Store the current task for potential cancellation
-            currentPredictionTask = task
-            task.resume()
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoading = false
-                
-                // Remove only the loading message
-                if self.messages.count > loadingIndex {
-                    self.messages.remove(at: loadingIndex)
-                }
-                
-                let errorMessage = Message(
-                    content: "Error preparing request: \(error.localizedDescription)",
-                    isUser: false,
-                    timestamp: Date()
-                )
-                self.messages.append(errorMessage)
             }
         }
     }

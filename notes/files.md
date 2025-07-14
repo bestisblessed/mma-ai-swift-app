@@ -14,12 +14,11 @@
 - Allows filtering and search of fighter/event information
 
 ### ChatViewModel.swift
-- Manages chat interactions with the Flask backend
-- Handles message processing, sending/receiving, and storage
+- Manages chat interactions using the OpenAI API via a Swift package
+- Handles message processing, streaming responses, and storage
 - Manages conversation history and message threading
 
-### NetworkManager.swift
-- Handles all API requests to the Flask backend
+- Handles all data API requests to the Flask backend
 - Processes fighter and event data from CSV files
 - Manages caching of data and API responses
 
