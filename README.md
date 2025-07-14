@@ -6,6 +6,7 @@ An iOS application that provides MMA analysis, fighter statistics, and event inf
 
 - Chat interface for asking questions about MMA fighters, events, and statistics
 - AI-powered responses using OpenAI's GPT models
+- Streaming chat replies for faster feedback
 - Example questions to help users get started
 - Real-time conversation history
 
@@ -96,8 +97,9 @@ For deploying the Flask API server to a Raspberry Pi:
 ### iOS App Setup
 
 1. Open the `MMAChat.xcodeproj` file in Xcode
-2. Make sure the `ChatViewModel.swift` file has the correct IP address for your local machine
-3. Build and run the app in the iOS simulator or on a physical device
+2. Add the [MacPaw/OpenAI](https://github.com/MacPaw/OpenAI) package via **File ▸ Add Packages...**
+3. Set the `OPENAI_API_KEY` environment variable in your scheme or `.env` file
+4. Build and run the app in the iOS simulator or on a physical device
 
 ## Usage
 
@@ -146,9 +148,8 @@ For deploying the Flask API server to a Raspberry Pi:
 
 ## Troubleshooting
 
-- If the app can't connect to the backend, make sure the Flask server is running and the IP address in `ChatViewModel.swift` is correct
-- If you see "Thinking..." for too long, check the Flask server logs for any errors
-- Make sure your OpenAI API key is valid and has sufficient credits
+- If the app can't connect to the backend data endpoints, ensure the Flask server is running
+- Make sure your `OPENAI_API_KEY` is set and valid
 
 ## License
 
