@@ -107,6 +107,15 @@ For deploying the Flask API server to a Raspberry Pi:
 4. Type your MMA-related questions in the text field and tap the send button
 5. The AI will respond with relevant information
 
+### Swift OpenAI Streaming Demo
+
+To experiment with direct OpenAI API streaming, a command-line Swift package is provided.
+
+1. Navigate to `swift-openai-demo`
+2. Run `swift build` to compile the demo
+3. Set your `OPENAI_API_KEY` environment variable
+4. Execute the program with `swift run`
+
 ## Potential Improvements
 
 ### Content & Functionality Enhancements
