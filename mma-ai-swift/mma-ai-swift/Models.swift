@@ -432,8 +432,10 @@ struct APIEvent: Codable {
         fighter1 = try container.decode(String.self, forKey: .fighter1)
         fighter2 = try container.decode(String.self, forKey: .fighter2)
         
-        fighter1ID = (try? container.decode(Int.self, forKey: .fighter1ID)) ?? 0
-        fighter2ID = (try? container.decode(Int.self, forKey: .fighter2ID)) ?? 0
+        fighter1ID = (try? container.decode(Int.self, forKey: .fighter1ID)) ??
+            (Int(try container.decodeIfPresent(String.self, forKey: .fighter1ID) ?? "") ?? 0)
+        fighter2ID = (try? container.decode(Int.self, forKey: .fighter2ID)) ??
+            (Int(try container.decodeIfPresent(String.self, forKey: .fighter2ID) ?? "") ?? 0)
         
         location = try container.decodeIfPresent(String.self, forKey: .location)
         date = try container.decodeIfPresent(String.self, forKey: .date)

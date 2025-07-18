@@ -425,6 +425,11 @@ def scrape_single_event(event_url):
             # Create DataFrame and save to CSV
             if all_data:
                 df = pd.DataFrame(all_data)
+
+                # Ensure fighter ID columns are preserved as integers
+                df['Fighter 1 ID'] = pd.to_numeric(df['Fighter 1 ID'], errors='coerce').fillna(0).astype(int)
+                df['Fighter 2 ID'] = pd.to_numeric(df['Fighter 2 ID'], errors='coerce').fillna(0).astype(int)
+
                 file_path = './data/upcoming_event_data_sherdog.csv'
                 
                 # Create data directory if it doesn't exist
