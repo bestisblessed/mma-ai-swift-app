@@ -566,17 +566,31 @@ class NetworkManager {
         let pattern = "(?<=[a-z])(?=[A-Z])"
         return name.replacingOccurrences(of: pattern, with: " ", options: .regularExpression)
     }
+
+    /// Normalize a fighter name by lowercasing and removing punctuation/spaces
+    func cleanName(_ name: String) -> String {
+        return name
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .joined()
+    }
     
     // MARK: - Fighter ID Utilities
     
     // Get fighter ID from name
     func getFighterId(name: String) -> Int? {
-        return fighterIdLookup[name]
+        if let id = fighterIdLookup[name] {
+            return id
+        }
+        return fighterIdLookup[cleanName(name)]
     }
     
     // Get fighter name from ID
     func getFighterName(id: Int) -> String? {
-        return fighterNameLookup[id]
+        if let name = fighterNameLookup[id] {
+            return name
+        }
+        return fighterIdLookup.first(where: { $0.value == id })?.key
     }
     
     // Build lookup tables after fetching fighter data
@@ -585,7 +599,9 @@ class NetworkManager {
         var nameLookup: [Int: String] = [:]
         
         for fighter in fighters {
+            let cleaned = cleanName(fighter.name)
             idLookup[fighter.name] = fighter.fighterID
+            idLookup[cleaned] = fighter.fighterID
             nameLookup[fighter.fighterID] = fighter.name
         }
         

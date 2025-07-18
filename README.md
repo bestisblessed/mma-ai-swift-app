@@ -106,6 +106,8 @@ For deploying the Flask API server to a Raspberry Pi:
 3. Tap on an example question or "Start Chatting" to begin
 4. Type your MMA-related questions in the text field and tap the send button
 5. The AI will respond with relevant information
+6. Fighter names are normalized (lowercased, punctuation removed) when searching
+   so variations like "JonJones" and "Jon Jones" match the same record
 
 ## Potential Improvements
 

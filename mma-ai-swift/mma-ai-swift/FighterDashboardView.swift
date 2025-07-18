@@ -347,6 +347,8 @@ class FighterDashboardViewModel: ObservableObject {
                     fightersById[fighter.fighterID] = fighter
                 }
                 fightersByName[fighter.name] = fighter
+                let cleaned = NetworkManager.shared.cleanName(fighter.name)
+                fightersByName[cleaned] = fighter
             }
             
             DispatchQueue.main.async {
@@ -379,9 +381,9 @@ class FighterDashboardViewModel: ObservableObject {
                         let fight = Fight(
                             redCorner: fighter,
                             blueCorner: result.opponent,
-                            redCornerID: FighterDataManager.shared.fighters[fighter]?.fighterID ?? 0,
-                            blueCornerID: FighterDataManager.shared.fighters[result.opponent]?.fighterID ?? 0,
-                            weightClass: FighterDataManager.shared.fighters[fighter]?.weightClass ?? "Unknown",
+                            redCornerID: FighterDataManager.shared.getFighter(fighter)?.fighterID ?? 0,
+                            blueCornerID: FighterDataManager.shared.getFighter(result.opponent)?.fighterID ?? 0,
+                            weightClass: FighterDataManager.shared.getFighter(fighter)?.weightClass ?? "Unknown",
                             isMainEvent: false,
                             isTitleFight: false,
                             round: "N/A",
@@ -422,7 +424,8 @@ class FighterDashboardViewModel: ObservableObject {
     @MainActor
     private func createFightDetails(fighter: String, result: FightResult, eventDetails: [String: EventInfo]) -> FightDetails {
         // Try to find the fighter ID
-        let fighterID = self.fightersByName[fighter]?.fighterID ?? 0
+        let cleanedFighter = NetworkManager.shared.cleanName(fighter)
+        let fighterID = self.fightersByName[fighter]?.fighterID ?? self.fightersByName[cleanedFighter]?.fighterID ?? 0
         
         // Try to find the event
         if let eventDetail = eventDetails[result.event] {
@@ -445,7 +448,7 @@ class FighterDashboardViewModel: ObservableObject {
                     blueCorner: result.opponent,
                     redCornerID: fighterID,
                     blueCornerID: result.opponentID,
-                    weightClass: self.fightersByName[fighter]?.weightClass ?? "Unknown",
+                    weightClass: self.fightersByName[fighter]?.weightClass ?? self.fightersByName[cleanedFighter]?.weightClass ?? "Unknown",
                     winner: winner,
                     winnerID: winnerID,
                     method: result.method,
@@ -453,8 +456,8 @@ class FighterDashboardViewModel: ObservableObject {
                     time: eventDetail.fights.first?.time ?? "N/A",
                     isMainEvent: fightDetail.isMainEvent,
                     isTitleFight: fightDetail.isTitleFight,
-                    redCornerStats: self.fightersByName[fighter],
-                    blueCornerStats: self.fightersByName[result.opponent]
+                    redCornerStats: self.fightersByName[fighter] ?? self.fightersByName[cleanedFighter],
+                    blueCornerStats: self.fightersByName[result.opponent] ?? self.fightersByName[NetworkManager.shared.cleanName(result.opponent)]
                 )
             } else {
                 // Fallback if no specific fight details found
@@ -468,6 +471,7 @@ class FighterDashboardViewModel: ObservableObject {
     
     @MainActor
     private func createBasicFightDetails(fighter: String, fighterID: Int, result: FightResult, isTitleFight: Bool) -> FightDetails {
+        let cleanedFighter = NetworkManager.shared.cleanName(fighter)
         let winner = result.outcome == "Win" ? fighter : result.opponent
         let winnerID = result.outcome == "Win" ? fighterID : result.opponentID
         
@@ -478,7 +482,7 @@ class FighterDashboardViewModel: ObservableObject {
             blueCorner: result.opponent,
             redCornerID: fighterID,
             blueCornerID: result.opponentID,
-            weightClass: self.fightersByName[fighter]?.weightClass ?? "Unknown",
+            weightClass: self.fightersByName[fighter]?.weightClass ?? self.fightersByName[cleanedFighter]?.weightClass ?? "Unknown",
             winner: winner,
             winnerID: winnerID,
             method: result.method,
@@ -486,8 +490,8 @@ class FighterDashboardViewModel: ObservableObject {
             time: "N/A",
             isMainEvent: false,
             isTitleFight: isTitleFight,
-            redCornerStats: self.fightersByName[fighter],
-            blueCornerStats: self.fightersByName[result.opponent]
+            redCornerStats: self.fightersByName[fighter] ?? self.fightersByName[cleanedFighter],
+            blueCornerStats: self.fightersByName[result.opponent] ?? self.fightersByName[NetworkManager.shared.cleanName(result.opponent)]
         )
     }
     
@@ -568,8 +572,10 @@ class FighterDashboardViewModel: ObservableObject {
     @MainActor
     func getFightDetails(for fight: FightWithId) -> FightDetails? {
         // Try to find fighter IDs from the lookup
-        let fighter1ID = self.fightersByName[fight.redCorner]?.fighterID ?? 0
-        let fighter2ID = self.fightersByName[fight.blueCorner]?.fighterID ?? 0
+        let cleanedRed = NetworkManager.shared.cleanName(fight.redCorner)
+        let cleanedBlue = NetworkManager.shared.cleanName(fight.blueCorner)
+        let fighter1ID = self.fightersByName[fight.redCorner]?.fighterID ?? self.fightersByName[cleanedRed]?.fighterID ?? 0
+        let fighter2ID = self.fightersByName[fight.blueCorner]?.fighterID ?? self.fightersByName[cleanedBlue]?.fighterID ?? 0
         
         // Try to find the fight details by comparing both names and IDs
         for (_, detail) in self.fightDetails {
@@ -604,8 +610,8 @@ class FighterDashboardViewModel: ObservableObject {
             time: fight.time,
             isMainEvent: fight.isMainEvent,
             isTitleFight: fight.isTitleFight,
-            redCornerStats: self.fightersByName[fight.redCorner],
-            blueCornerStats: self.fightersByName[fight.blueCorner]
+            redCornerStats: self.fightersByName[fight.redCorner] ?? self.fightersByName[cleanedRed],
+            blueCornerStats: self.fightersByName[fight.blueCorner] ?? self.fightersByName[cleanedBlue]
         )
     }
 }
