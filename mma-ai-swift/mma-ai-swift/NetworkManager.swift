@@ -389,10 +389,12 @@ class NetworkManager {
                     let mainCard: [UpcomingFight]
                     let prelims: [UpcomingFight]
                     let allFights: [UpcomingFight]
-                    
+
                     struct UpcomingFight: Codable {
                         let fighter1: String
                         let fighter2: String
+                        let fighter1ID: Int?
+                        let fighter2ID: Int?
                         let weightClass: String?
                         let fightType: String?
                         let round: Int?
@@ -434,6 +436,8 @@ class NetworkManager {
                             "Event Date": event.date as Any,
                             "Fighter 1": formattedFighter1,
                             "Fighter 2": formattedFighter2,
+                            "Fighter 1 ID": fight.fighter1ID ?? 0,
+                            "Fighter 2 ID": fight.fighter2ID ?? 0,
                             "Weight Class": fight.weightClass as Any,
                             "Winning Fighter": fight.winner as Any,
                             "Winning Method": fight.method as Any,

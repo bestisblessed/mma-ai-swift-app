@@ -423,6 +423,10 @@ def get_upcoming_events():
     try:
         # Load the upcoming events CSV file
         upcoming_df = pd.read_csv('data/upcoming_event_data_sherdog.csv')
+
+        # Ensure fighter ID columns are integers
+        upcoming_df["Fighter 1 ID"] = upcoming_df["Fighter 1 ID"].fillna(0).astype(int)
+        upcoming_df["Fighter 2 ID"] = upcoming_df["Fighter 2 ID"].fillna(0).astype(int)
         
         # Group by event name to organize fights under each event
         events = []
@@ -435,6 +439,8 @@ def get_upcoming_events():
                 fight = {
                     'fighter1': row['Fighter 1'],
                     'fighter2': row['Fighter 2'],
+                    'fighter1ID': int(row['Fighter 1 ID']),
+                    'fighter2ID': int(row['Fighter 2 ID']),
                     'weightClass': row['Weight Class'],
                     'fightType': row['Fight Type'],
                     'round': None,  # These are upcoming so no result yet
