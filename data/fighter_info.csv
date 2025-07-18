@@ -67,7 +67,7 @@ Ricky Simon,-,"Aug 31, 1992",United States,"Vancouver, Washington",American Top 
 Bin Xie,The Stalker,"Feb 28, 1998",China,Tianjin,Tianjin Top Team,Featherweight,5'10,13,5,5,4,4,4,0,1,231979,"72""",Orthodox,e415ea6f8d41c917
 Jack Becker,-,"Dec 20, 1992",Australia,"Perth, Western Australia",Tristar Gym,Lightweight,5'10,13,6,4,4,5,3,3,0,84392,,,b5a379583673510a
 Yuji Ephoevi-Ga,The Chef,"Oct 19, 1999",Japan,"Nerima, Tokyo",Tribe Tokyo MMA,Lightweight,6'0,11,1,2,6,3,1,0,0,403678,,,919fc4bc3edf4de7
-Kangjie Zhu,The Hypnotist / One Punch Man,"Jan 16, 1996",China,"Hefei, Anhui",Haosheng Fight Gym,Featherweight,5'8,21,4,9,12,0,3,0,1,341915,--,,6f4ec5aa3eced219
+Zhu Kangjie,The Hypnotist / One Punch Man,"Jan 16, 1996",China,"Hefei, Anhui",Haosheng Fight Gym,Featherweight,5'8,21,4,9,12,0,3,0,1,341915,--,,6f4ec5aa3eced219
 Kuya Ito,Psycho Zombie,"Oct 7, 1996",Japan,"Okaya, Nagano",Brave,Bantamweight,5'5,17,9,13,4,0,3,3,3,124673,,,f647247f0d9f3b50
 Qinghe Zhang,-,-,China,Shandong,Yunnan Kunli Junlong Fight Club,Bantamweight,5'7,16,8,4,9,3,3,3,2,382525,,,
 Sang Wook Kim,Frogman,"Oct 17, 1993",South Korea,Seoul,Havas MMA,Lightweight,6'0,12,3,4,5,3,3,0,0,361209,,,e9712cad24948ce1
@@ -79,7 +79,7 @@ Brunno Ferreira,The Hulk,"Nov 4, 1992",Brazil,"Curitiba, Parana",Brazilian TKO,M
 Molly McCann,Meatball,"May 4, 1990",England,"Liverpool, Merseyside",Next Generation MMA Liverpool,Strawweight,5'4,14,8,7,6,1,4,0,4,150485,"62""",Orthodox,51018a31ddf31eb2
 Bobby Green,King,"Sep 9, 1986",United States,"Redlands, California",Pinnacle MMA,Lightweight,5'10,32,17,12,11,9,8,6,3,27953,"71""",Orthodox,887961364be5ceb3
 Nathan Fletcher,-,"Jan 3, 1998",England,Liverpool,Next Generation MMA Liverpool,Featherweight,5'8,9,2,1,1,7,1,1,0,275293,,,a2d342ffc83913ed
-Mick Parkin,-,"Oct 2, 1995",England,"London, Greater London",TFT MMA,Heavyweight,6'3,10,1,3,6,1,1,0,0,224411,--,,0d5cc0170c1a7e71
+Michael Parkin,-,"Oct 2, 1995",England,"London, Greater London",TFT MMA,Heavyweight,6'3,10,1,3,6,1,1,0,0,224411,--,,0d5cc0170c1a7e71
 Marcin Tybura,Tybur,"Nov 9, 1985",Poland,Uniejow,Ankos MMA,Heavyweight,6'3,27,9,10,10,7,3,5,1,86928,"78""",Orthodox,c9cf753cfdf77fc2
 Kaue Fernandes,-,"Mar 17, 1995",Brazil,"Rio de Janeiro, Rio de Janeiro",Nova Uniao,Lightweight,6'0,10,2,3,5,2,2,0,0,297051,,,ec13c393d029297d
 Guram Kutateladze,Georgian Viking,"Jan 8, 1992",Georgia,Tbilisi,Allstars Training Center,Lightweight,5'11,13,5,5,7,1,3,1,1,127817,"72""",Orthodox,7772b283d288dbe2
@@ -100,7 +100,7 @@ Iasmin Lucindo,-,"Jan 8, 2002",Brazil,"Fortaleza, Ceara",Fight House,Strawweight
 Lone'er Kavanagh,-,"Jun 9, 1999",England,"London, Greater London",Great Britain Top Team,Flyweight,5'4,9,0,4,4,1,0,0,0,213249,,,bb2c3c3a466224af
 Mairon Santos,The Legend,"Jun 10, 2000",Brazil,"Rio de Janeiro, Rio de Janeiro",Xtreme Couture,Lightweight,5'9,16,1,8,8,0,0,1,0,297155,,,480779d7f9a424d3
 Shauna Bannon,Mama B,"Oct 23, 1993",Ireland,Dublin,Holohan Martial Arts,Strawweight,5'5,7,1,4,2,1,1,0,0,315165,,,9c442aaf149ea982
-Kaiwen Li,The Underdog,"Oct 16, 1995",China,Hunan,K-1 Gym,Featherweight,5'9,15,6,6,8,1,1,3,1,183217,--,,0565706b1e7f7e7c
+Li Kaiwen,The Underdog,"Oct 16, 1995",China,Hunan,K-1 Gym,Featherweight,5'9,15,6,6,8,1,1,3,1,183217,--,,0565706b1e7f7e7c
 Sean Brady,-,"Nov 23, 1992",United States,"Philadelphia, Pennsylvania",Renzo Gracie Philly,Welterweight,5'9,18,1,9,3,6,0,1,0,126971,"72""",Orthodox,45f7cb591c3ab00b
 Osman Diaz,Ozzy,"Nov 22, 1990",United States,"Los Angeles, California",California Mixed Martial Arts,Middleweight,6'4,10,3,1,7,2,0,3,0,156965,,,6967153c7edb4d87
 Caolan Loughran,The Don,"May 18, 1996",Ireland,Tyrone,Team Kaobon,Bantamweight,5'6,10,2,3,5,2,2,0,0,250567,,,42ac4020cba261ad
@@ -183,7 +183,7 @@ Hamdy Abdelwahab,The Hammer,"Jan 22, 1993",United States,"Queens, New York",Kill
 Bogdan Grad,The Unleashed,"Sep 18, 1995",Austria,Graz,ETTL Bros. MMA,Featherweight,5'8,15,3,3,9,3,2,1,0,156707,,,fb37795db81f93f3
 Kaan Ofli,Genghis,"Jun 19, 1993",Australia,"Melbourne, Victoria",XFC Narre Warren,Featherweight,5'8,11,4,4,2,5,3,1,0,189203,,,7facc9c45d792985
 Alexandre Pantoja,The Cannibal,"Apr 16, 1990",Brazil,"Arraial do Cabo, Rio de Janeiro",American Top Team,Flyweight,5'5,30,5,10,8,12,5,0,0,25023,"67""",Orthodox,a0f0004aadf10b71
-Kait Blink' Kara-France,Don't Blink,"Mar 26, 1993",New Zealand,Auckland,City Kickboxing,Flyweight,5'5,25,12,10,12,3,5,3,4,73692,"69""",Orthodox,853eb0dd5c0e2149
+Kai Kara-France,Don't Blink,"Mar 26, 1993",New Zealand,Auckland,City Kickboxing,Flyweight,5'5,25,12,10,12,3,5,3,4,73692,"69""",Orthodox,853eb0dd5c0e2149
 Shamil Gaziev,-,"Feb 10, 1990",Bahrain,Manama,KHK MMA,Heavyweight,6'3,14,1,2,9,3,0,1,0,313721,,,6747ccd6d1acd266
 Ilia Topuria,El Matador,"Jan 21, 1997",Spain,"Alicante, Valencia",Topuria Team,Lightweight,5'8,17,0,2,7,8,0,0,0,202445,"69""",Orthodox,54f64b5e283b0ce7
 Jamal Pogues,The Stormtrooper,"Dec 1, 1995",United States,"Victorville, California",Syndicate MMA,Heavyweight,6'2,11,5,6,4,1,2,1,2,152993,"77""",Orthodox,f41b9f5efc7162d6
@@ -306,7 +306,7 @@ Tagir Ulanbekov,-,"Jul 8, 1991",Russia,"Makhachkala, Dagestan",Eagles MMA,Flywei
 Diego Ferreira,-,"Jan 18, 1985",Brazil,"Careiro da Varzea, Amazonas",Fortis MMA,Lightweight,5'9,19,6,7,5,7,3,3,0,26358,"74""",Orthodox,f53d4f21d1b5f2dc
 Brendan Allen,All In,"Dec 28, 1995",United States,"Milwaukee, Wisconsin",Kill Cliff FC,Middleweight,6'2,24,7,5,5,14,4,2,1,201703,"75""",Orthodox,2f181c0467965b98
 Marina Rodriguez,-,"Apr 29, 1987",Brazil,"Bage, Rio Grande do Sul",Thai Brasil,Strawweight,5'7,17,6,9,7,1,4,2,0,193977,"65""",Orthodox,cd2c4d30c6e13b47
-Yana Santos,Foxy,"Nov 11, 1989",Russia,"Murmansk, Oblast de Murmansk",American Top Team,Bantamweight,5'8,16,8,8,7,1,3,3,2,49412,"68""",Orthodox,3143bf892608139a
+Yana Kunitskaya,Foxy,"Nov 11, 1989",Russia,"Murmansk, Oblast de Murmansk",American Top Team,Bantamweight,5'8,16,8,8,7,1,3,3,2,49412,"68""",Orthodox,3143bf892608139a
 Muin Gafurov,Tajik,"May 17, 1996",Tajikistan,Dushanbe,Taj-Fighter,Bantamweight,5'7,20,6,3,10,7,5,0,1,182325,"68""",Southpaw,a54660deb6a8489c
 Jailton Almeida,Malhadinho,"Jun 28, 1991",Brazil,"Salvador, Bahia",Galpao da Luta,Heavyweight,6'4,22,3,1,8,13,1,2,0,114657,"79""",Orthodox,41e83a89929d1327
 Gillian Robertson,The Savage,"May 17, 1995",Canada,"Niagara Falls, Ontario",The Goat Shed Academy,Strawweight,5'5,16,8,4,3,9,6,1,1,219015,"63""",Orthodox,38c7f72747f4f712
@@ -335,7 +335,7 @@ Cesar Almeida,Cesinha,"Mar 28, 1988",Brazil,"Sao Paulo, Sao Paulo",Lotus MMA,Mid
 Julian Marquez,The Cuban Missile Crisis,"May 8, 1990",United States,"Kansas City, Missouri",MMA Lab,Middleweight,6'2,9,6,0,6,3,2,4,0,77743,"72""",Orthodox,d0e1b42d41dab603
 Danny Barlow,Left Hand 2 God,"Aug 2, 1995",United States,"Memphis, Tennessee",Law School MMA,Welterweight,6'2,9,1,3,5,1,0,1,0,336147,,,b7c5eb7cdbac6a63
 Mario Pinto,-,"Mar 14, 1998",Portugal,Lisbon,Urban Warriors,Heavyweight,6'5,10,0,3,6,1,0,0,0,310173,,,39d309957c5c210d
-Rayanne dos Santos,-,"Jun 8, 1995",Brazil,"Belem, Para",Marajo Brothers,Strawweight,5'3,14,9,4,2,8,7,1,1,230789,--,,02bb48869eb7ac8f
+Rayanne Amanda,-,"Jun 8, 1995",Brazil,"Belem, Para",Marajo Brothers,Strawweight,5'3,14,9,4,2,8,7,1,1,230789,--,,02bb48869eb7ac8f
 Lucas Almeida,-,"Jan 31, 1991",Brazil,"Sorocaba, Sao Paulo",MMA Sorocaba,Lightweight,6'0,15,4,1,9,5,2,1,1,191243,"71""",Orthodox,710f0f8c5d5c9d41
 Uros Medic,The Doctor,"Apr 25, 1993",United States,"Anchorage, Alaska",Kings MMA,Welterweight,6'1,10,3,0,8,2,0,1,2,272505,"71""",Southpaw,681399317dbf4701
 Nasrat Haqparast,-,"Aug 22, 1995",Morocco,Rabat,Tristar Gym,Lightweight,5'10,18,5,8,10,0,3,1,1,122581,"72""",Southpaw,b7b84ccd221be298
@@ -379,7 +379,7 @@ Magomed Gadzhiyasulov,Mohammed Haji,"Nov 4, 1993",Russia,"Makhachkala, Dagestan"
 Joe Solecki,-,"Aug 27, 1993",United States,"Wenonah, New Jersey",Gym-O,Lightweight,5'9,13,6,4,0,9,4,2,0,227993,"70""",Orthodox,af65aa688d13eedf
 Gilbert Burns,Durinho,"Jul 20, 1986",Brazil,"Niteroi, Rio de Janeiro",Kill Cliff FC,Welterweight,5'10,22,9,7,6,9,5,4,0,91727,"71""",Orthodox,23024fdfc966410a
 Michael Johnson,The Menace,"Jun 4, 1986",United States,"Springfield, Missouri",Kill Cliff FC,Lightweight,5'10,23,19,11,10,2,7,3,9,68788,"73""",Southpaw,511e82663651438d
-Josefine Lindgren Knutsson,Little Thunder,"Jan 16, 1996",Sweden,"Bromma, Stockholm",Allstars Training Center,Strawweight,5'3,8,1,7,1,0,1,0,0,378677,--,,971dba22c622af12
+Josefine Knutsson,Little Thunder,"Jan 16, 1996",Sweden,"Bromma, Stockholm",Allstars Training Center,Strawweight,5'3,8,1,7,1,0,1,0,0,378677,--,,971dba22c622af12
 Luis Gurule,Grim,"Nov 16, 1993",United States,"Sheridan, Colorado",Factory X,Flyweight,5'5,10,1,4,5,1,0,1,0,390304,,,29162be25ebef5f0
 Michael Morales,-,"Jun 24, 1999",Ecuador,"Machala, El Oro",Entram Gym,Welterweight,6'0,18,0,4,13,1,0,0,0,268041,"79""",Orthodox,c32aeb1a59e6272d
 Matheus Camilo,Jaguar,"Jan 2, 2001",Brazil,"Rio Branco, Acre",Nova Uniao,Lightweight,5'10,9,3,3,4,2,0,0,3,319531,,,72f890c5d421e705
@@ -430,14 +430,14 @@ Tainara Lisboa,Thai Panther,"Mar 2, 1991",Brazil,"Santos, Sao Paulo",Damas 013,B
 Namsrai Batbayar,Steppe Warrior,"Dec 29, 2000",Mongolia,-,One Team Fighting Center,Flyweight,5'4,8,1,0,4,4,0,0,1,403618,,,e1f8beeb6d2d871a
 Arisa Matsuda,-,"Dec 15, 1994",Japan,"Kashiwara, Osaka",Shooto Gym Blows,Strawweight,5'3,7,0,4,3,0,0,0,0,390313,,,4c33b3d37955aa85
 Kai Yoshida,Scorpion,"Oct 10, 1999",Japan,"Kasugai, Aichi",Karatedo Goju-Ryu Ho-Bukan,Flyweight,5'9,6,2,3,3,0,0,1,1,422176,,,2e517966267a468a
-Ateba Abega Gautier,The Silent Assassin,"Apr 10, 2002",Cameroon,Doula,Manchester Top Team,Middleweight,6'4,7,1,1,6,0,1,0,0,386979,--,,2f815ed5f8278ba6
+Ateba Gautier,The Silent Assassin,"Apr 10, 2002",Cameroon,Doula,Manchester Top Team,Middleweight,6'4,7,1,1,6,0,1,0,0,386979,--,,2f815ed5f8278ba6
 Sebastian Szalay,Seb,"Feb 3, 1994",Australia,"Perth, Western Australia",Freestyle MMA,Featherweight,5'7,9,1,7,1,1,1,0,0,317671,,,f201f21cf2c79eb2
 Eo Jin Park,Young Boss,"Dec 26, 2001",South Korea,"Daejeon, Hoseo",Team Young,Featherweight,6'0,9,2,2,4,3,1,1,0,390120,,,f79e7f138bf50cc0
 Wataru Yamauchi,-,"Jun 22, 1999",Japan,"Iwaki, Fukushima",Fight Farm,Flyweight,5'6,7,2,4,2,1,0,2,0,388617,,,d8bf3df51ff3a270
 Keiichiro Nakamura,-,"Dec 2, 1998",Japan,"Yoichi, Hokkaido",EXFIGHT,Featherweight,5'10,6,1,0,6,0,0,0,1,403670,,,3618e0632ecdba9c
 Denise Gomes,-,"Dec 30, 1999",Brazil,"Sant'Ana do Livramento, Rio Grande do Sul",GAEA Project,Strawweight,5'3,11,3,4,7,0,2,1,0,382138,,,cffb87059e645bd1
 Elise Reed,-,"Dec 5, 1992",United States,"Princeton, New Jersey",Kickside Martial Arts,Strawweight,5'3,8,5,6,2,0,0,3,2,278133,"63""",Orthodox,ac7c765882f2c68c
-Steve Erceg,Astro Boy,"Jul 27, 1995",Australia,"Myaree, Western Australia",Wilkes Martial Arts,Flyweight,5'8,12,4,4,2,6,3,1,0,228813,--,,9411103a865f32d3
+Stephen Erceg,Astro Boy,"Jul 27, 1995",Australia,"Myaree, Western Australia",Wilkes Martial Arts,Flyweight,5'8,12,4,4,2,6,3,1,0,228813,--,,9411103a865f32d3
 Raul Rosas Jr.,El Nino Problema,"Oct 8, 2004",United States,"Santa Rosa, California",10th Planet Jiu Jitsu Las Vegas,Bantamweight,5'9,11,1,3,2,6,1,0,0,339419,,,fe2babf95de24fb1
 Julia Polastri,Psycho,"Mar 5, 1998",Brazil,"Duque de Caxias, Rio de Janeiro",CWB Fighter,Strawweight,5'2,13,5,6,4,3,5,0,0,266047,"63""",Orthodox,abb68e3c7ca128f2
 David Martinez,Black Spartan,"Aug 3, 1998",Mexico,Mexico City,Bonebreakers MMA,Bantamweight,5'6,12,1,2,10,0,1,0,0,221351,,,9a97acbfd5a08bfa
@@ -530,7 +530,7 @@ Bekzat Almakhan,The Turan Warrior,"Oct 8, 1997",Kazakhstan,Almaty,Triumph Fights
 Kennedy Nzechukwu,American Savage,"Jun 13, 1992",United States,"Dallas, Texas",Fortis MMA,Heavyweight,6'5,14,5,3,10,1,2,2,1,212289,"83""",Southpaw,8667caa0451d245b
 Jeong Yeong Lee,The Korean Tiger,"Nov 13, 1995",South Korea,"Daegu, Yeongnam",Ssen Gym,Featherweight,5'10,11,3,4,4,3,2,1,0,135897,,,d008d785f6347dc2
 Max Holloway,Blessed,"Dec 4, 1991",United States,"Waianae, Hawaii",Gracie Technics,Featherweight,5'11,26,8,12,12,2,6,1,1,38671,"69""",Orthodox,150ff4cc642270b9
-Abusupiyan Magomedov,Abus,"Sep 2, 1990",Russia,Argun,UFD Gym,Middleweight,6'2,28,6,7,14,7,2,2,2,60755,--,,36b8f265bcd1b7a4
+Abus Magomedov,Abus,"Sep 2, 1990",Russia,Argun,UFD Gym,Middleweight,6'2,28,6,7,14,7,2,2,2,60755,--,,36b8f265bcd1b7a4
 Gabriel Bonfim,Marretinha,"Aug 20, 1997",Brazil,"Brasilia, Distrito Federal",Bonfim Brothers,Welterweight,6'0,17,1,1,3,13,0,1,0,185083,,,01641ba5df0c69b0
 Brad Katona,Superman,"Dec 19, 1991",Canada,"Winnipeg, Manitoba",SBG Ireland,Bantamweight,5'6,14,5,10,1,3,4,1,0,66518,"64""",Orthodox,7b433309b0fd12aa
 Robert Whittaker,The Reaper / Bobby Knuckles,"Dec 20, 1990",Australia,"Sydney, New South Wales",PMA Super Martial Arts,Middleweight,6'0,26,8,11,10,5,3,3,2,45132,"73""",Orthodox,e1147d3d2dabe1ce
@@ -630,14 +630,14 @@ Raquel Pennington,Rocky,"Sep 5, 1988",United States,"Colorado Springs, Colorado"
 Daniel Pineda,The Pit,"Aug 6, 1985",United States,"Houston, Texas",4oz. Fight Club,Featherweight,5'7,28,17,0,9,19,8,3,6,21564,"69""",Orthodox,361d49960a196976
 Caio Borralho,The Natural,"Jan 16, 1993",Brazil,"Sao Luis, Maranhao",The Fighting Nerds,Middleweight,6'2,17,1,8,5,4,1,0,0,188043,"75""",Southpaw,4126a78111c0855a
 Casey O'Neill,King,"Oct 7, 1997",Scotland,Irvine,Xtreme Couture,Flyweight,5'6,10,2,5,3,2,1,0,1,175007,"69""",Orthodox,04835018f90b118c
-Yunfeng Li,-,"Mar 8, 1999",China,"Chengdu, Sichuan",Enbo Fight Club,Featherweight,5'10,10,6,2,2,6,2,1,3,326095,--,,4c7afd56ef1947ac
+Li Yunfeng,-,"Mar 8, 1999",China,"Chengdu, Sichuan",Enbo Fight Club,Featherweight,5'10,10,6,2,2,6,2,1,3,326095,--,,4c7afd56ef1947ac
 Zha Yi,-,"Jan 8, 1997",China,"Aba, Sichuan",Enbo Fight Club,Featherweight,5'7,25,5,6,6,13,3,1,1,228277,,,3f11fd1751fa83b1
 Joshua Culibao,Kuya,"May 24, 1994",Australia,"Sydney, New South Wales",Igor MMA,Featherweight,5'9,11,4,5,5,1,3,1,0,222801,,,6751eacd16bd59bc
-Jingliang Li,The Leech,"Mar 20, 1988",China,"Tacheng, Xinjiang",China Top Team,Welterweight,6'0,19,9,5,10,4,6,1,2,26381,"71""",Orthodox,e64b96c07d7ce999
+Li Jingliang,The Leech,"Mar 20, 1988",China,"Tacheng, Xinjiang",China Top Team,Welterweight,6'0,19,9,5,10,4,6,1,2,26381,"71""",Orthodox,e64b96c07d7ce999
 Dustin Poirier,The Diamond,"Jan 19, 1989",United States,"Carencro, Louisiana",American Top Team,Lightweight,5'9,30,9,7,15,8,2,3,4,50529,"72""",Southpaw,029eaff01e6bb8f0
 Kyu Sung Kim,-,"Nov 5, 1992",South Korea,"Jeonju, North Jeolla Province",Jeonju First Gym,Bantamweight,5'11,12,6,2,8,2,3,2,1,171131,,,e7ecfab8fd86d3e1
 Adam Fugitt,-,"Jan 12, 1989",United States,"Eugene, Oregon",Fight Ready,Welterweight,6'1,10,4,2,5,3,1,2,1,206917,,Southpaw,a01a62132460a98d
-Nathan Maness,Mayhem,"Jun 27, 1991",United States,"Morganfield, Kentucky",Salvation Mixed Martial Arts,Flyweight,5'10,16,3,7,6,3,1,1,1,158855,"72""",Orthodox,6e9f40c706f91f32
+Nate Maness,Mayhem,"Jun 27, 1991",United States,"Morganfield, Kentucky",Salvation Mixed Martial Arts,Flyweight,5'10,16,3,7,6,3,1,1,1,158855,"72""",Orthodox,6e9f40c706f91f32
 Huaxiang Dong,Hua Mulan,"Aug 21, 1998",China,"Jing'an, Shanghai",Enbo Fight Club,Strawweight,5'5,13,3,5,1,7,1,1,1,256795,,,bad82b681819b272
 Paulo Costa,Borrachinha,"Apr 21, 1991",Brazil,"Belo Horizonte, Minas Gerais",Team Borracha,Middleweight,6'0,14,4,2,11,1,3,1,0,147165,"72""",Orthodox,2e5c2aa8e4ab9d82
 Stewart Nicoll,-,"Nov 3, 1994",Australia,"Brisbane, Queensland",Broz Martial Arts,Flyweight,5'5,8,1,1,4,3,0,0,1,289569,,,2bd98ab77a8daa75
@@ -655,7 +655,7 @@ Ye Dam Seo,-,"Mar 20, 1992",South Korea,"Cheongju, Chungcheongbuk",Paraestra Che
 Shin Haraguchi,-,"Nov 27, 1998",Japan,"Kanoya, Kagoshima",Brave,Featherweight,5'6,11,2,4,6,1,1,0,1,393466,,,05b17ae24e6bba81
 Melissa Gatto,-,"May 2, 1996",Brazil,"Campinas, Sao Paulo",MSP,Bantamweight,5'5,9,2,2,3,4,2,0,0,193547,"69""",Orthodox,a4a80dd7336ffd59
 Tatsuya Saika,Yanbo,"Sep 18, 1990",Japan,Kanagawa,Dobuita,Lightweight,5'11,13,5,1,12,0,0,4,1,258823,,,cc4e571964b084d4
-Niushiyue Ji,Little King Kong,"Dec 9, 2000",China,"Chengdu, Sichuan",Enbo Fight Club,Flyweight,5'8,14,4,6,5,3,3,1,0,257563,--,,c14a683dac2ebc4c
+Ji Niushiyue,Little King Kong,"Dec 9, 2000",China,"Chengdu, Sichuan",Enbo Fight Club,Flyweight,5'8,14,4,6,5,3,3,1,0,257563,--,,c14a683dac2ebc4c
 Young Jae Song,Super Rookie,"Jan 3, 1996",South Korea,"Chuncheon, Gangwon",Havas MMA,Featherweight,5'8,8,1,0,7,1,1,0,0,155665,,,0efb0d4ebb950fcb
 Masuto Kawana,Mast,"Jan 30, 1995",Japan,"Higashihiroshima, Hiroshima",Lotus Setagaya,Featherweight,5'7,11,5,6,3,2,2,3,0,387670,,,49f4171f14f54220
 Brady Hiestand,Bam Bam,"Apr 30, 1999",United States,"Spokane, Washington",Sikjitsu,Bantamweight,5'8,8,2,2,3,3,1,1,0,249533,"71""",Orthodox,7af33fc4435017f1
@@ -720,7 +720,7 @@ Montana De La Rosa,-,"Feb 14, 1995",United States,"Helena, Montana",Elevation Fi
 Jamie Mullarkey,-,"Aug 17, 1994",Australia,"Central Coast, New South Wales",Bangtao Muay Thai & MMA,Lightweight,5'8,17,8,4,10,3,2,6,0,68104,"74""",Orthodox,af9f42e6894047fc
 Josh Fremd,-,"Jan 15, 1994",United States,"Connellsville, Pennsylvania",Factory X,Middleweight,6'4,11,6,3,4,4,3,2,1,162285,,,ca43de99b07b6b40
 Loik Radzhabov,The Tajik Tank,"Sep 17, 1990",Tajikistan,Dushanbe,Kill Cliff FC,Lightweight,5'9,18,6,5,8,5,5,1,0,154357,,Orthodox,8c169fbe1ac33637
-Valentine Woodburn,The Animal,"Aug 10, 1993",United States,"Apopka, Florida",Fusion X-Cel Performance,Welterweight,5'8,8,2,3,5,0,1,1,0,315963,--,,7a47e068f8017019
+Val Woodburn,The Animal,"Aug 10, 1993",United States,"Apopka, Florida",Fusion X-Cel Performance,Welterweight,5'8,8,2,3,5,0,1,1,0,315963,--,,7a47e068f8017019
 Christos Giagos,The Spartan,"Jan 23, 1990",United States,"Hawthorne, California",Black House,Lightweight,5'10,20,12,8,8,4,3,3,6,68130,"71""",Orthodox,de45aaae23dfa392
 Darrius Flowers,Beast Mode,"Aug 25, 1994",United States,"Mason City, Iowa",Chicago Fight Team,Welterweight,5'9,12,8,3,8,1,1,1,6,191363,,,65db4065e2bc107d
 Natan Levy,Lethal,"Sep 30, 1991",Israel,Tel Aviv,Syndicate MMA,Welterweight,5'9,8,2,5,0,3,1,0,1,227411,"71""",Southpaw,a29db9cd4f9ccea5
@@ -851,7 +851,7 @@ Taila Santos,-,"Jun 22, 1993",Brazil,"Jaragua do Sul, Santa Catarina",Team Taila
 Danny Roberts,Hot Chocolate,"Jul 14, 1987",England,"Liverpool, Merseyside",Team McHale,Welterweight,6'1,18,8,5,8,5,1,5,2,64677,"74""",Southpaw,a6cba6bb66c1a8c9
 Ronnie Lawrence,The Heat,"Jun 13, 1992",United States,"Murfreesboro, Tennessee",MMA Science Academy,Bantamweight,5'8,8,2,4,4,0,2,0,0,102885,"68""",Switch,e7e01e266a9d4342
 Tanner Boser,The Bulldozer,"Aug 2, 1991",Canada,"Bonnyville, Alberta",Shaved Bears MMA,Heavyweight,6'2,22,10,8,12,2,8,2,0,114961,"75""",Orthodox,04c8b08b16a5b99e
-Jiahefu Wuziazibieke,Kazakh Warrior,"Apr 9, 1990",China,Xinjiang,Wanshi Fight Gym,Lightweight,5'10,33,12,9,7,17,6,1,5,186687,--,,2d077e22886298be
+Wuziazibieke Jiahefu,Kazakh Warrior,"Apr 9, 1990",China,Xinjiang,Wanshi Fight Gym,Lightweight,5'10,33,12,9,7,17,6,1,5,186687,--,,2d077e22886298be
 Robbie Lawler,Ruthless,"Mar 20, 1982",United States,"San Diego, California",Kill Cliff FC,Welterweight,5'11,30,16,7,22,1,7,4,5,2245,"74""",Southpaw,f2925e6db404bf1d
 Jorge Masvidal,Gamebred,"Nov 12, 1984",United States,"Miami, Florida",American Top Team,Welterweight,5'11,35,17,17,16,2,13,2,2,7688,"74""",Orthodox,47b9e0e7703a4868
 Derek Brunson,Blonde,"Jan 4, 1984",United States,"Wilmington, North Carolina",Kill Cliff FC,Middleweight,6'1,24,9,8,12,4,2,7,0,68494,"77""",Southpaw,b1a3e0aca758b322
@@ -920,7 +920,7 @@ Gadzhi Omargadzhiev,-,"Feb 24, 1993",Russia,Moscow,CSKA Moscow,Welterweight,6'1,
 Erick Gonzalez,The Ghost Pepper,"Jan 20, 1992",United States,"Torrance, California",Fight Science,Lightweight,5'10,14,8,5,8,1,3,2,3,158233,"75""",Orthodox,a2ccf35a88346a91
 Rafael Alves,The Turn,"Oct 11, 1990",Brazil,"Belem, Para",Main Street Boxing & Muay Thai,Lightweight,5'7,21,12,5,7,9,2,4,6,96651,"68""",Orthodox,029afd138865d20a
 Nick Maximov,-,"Dec 23, 1997",United States,"Chico, California",Nick Diaz Academy,Middleweight,6'0,12,2,5,3,4,1,0,1,302823,"76""",Southpaw,12585614e0ed2626
-KyleArce Knight' Daukaus,The D'Arce Knight,"Feb 27, 1993",United States,"Philadelphia, Pennsylvania",Martinez BJJ,Middleweight,6'3,15,4,3,1,11,2,2,0,83350,"76""",Southpaw,d6c0cdd7e467c440
+Kyle Daukaus,The D'Arce Knight,"Feb 27, 1993",United States,"Philadelphia, Pennsylvania",Martinez BJJ,Middleweight,6'3,15,4,3,1,11,2,2,0,83350,"76""",Southpaw,d6c0cdd7e467c440
 Omar Morales,Venezuelan Fighter,"Oct 17, 1985",Venezuela,"Caracas, Capital District",The Goat Shed Academy,Lightweight,5'11,11,4,4,2,5,2,1,1,120645,"73""",Orthodox,a0e6753c42698f13
 Marcelo Rojo,Pitbull,"Jul 2, 1988",Argentina,Cordoba,Entram Gym,Featherweight,5'8,17,10,1,9,6,3,2,5,92673,"71""",Orthodox,2804ce8dadab5770
 Mauricio Rua,Shogun,"Nov 25, 1981",Brazil,"Curitiba, Parana",Universidade da Luta,Light Heavyweight,6'1,27,14,5,21,1,4,7,3,5707,"76""",Orthodox,140745cbbcb023ac

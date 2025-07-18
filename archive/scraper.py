@@ -257,11 +257,11 @@ print(f"Column names: {list(df2.columns)}")
 
 ### 8) Sherdog: Remove Nicknames from Fighter Names ###
 df = pd.read_csv('./data/fighter_id_sherdog.csv')
-df['Fighter'] = df['Fighter'].str.replace(r" '.+?'", "", regex=True)
+df['Fighter'] = df['Fighter'].str.replace(r"\s?'[^']*'", "", regex=True)
 df.to_csv('./data/fighter_id_sherdog.csv', index=False)
 df = pd.read_csv('./data/event_data_sherdog.csv')
 for col in ['Fighter 1', 'Fighter 2', 'Winning Fighter']:
-    df[col] = df[col].str.replace(r" '.+?'", "", regex=True)
+    df[col] = df[col].str.replace(r"\s?'[^']*'", "", regex=True)
 df.to_csv('./data/event_data_sherdog.csv', index=False)
 
 ### 9) Sherdog: Add UFC Indicator ###
@@ -783,10 +783,20 @@ for info_name, master_name in manual_matches.items():
     master_row = master_df[master_df['FIGHTER'] == master_name]
     if not info_idx.empty and not master_row.empty:
         master_row = master_row.iloc[0]
+        fighter_info_df.loc[info_idx, 'Fighter'] = master_name
         fighter_info_df.loc[info_idx, 'Reach'] = master_row['REACH']
         fighter_info_df.loc[info_idx, 'Stance'] = master_row['STANCE']
         fighter_info_df.loc[info_idx, 'Fighter_ID_UFCStats'] = master_row['Fighter_ID_UFCStats']
 fighter_info_df.to_csv('data/fighter_info.csv', index=False)
+
+# Apply the same renaming to event data files
+for csv_path in ['data/event_data_sherdog.csv', 'data/upcoming_event_data_sherdog.csv']:
+    if os.path.exists(csv_path):
+        event_df = pd.read_csv(csv_path)
+        for col in ['Fighter 1', 'Fighter 2', 'Winning Fighter']:
+            event_df[col] = event_df[col].replace(manual_matches)
+        event_df.to_csv(csv_path, index=False)
+
 print("✅ Manual merges applied for confirmed matches.")
 missing_rows = fighter_info_df[fighter_info_df['Fighter_ID_UFCStats'].isna()]
 print(f"\n❗ Remaining fighters missing UFC Stats ID: {len(missing_rows)}")
