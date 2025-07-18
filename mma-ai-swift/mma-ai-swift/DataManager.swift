@@ -58,7 +58,11 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     }
     
     func getFighter(_ name: String) -> FighterStats? {
-        fighters[name]
+        if let fighter = fighters[name] {
+            return fighter
+        }
+        let cleaned = networkManager.cleanName(name)
+        return fighters.first { networkManager.cleanName($0.key) == cleaned }?.value
     }
     
     func getFighterByID(_ id: Int) -> FighterStats? {
@@ -66,12 +70,16 @@ class FighterDataManager: ObservableObject, @unchecked Sendable {
     }
     
     func getFightHistory(_ name: String) -> [FightResult]? {
-        fightHistory[name]
+        if let history = fightHistory[name] {
+            return history
+        }
+        let cleaned = networkManager.cleanName(name)
+        return fightHistory.first { networkManager.cleanName($0.key) == cleaned }?.value
     }
     
     // Convert FightResult to FightRecord for the profile view
     func getFightRecords(_ name: String) -> [FightRecord]? {
-        guard let results = fightHistory[name] else {
+        guard let results = getFightHistory(name) else {
             return nil
         }
         
